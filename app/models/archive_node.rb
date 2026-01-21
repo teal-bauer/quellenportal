@@ -33,4 +33,16 @@ class ArchiveNode < ApplicationRecord
     parents.reverse
   end
 
+  def descendant_ids
+    ids = []
+    nodes_to_process = child_nodes.to_a
+
+    while nodes_to_process.any?
+      node = nodes_to_process.shift
+      ids << node.id
+      nodes_to_process.concat(node.child_nodes.to_a)
+    end
+
+    ids
+  end
 end
