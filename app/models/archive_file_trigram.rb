@@ -19,7 +19,18 @@ class ArchiveFileTrigram < ApplicationRecord
         ->(query) do
           return none if query.blank?
 
-          where(archive_file_trigrams: "\"#{query}\"").order(:call_number)
+          where(archive_file_trigrams: query).order(:call_number)
+        end
+
+  scope :in_node,
+        ->(node_id) do
+          return all if node_id.blank?
+
+          node = ArchiveNode.find_by(id: node_id)
+          return none unless node
+
+          node_ids = [node.id] + node.descendant_ids
+          where(archive_node_id: node_ids)
         end
 
   scope :lookup_by_call_number,
