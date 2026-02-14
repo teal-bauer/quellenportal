@@ -26,7 +26,7 @@ document.querySelectorAll(".cite__copy").forEach((button) => {
         const oldColor = button.style.backgroundColor;
         const oldText = button.textContent;
         button.textContent = "Kopiert!";
-        button.style.backgroundColor = "green";
+        button.style.backgroundColor = "#5a7a3a";
 
         setTimeout(() => {
           button.textContent = oldText;
