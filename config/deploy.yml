@@ -40,5 +40,6 @@ aliases:
   console: app exec --interactive --reuse "bin/rails console"
   shell: app exec --interactive --reuse "bash"
   logs: app logs -f
+  download: app exec --interactive --reuse "bin/rails data:download"
   import: app exec --interactive --reuse "bin/rails data:import"
   reindex: app exec --interactive --reuse "bin/rails data:reindex"
