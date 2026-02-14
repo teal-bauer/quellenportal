@@ -1,0 +1,44 @@
+service: quellenportal
+
+image: teal-bauer/quellenportal
+
+servers:
+  web:
+    - <%= ENV.fetch("DEPLOY_HOST") %>
+
+proxy:
+  ssl: false
+  host: quellenportal.de,archivfinder.de
+  app_port: 3000
+  forward_headers: true
+
+registry:
+  server: ghcr.io
+  username: teal-bauer
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+env:
+  secret:
+    - RAILS_MASTER_KEY
+  clear:
+    WEB_CONCURRENCY: 2
+
+volumes:
+  - "quellenportal_sqlite:/rails/db/sqlite"
+  - "quellenportal_storage:/rails/storage"
+  - "quellenportal_data:/rails/data"
+
+asset_path: /rails/public/assets
+
+builder:
+  arch: amd64
+  remote: ssh://root@<%= ENV.fetch("DEPLOY_HOST") %>
+  local: false
+
+aliases:
+  console: app exec --interactive --reuse "bin/rails console"
+  shell: app exec --interactive --reuse "bash"
+  logs: app logs -f
+  import: app exec --interactive --reuse "bin/rails data:import"
+  reindex: app exec --interactive --reuse "bin/rails data:reindex"
