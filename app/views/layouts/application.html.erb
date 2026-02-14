@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="<%= I18n.locale %>">
   <head>
-    <title>Bundessuche</title>
+    <title>Quellenportal</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
@@ -21,13 +21,14 @@
     <div class="container__outer">
       <main class="container__inner">
         <h1 class="search__title">
-          <%= link_to "Bundessuche", :root %>
+          <%= link_to "Quellenportal", :root %>
         </h1>
         <%= yield %>
       </main>
     </div>
     <footer>
       <%= link_to "Impressum", :legal_notice  %>
+      <small>basierend auf <a href="https://bundessuche.de">Bundessuche</a> von Michael Emhofer</small>
     </footer>
   </body>
 </html>

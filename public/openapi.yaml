@@ -1,13 +1,13 @@
 openapi: 3.1.0
 info:
-  title: Bundessuche API
+  title: Quellenportal API
   description: Search interface for German Federal Archive (Bundesarchiv) records.
   version: 0.1.0
   contact:
-    email: info@bundessuche.de
+    email: info@quellenportal.de
 
 servers:
-  - url: https://bundessuche.de
+  - url: https://quellenportal.de
 
 security: []
 
