@@ -128,7 +128,7 @@ class BundesarchivImporter
   # Import a single XML file. Called by ImportFileJob or directly for sync import.
   def import_file(path)
     caches = {
-      nodes: ArchiveNode.all.index_by(&:source_id),
+      nodes: {},
       origins: Origin.all.to_h { |o| [[o.name, o.label], o] }
     }
     doc = File.open(path) { |file| Nokogiri.XML(file) }
