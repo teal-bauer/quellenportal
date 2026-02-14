@@ -1,92 +1,108 @@
 class ArchiveObject
-  def initialize(parent_nodes, node)
+  def initialize(parent_nodes, node, caches)
     @parent_nodes = parent_nodes
     @node = node
+    @caches = caches
     @archive_node = store
   end
 
   def store
-    ArchiveNode.find_or_create_by(
+    source_id = @node.attr("id")
+    return @caches[:nodes][source_id] if @caches[:nodes][source_id]
+
+    node = ArchiveNode.find_or_initialize_by(source_id: source_id)
+    node.assign_attributes(
       name: @node.xpath("did/unittitle").text,
-      source_id: @node.attr("id"),
       level: @node.attr("level"),
       parent_node: @parent_nodes.last
     )
+    node.save! if node.new_record? || node.changed?
+    @caches[:nodes][source_id] = node
+    node
   end
 
   def process_files
+    file_nodes = @node.xpath("c[@level='file']")
+    return 0 if file_nodes.empty?
+
     archive_file_count = 0
+    originations_to_insert = []
 
-    @node
-      .xpath("c[@level='file']")
-      .each_slice(1000) do |slice|
-        data =
-          slice.map do |node|
-            date = UnitDate.new(node.xpath("did/unitdate").first)
-            origins =
-              node
-                .xpath("did/origination")
-                .map do |origin|
-                  Origin.find_or_create_by(
-                    name: origin.text,
-                    label: origin.attr("label")
-                  )
-                end
-            call_number =
-              node
-                .xpath('did/unitid[@type="call number"]')
-                .text
-                .sub(/\ABArch /, "")
+    file_nodes.each_slice(1000) do |slice|
+      origin_data = []
+      data = slice.map do |node|
+        date = UnitDate.new(node.xpath("did/unitdate").first)
 
-            parents_cache =
-              (@parent_nodes + [@archive_node]).map do |n|
-                { name: n.name, id: n.id }
-              end
-            {
-              origins: origins,
-              archive_file: {
-                archive_node_id: @archive_node.id,
-                title: node.xpath("did/unittitle").text,
-                parents: parents_cache,
-                call_number: call_number,
-                source_date_text: date.text,
-                source_date_start: date.start_date,
-                source_date_end: date.end_date,
-                source_id: node.attr("id"),
-                link: node.xpath("otherfindaid/p/extref")[0]&.attr("href"),
-                location: node.xpath("did/physloc").text,
-                language_code:
-                  node.xpath("did/langmaterial/language")[0]&.attr("langcode"),
-                summary:
-                  node.xpath('scopecontent[@encodinganalog="summary"]/p').text
-              }
-            }
-          end
-        archive_files =
-          ArchiveFile.upsert_all(
-            data.map { |d| d[:archive_file] },
-            unique_by: :source_id,
-            returning: :id
-          )
-        data
-          .zip(archive_files)
-          .each do |d, r|
-            d[:origins].each do |origin|
-              origin.archive_files << ArchiveFile.find(r["id"])
-            end
-          end
+        # Collect origin info without DB hits
+        node_origins = node.xpath("did/origination").map do |origin|
+          { name: origin.text, label: origin.attr("label") }
+        end
+        origin_data << node_origins
 
-        archive_file_count += data.count
+        call_number = node
+          .xpath('did/unitid[@type="call number"]')
+          .text
+          .sub(/\ABArch /, "")
+
+        parents_cache = (@parent_nodes + [@archive_node]).map do |n|
+          { name: n.name, id: n.id }
+        end
+
+        {
+          archive_node_id: @archive_node.id,
+          title: node.xpath("did/unittitle").text,
+          parents: parents_cache,
+          call_number: call_number,
+          source_date_text: date.text,
+          source_date_start: date.start_date,
+          source_date_end: date.end_date,
+          source_id: node.attr("id"),
+          link: node.xpath("otherfindaid/p/extref")[0]&.attr("href"),
+          location: node.xpath("did/physloc").text,
+          language_code: node.xpath("did/langmaterial/language")[0]&.attr("langcode"),
+          summary: node.xpath('scopecontent[@encodinganalog="summary"]/p').text
+        }
       end
 
+      results = ArchiveFile.upsert_all(data, unique_by: :source_id, returning: [:id, :source_id])
+
+      # Build source_id -> id mapping from results
+      id_map = results.to_h { |r| [r["source_id"], r["id"]] }
+
+      # Batch collect originations
+      data.zip(origin_data).each do |file_data, origins|
+        file_id = id_map[file_data[:source_id]]
+        origins.each do |origin_attrs|
+          origin = get_or_create_origin(origin_attrs[:name], origin_attrs[:label])
+          originations_to_insert << { archive_file_id: file_id, origin_id: origin.id }
+        end
+      end
+
+      archive_file_count += data.count
+    end
+
+    # Batch insert originations
+    if originations_to_insert.any?
+      Origination.insert_all(originations_to_insert, unique_by: [:archive_file_id, :origin_id])
+    end
+
     archive_file_count
+  end
+
+  def get_or_create_origin(name, label)
+    key = [name, label]
+    return @caches[:origins][key] if @caches[:origins][key]
+
+    origin = Origin.find_or_create_by(name: name, label: label)
+    @caches[:origins][key] = origin
+    origin
   end
 
   def descend
     @node
       .xpath("c[@level!='file']")
       .map do |node|
-        descendent = ArchiveObject.new(@parent_nodes + [@archive_node], node)
+        descendent = ArchiveObject.new(@parent_nodes + [@archive_node], node, @caches)
         files_count = descendent.process_files
         decendend_count = descendent.descend
 
@@ -99,12 +115,19 @@ end
 class BundesarchivImporter
   def initialize(dir)
     @dir = dir || "data"
+    @caches = {
+      origins: {},
+      nodes: {}
+    }
   end
 
   def run(show_progress: false)
     puts "Importing data from XML files in #{@dir}..." if show_progress
     start = Time.now
     archive_file_count = 0
+
+    # Disable fsync for faster bulk import (data loss risk on crash)
+    ActiveRecord::Base.connection.execute("PRAGMA synchronous=OFF")
 
     xml_files = Dir.glob("*.xml", base: @dir).sort
     total = xml_files.count
@@ -137,17 +160,23 @@ class BundesarchivImporter
         next
       end
 
-      archive_file_count +=
-        archive_description
-          .xpath("//c[@level='fonds']")
-          .map do |fond|
-            object = ArchiveObject.new([], fond)
-            object.descend + object.process_files
-          end
-          .sum
+      # Wrap each file in a transaction for faster commits
+      ActiveRecord::Base.transaction do
+        archive_file_count +=
+          archive_description
+            .xpath("//c[@level='fonds']")
+            .map do |fond|
+              object = ArchiveObject.new([], fond, @caches)
+              object.descend + object.process_files
+            end
+            .sum
+      end
 
       progress_bar.increment if show_progress
     end
+
+    # Restore safe sync mode
+    ActiveRecord::Base.connection.execute("PRAGMA synchronous=NORMAL")
 
     ArchiveFile.update_cached_all_count
 
