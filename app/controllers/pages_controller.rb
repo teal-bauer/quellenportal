@@ -2,6 +2,6 @@ class PagesController < ApplicationController
   def about
   end
 
-  def imprint
+  def legal_notice
   end
 end
