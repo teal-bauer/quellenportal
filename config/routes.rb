@@ -8,7 +8,7 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   root "search#index"
 
-  get "imprint" => "pages#imprint"
+  get "legal-notice" => "pages#legal_notice"
 
   resources :archive_files, only: [:show]
   resources :archive_nodes, only: [:show]

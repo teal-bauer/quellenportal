@@ -1,0 +1,280 @@
+openapi: 3.1.0
+info:
+  title: Bundessuche API
+  description: Search interface for German Federal Archive (Bundesarchiv) records.
+  version: 0.1.0
+  contact:
+    email: info@bundessuche.de
+
+servers:
+  - url: https://bundessuche.de
+
+security: []
+
+paths:
+  /:
+    get:
+      operationId: search
+      summary: Search archive files
+      description: >-
+        Full-text search across archive file records using SQLite FTS5 trigram
+        tokenization. Returns paginated HTML results.
+      parameters:
+        - name: q
+          in: query
+          description: Search query string
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number for pagination (500 results per page)
+          schema:
+            type: integer
+            minimum: 1
+        - name: node_id
+          in: query
+          description: Restrict search to files belonging to this archive node
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Search results page
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /archive_files/{id}.ris:
+    get:
+      operationId: getArchiveFileRis
+      summary: Export archive file as RIS
+      description: Returns the archive file in RIS (Research Information Systems) citation format.
+      parameters:
+        - $ref: "#/components/parameters/ArchiveFileId"
+      responses:
+        "200":
+          description: RIS citation data
+          content:
+            application/x-research-info-systems:
+              schema:
+                type: string
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /archive_files/{id}.bib:
+    get:
+      operationId: getArchiveFileBib
+      summary: Export archive file as BibTeX
+      description: Returns the archive file in BibTeX citation format.
+      parameters:
+        - $ref: "#/components/parameters/ArchiveFileId"
+      responses:
+        "200":
+          description: BibTeX citation data
+          content:
+            application/x-bibtex:
+              schema:
+                type: string
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /archive_nodes/{id}:
+    get:
+      operationId: getArchiveNode
+      summary: Show archive node
+      description: >-
+        Returns an archive node with its parent chain, child nodes, and
+        associated archive files.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Archive node ID
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Archive node with full tree context
+          content:
+            text/html:
+              schema:
+                type: string
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArchiveNodeDetail"
+            application/xml:
+              schema:
+                $ref: "#/components/schemas/ArchiveNodeDetail"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /legal-notice:
+    get:
+      operationId: getLegalNotice
+      summary: Legal notice / Impressum
+      responses:
+        "200":
+          description: Legal notice page
+          content:
+            text/html:
+              schema:
+                type: string
+
+components:
+  parameters:
+    ArchiveFileId:
+      name: id
+      in: path
+      required: true
+      description: Archive file ID
+      schema:
+        type: integer
+
+  responses:
+    NotFound:
+      description: Record not found
+
+  schemas:
+    ArchiveFile:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        summary:
+          type:
+            - string
+            - "null"
+        call_number:
+          type:
+            - string
+            - "null"
+        source_date_text:
+          type:
+            - string
+            - "null"
+        source_date_start:
+          type:
+            - string
+            - "null"
+          format: date
+        source_date_end:
+          type:
+            - string
+            - "null"
+          format: date
+        link:
+          type:
+            - string
+            - "null"
+          format: uri
+        location:
+          type:
+            - string
+            - "null"
+        language_code:
+          type:
+            - string
+            - "null"
+        source_id:
+          type: string
+        parents:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+        archive_node_id:
+          type: integer
+
+    ArchiveNode:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        level:
+          type:
+            - string
+            - "null"
+        source_id:
+          type: string
+        parent_node_id:
+          type:
+            - integer
+            - "null"
+
+    ArchiveNodeDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        level:
+          type:
+            - string
+            - "null"
+        source_id:
+          type: string
+        parents:
+          type: array
+          items:
+            $ref: "#/components/schemas/ArchiveNodeSummary"
+        child_nodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/ArchiveNodeSummary"
+        archive_files:
+          type: array
+          items:
+            $ref: "#/components/schemas/ArchiveFileSummary"
+
+    ArchiveNodeSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        level:
+          type:
+            - string
+            - "null"
+
+    ArchiveFileSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        call_number:
+          type:
+            - string
+            - "null"
+        source_date_text:
+          type:
+            - string
+            - "null"
+        summary:
+          type:
+            - string
+            - "null"
+
+    Origin:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        label:
+          type: string
+          enum:
+            - pre
+            - final
+            - organisational unit
