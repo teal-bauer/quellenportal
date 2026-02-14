@@ -1,7 +1,16 @@
 <form class="<%= @query ? "" : "search__form--centered" %>">
+  <% if @archive_node %>
+    <input type="hidden" name="node_id" value="<%= @archive_node.id %>" />
+  <% end %>
   <input type="text" name="q" value="<%= @query %>" placeholder="<%= t("search_placeholder", total: @total) %>" class="search__text-input" />
   <input type="submit" value="<%= t("search_button") %>" class="search__button" />
 </form>
+<% if @archive_node %>
+  <p class="search__node-filter">
+    Suche in: <%= link_to @archive_node.name, archive_node_path(@archive_node) %>
+    (<%= link_to "Filter entfernen", root_path(q: @query) %>)
+  </p>
+<% end %>
 <% if @query %>
   <% cache [controller.action_name, query_cache_key(@query), @trigrams.current_page] do %>
     <% if @pagination_cache[:total_count] > 0 %>

@@ -1,3 +1,9 @@
+<form class="archive-node-search" action="<%= root_path %>">
+  <input type="hidden" name="node_id" value="<%= @archive_node.id %>" />
+  <input type="text" name="q" placeholder="In diesem Bestand suchen..." class="search__text-input" />
+  <input type="submit" value="Suchen" class="search__button" />
+</form>
+
 <div class="archive-node-menu">
   <ul class="archive-node-mneu__list">
     <li class="archive-node archive-node--selected">
