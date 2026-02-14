@@ -4,7 +4,7 @@ image: teal-bauer/quellenportal
 
 servers:
   web:
-    - <%= ENV.fetch("DEPLOY_HOST") %>
+    - 100.91.49.44
 
 proxy:
   ssl: false
@@ -33,7 +33,7 @@ asset_path: /rails/public/assets
 
 builder:
   arch: amd64
-  remote: ssh://root@<%= ENV.fetch("DEPLOY_HOST") %>
+  remote: ssh://root@100.91.49.44
   local: false
 
 aliases:
