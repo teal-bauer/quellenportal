@@ -40,5 +40,8 @@ module Bundessuche
     config.i18n.default_locale = :de
 
     config.active_record.schema_format = :sql
+
+    config.active_job.queue_adapter = :solid_queue
+    config.solid_queue.connects_to = { database: { writing: :queue } }
   end
 end

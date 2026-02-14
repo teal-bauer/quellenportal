@@ -8,16 +8,31 @@ default: &default
     wal_autocheckpoint: 1000
 
 development:
-  <<: *default
-  database: db/sqlite/bundessuche_development.sqlite3
+  primary:
+    <<: *default
+    database: db/sqlite/bundessuche_development.sqlite3
+  queue:
+    <<: *default
+    database: db/sqlite/queue_development.sqlite3
+    migrations_paths: db/queue_migrate
 
 # Warning: The database defined as "test" will be erased and
 # re-generated from your development database when you run "rake".
 # Do not set this db to the same as development or production.
 test:
-  <<: *default
-  database: db/sqlite/bundessuche_test.sqlite3
+  primary:
+    <<: *default
+    database: db/sqlite/bundessuche_test.sqlite3
+  queue:
+    <<: *default
+    database: db/sqlite/queue_test.sqlite3
+    migrations_paths: db/queue_migrate
 
 production:
-  <<: *default
-  database: db/sqlite/bundessuche_production.sqlite3
+  primary:
+    <<: *default
+    database: db/sqlite/bundessuche_production.sqlite3
+  queue:
+    <<: *default
+    database: db/sqlite/queue_production.sqlite3
+    migrations_paths: db/queue_migrate

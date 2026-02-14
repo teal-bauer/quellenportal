@@ -29,8 +29,13 @@ namespace :data do
     puts "\nDone."
   end
 
-  desc "Import data from XML files"
+  desc "Import data from XML files (background via Solid Queue)"
   task :import, [:dir] => [:environment] do |task, args|
+    BundesarchivImporter.new(args[:dir]).enqueue_all
+  end
+
+  desc "Import data from XML files (synchronous)"
+  task :import_sync, [:dir] => [:environment] do |task, args|
     BundesarchivImporter.new(args[:dir]).run(show_progress: true)
   end
 

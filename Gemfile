@@ -16,6 +16,7 @@ gem "activerecord-enhancedsqlite3-adapter", "~> 0.8.0" # Performance improvement
 
 gem "bibtex-ruby", "~> 6.1" # Export bibtex citations
 gem "bootsnap", require: false # Reduces boot times through caching; required in config/boot.rb
+gem "solid_queue" # Background job processing
 gem "kaminari" # Pagination
 gem "progressbar", "~> 1.13" # Used in the import task
 gem "view_component" # Reusable view components

@@ -23,6 +23,7 @@ env:
     - RAILS_MASTER_KEY
   clear:
     WEB_CONCURRENCY: 2
+    SOLID_QUEUE_IN_PUMA: true
 
 volumes:
   - "quellenportal_sqlite:/rails/db/sqlite"
