@@ -3,7 +3,11 @@
 # If running the rails server then create or migrate existing database
 if [ "${1}" == "./bin/rails" ] && [ "${2}" == "server" ]; then
   ./bin/rails db:prepare
-  ./bin/rails db:setup:queue 2>/dev/null || ./bin/rails db:migrate:queue
+  ./bin/rails runner 'SolidQueue::Job.count' 2>/dev/null || ./bin/rails runner '
+    config = ActiveRecord::Base.configurations.configs_for(env_name: Rails.env, name: "queue")
+    ActiveRecord::Tasks::DatabaseTasks.create(config)
+    ActiveRecord::Tasks::DatabaseTasks.load_schema(config, :ruby, Rails.root.join("db/queue_schema.rb"))
+  '
 fi
 
 exec "${@}"
