@@ -48,19 +48,19 @@ class SearchController < ApplicationController
   def load_browse_data
     case @tab
     when "fonds"
-      @root_nodes = ArchiveNode.where(parent_node_id: nil).order(:name)
+      @root_nodes = ArchiveNode.where(parent_node_id: nil).order(:name).page(params[:page]).per(50)
     when "origins"
       if params[:origin_id].present?
         @origin = Origin.find(params[:origin_id])
-        @archive_files = @origin.archive_files.page(params[:page]).per(500)
+        @archive_files = @origin.archive_files.page(params[:page]).per(50)
       else
-        @origins = Origin.with_file_counts
+        @origins = Kaminari.paginate_array(Origin.with_file_counts).page(params[:page]).per(50)
       end
     when "dates"
       if params[:from].present? && params[:to].present?
         @date_from = Date.parse(params[:from])
         @date_to = Date.parse(params[:to])
-        @archive_files = ArchiveFile.in_date_range(@date_from, @date_to).page(params[:page]).per(500)
+        @archive_files = ArchiveFile.in_date_range(@date_from, @date_to).page(params[:page]).per(50)
       else
         @decade_counts = ArchiveFile.decade_counts
       end
