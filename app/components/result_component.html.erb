@@ -10,14 +10,19 @@
       <%= date %>
     </p>
   </div>
-  <div class="cite">
-    <span class="cite__label">Zitieren:</span>
-    <a class="cite__button cite__copy" data-path="<%= archive_file_path(@archive_file, format: :ris) %>">als RIS kopieren</a>
-    <%= link_to 'als RIS herunterladen', archive_file_path(@archive_file, format: :ris), class: "cite__button" %>
-    <a class="cite__button cite__copy" data-path="<%= archive_file_path(@archive_file, format: :bib) %>">als BibTeX kopieren</a>
-    <%= link_to 'als BibTeX herunterladen', archive_file_path(@archive_file, format: :bib), class: "cite__button" %>
-  </div>
   <p class="result__summary">
     <%= summary %>
   </p>
+  <div class="cite">
+    <div class="cite__group">
+      <span class="cite__format">RIS</span>
+      <a class="cite__action cite__copy" data-path="<%= archive_file_path(@archive_file, format: :ris) %>" title="RIS kopieren">&#x2398; Kopieren</a>
+      <%= link_to archive_file_path(@archive_file, format: :ris), class: "cite__action", title: "RIS herunterladen" do %>&#x2913; Download<% end %>
+    </div>
+    <div class="cite__group">
+      <span class="cite__format">BibTeX</span>
+      <a class="cite__action cite__copy" data-path="<%= archive_file_path(@archive_file, format: :bib) %>" title="BibTeX kopieren">&#x2398; Kopieren</a>
+      <%= link_to archive_file_path(@archive_file, format: :bib), class: "cite__action", title: "BibTeX herunterladen" do %>&#x2913; Download<% end %>
+    </div>
+  </div>
 </div>

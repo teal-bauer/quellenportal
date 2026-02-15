@@ -3,7 +3,6 @@
   <p><%= link_to t("browse.back_to_list"), browse_origins_path %></p>
   <% @archive_files.each do |archive_file| %>
     <%= render ResultComponent.new(archive_file: archive_file) %>
-    <hr />
   <% end %>
   <div class="pagination">
     <%= paginate @archive_files %>

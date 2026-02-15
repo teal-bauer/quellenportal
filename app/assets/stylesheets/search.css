@@ -22,6 +22,7 @@
 .search-bar__form {
   display: flex;
   align-items: center;
+  margin-left: auto;
 }
 
 .search__button {

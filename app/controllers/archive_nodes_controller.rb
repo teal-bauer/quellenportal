@@ -3,6 +3,7 @@ class ArchiveNodesController < ApplicationController
     @archive_node = ArchiveNode.find(params[:id])
     respond_to do |format|
       format.html do
+        @browse_counts = browse_counts
         @archive_node = drill_down(@archive_node)
         if @archive_node.id != params[:id].to_i
           redirect_to archive_node_path(@archive_node), status: :moved_permanently
@@ -18,6 +19,16 @@ class ArchiveNodesController < ApplicationController
   end
 
   private
+
+  def browse_counts
+    Rails.cache.fetch("browse/tab_counts", expires_in: 24.hours) do
+      {
+        fonds: ArchiveNode.where(parent_node_id: nil).count,
+        origins: Origin.count,
+        decades: ArchiveFile.where.not(source_date_start: nil).count
+      }
+    end
+  end
 
   def drill_down(node)
     while node.archive_files.none? && node.child_nodes.count == 1

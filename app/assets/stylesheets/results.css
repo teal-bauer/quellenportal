@@ -49,7 +49,9 @@
 }
 
 .result {
-    margin-bottom: 60px;
+    padding: 1rem 0;
+    border-bottom: 1px solid #d4c9b8;
+    margin-bottom: 0;
 }
 
 .result__title {
@@ -64,39 +66,43 @@
     display: flex;
     align-items: center;
     flex-wrap: wrap;
+    gap: 0.5rem;
 }
 
-.cite__label {
-    font-weight: bold;
-    margin-right: 5px;
+.cite__group {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid #c4b8a6;
+}
+
+.cite__format {
+    padding: 3px 8px;
+    font-size: 12px;
     color: #6b5d4f;
+    background-color: #ede6d8;
+    font-weight: bold;
+}
+
+.cite__action {
+    padding: 4px 8px;
+    font-size: 12px;
+    color: #6b5d4f;
+    text-decoration: none;
+    cursor: pointer;
+    border-left: 1px solid #c4b8a6;
+    transition: background-color 0.15s, color 0.15s;
+    white-space: nowrap;
+}
+
+.cite__action:hover {
+    background-color: #ede6d8;
+    color: #7a4419;
 }
 
 .result__summary {
     overflow-wrap: anywhere;
-}
-
-.cite__button {
-    background-color: #8b6c42;
-    border-radius: 4px;
-    border: none;
-    color: white;
-    cursor: pointer;
-    display: inline-block;
-    font-size: 12px;
-    margin: 4px 2px;
-    padding: 5px 10px;
-    text-align: center;
-    text-decoration: none;
-    transition: background-color 0.15s;
-}
-.cite__button:hover {
-    background-color: #725834;
-}
-
-.cite__button--disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
 }
 
 @media (max-width: 600px) {

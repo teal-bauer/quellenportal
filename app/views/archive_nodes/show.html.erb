@@ -1,8 +1,21 @@
-<form class="archive-node-search" action="<%= root_path %>">
-  <input type="hidden" name="node_id" value="<%= @archive_node.id %>" />
-  <input type="text" name="q" placeholder="In diesem Bestand suchen..." class="search__text-input" />
-  <input type="submit" value="Suchen" class="search__button" />
-</form>
+<div class="search-bar">
+  <nav class="browse-tabs">
+    <%= link_to browse_fonds_path, class: "browse-tabs__tab browse-tabs__tab--active" do %>
+      <%= t("browse.fonds") %> <span class="browse-tabs__count"><%= @browse_counts[:fonds] %></span>
+    <% end %>
+    <%= link_to browse_origins_path, class: "browse-tabs__tab" do %>
+      <%= t("browse.origins") %> <span class="browse-tabs__count"><%= @browse_counts[:origins] %></span>
+    <% end %>
+    <%= link_to browse_dates_path, class: "browse-tabs__tab" do %>
+      <%= t("browse.dates") %> <span class="browse-tabs__count"><%= @browse_counts[:decades] %></span>
+    <% end %>
+  </nav>
+  <form class="search-bar__form" action="<%= root_path %>">
+    <input type="hidden" name="node_id" value="<%= @archive_node.id %>" />
+    <input type="text" name="q" placeholder="In diesem Bestand suchen..." class="search__text-input" />
+    <input type="submit" value="Suchen" class="search__button" />
+  </form>
+</div>
 
 <nav class="archive-node-menu">
   <ul class="archive-node-level" style="--level: 0">
