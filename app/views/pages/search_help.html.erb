@@ -1,0 +1,35 @@
+<h2>Suchhinweise</h2>
+<p>
+  Quellenportal durchsucht die Erschließungsinformationen des Bundesarchivs per Volltextsuche.
+  Einzelne Suchbegriffe werden mit UND verknüpft — alle Begriffe müssen im Ergebnis vorkommen.
+</p>
+
+<h3>Phrasensuche</h3>
+<p>
+  Setzen Sie mehrere Wörter in Anführungszeichen, um nach einer exakten Wortfolge zu suchen.
+</p>
+<pre>"Abteilung für Inneres"</pre>
+
+<h3>Begriffe ausschließen</h3>
+<p>
+  Setzen Sie ein Minuszeichen vor einen Begriff, um Ergebnisse auszuschließen, die diesen enthalten.
+</p>
+<pre>Verwaltung -Personal</pre>
+
+<h3>Oder-Verknüpfung</h3>
+<p>
+  Verbinden Sie Begriffe mit <code>OR</code>, um Ergebnisse zu finden, die mindestens einen der Begriffe enthalten.
+</p>
+<pre>Ministerium OR Behörde</pre>
+
+<h3>Kombinierte Operatoren</h3>
+<p>
+  Operatoren lassen sich beliebig kombinieren.
+</p>
+<pre>"Auswärtiges Amt" OR Außenministerium -Protokoll</pre>
+
+<h3>Bestandsbezogene Suche</h3>
+<p>
+  Über die <%= link_to "Bestandsübersicht", browse_fonds_path %> können Sie einen Bestand auswählen.
+  Von dort aus durchsuchen Sie nur den gewählten Bestand und seine Unterbestände.
+</p>

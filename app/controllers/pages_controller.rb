@@ -4,4 +4,7 @@ class PagesController < ApplicationController
 
   def legal_notice
   end
+
+  def search_help
+  end
 end

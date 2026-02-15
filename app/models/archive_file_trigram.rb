@@ -25,13 +25,31 @@ class ArchiveFileTrigram < ApplicationRecord
   def self.sanitize_fts5(query)
     operators = %w[AND OR NOT]
     tokens = query.scan(/"[^"]*"|\S+/)
-    tokens.map do |token|
-      next token if operators.include?(token.upcase)
-      next token if token.start_with?('"') && token.end_with?('"')
-      suffix = token.end_with?("*") ? "*" : ""
-      word = token.chomp("*")
-      '"' + word.gsub('"', '""') + '"' + suffix
-    end.join(" ")
+
+    result = []
+    tokens.each do |token|
+      if operators.include?(token.upcase)
+        # Only keep operator if it's between two terms
+        result << token.upcase if result.last && !operators.include?(result.last)
+      elsif token.start_with?('"') && token.end_with?('"') && token.length > 1
+        result << token
+      else
+        prefix = ""
+        word = token
+        if word.start_with?("-")
+          prefix = "-"
+          word = word[1..]
+        end
+        suffix = word.end_with?("*") ? "*" : ""
+        word = word.chomp("*")
+        next if word.empty?
+        result << prefix + '"' + word.gsub('"', '""') + '"' + suffix
+      end
+    end
+
+    # Drop trailing operator
+    result.pop if result.last && operators.include?(result.last)
+    result.join(" ")
   end
 
   scope :in_node,

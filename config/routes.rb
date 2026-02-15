@@ -9,6 +9,7 @@ Rails.application.routes.draw do
   root "search#index"
 
   get "legal-notice" => "pages#legal_notice"
+  get "search-help" => "pages#search_help", as: :search_help
 
   get "browse/fonds" => "search#index", tab: "fonds", as: :browse_fonds
   get "browse/origins" => "search#index", tab: "origins", as: :browse_origins

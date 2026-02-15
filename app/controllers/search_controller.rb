@@ -8,24 +8,31 @@ class SearchController < ApplicationController
     @archive_node = ArchiveNode.find_by(id: @node_id) if @node_id.present?
 
     if @query.present?
-      @trigrams =
-        ArchiveFileTrigram
-          .search(@query)
-          .in_node(@node_id)
-          .page(params[:page])
-          .per(500)
-          .includes(:archive_file)
+      begin
+        @trigrams =
+          ArchiveFileTrigram
+            .search(@query)
+            .in_node(@node_id)
+            .page(params[:page])
+            .per(500)
+            .includes(:archive_file)
 
-      cache_key = "controllers/search/pagination_cache_#{helpers.query_cache_key @query}_node_#{@node_id}"
-      @pagination_cache =
-        Rails
-          .cache
-          .fetch(cache_key) do
-            {
-              total_count: @trigrams.total_count,
-              total_pages: @trigrams.total_pages
-            }
-          end
+        cache_key = "controllers/search/pagination_cache_#{helpers.query_cache_key @query}_node_#{@node_id}"
+        @pagination_cache =
+          Rails
+            .cache
+            .fetch(cache_key) do
+              {
+                total_count: @trigrams.total_count,
+                total_pages: @trigrams.total_pages
+              }
+            end
+      rescue ActiveRecord::StatementInvalid => e
+        raise unless e.cause.is_a?(SQLite3::SQLException)
+        @search_error = true
+        @trigrams = ArchiveFileTrigram.none.page(1)
+        @pagination_cache = { total_count: 0, total_pages: 0 }
+      end
     else
       @tab = params[:tab]
       @browse_counts = browse_counts

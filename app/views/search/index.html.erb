@@ -27,6 +27,11 @@
   </p>
 <% end %>
 <% if @query %>
+  <% if @search_error %>
+    <hr />
+    <h3>Suchanfrage konnte nicht verarbeitet werden.</h3>
+    <p>Bitte prüfen Sie die Syntax Ihrer Anfrage. <%= link_to "Suchhinweise", search_help_path %></p>
+  <% end %>
   <% cache [controller.action_name, query_cache_key(@query), @trigrams.current_page] do %>
     <% if @pagination_cache[:total_count] > 0 %>
       <h3><%= @pagination_cache[:total_count] =%> Objekte gefunden.</h3>
@@ -67,7 +72,7 @@
       <li><strong>Stöbern</strong> — Bestände, Provenienz und Zeiträume durchblättern, ohne einen Suchbegriff zu kennen</li>
       <li><strong>Bestandsnavigation</strong> — die Tektonik des Archivs als navigierbare Baumstruktur</li>
       <li><strong>Bestandsbezogene Suche</strong> — Suche auf einzelne Bestände eingrenzen</li>
-      <li><strong>Suchoperatoren</strong> — AND, OR, NOT und Phrasensuche mit Anführungszeichen</li>
+      <li><strong>Suchoperatoren</strong> — AND, OR, NOT und Phrasensuche (<%= link_to "Suchhinweise", search_help_path %>)</li>
     </ul>
     <p>
       Weitere Optionen für die Suche in den Beständen des Bundesarchivs sind <a href="https://www.archivesportaleurope.net">Archives Portal Europe</a>,
