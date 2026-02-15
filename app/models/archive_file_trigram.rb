@@ -34,16 +34,20 @@ class ArchiveFileTrigram < ApplicationRecord
       elsif token.start_with?('"') && token.end_with?('"') && token.length > 1
         result << token
       else
-        prefix = ""
+        negate = false
         word = token
         if word.start_with?("-")
-          prefix = "-"
+          negate = true
           word = word[1..]
         end
         suffix = word.end_with?("*") ? "*" : ""
         word = word.chomp("*")
         next if word.empty?
-        result << prefix + '"' + word.gsub('"', '""') + '"' + suffix
+        quoted = '"' + word.gsub('"', '""') + '"' + suffix
+        if negate && result.last && !operators.include?(result.last)
+          result << "NOT"
+        end
+        result << quoted
       end
     end
 
