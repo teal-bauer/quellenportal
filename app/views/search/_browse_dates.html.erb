@@ -1,0 +1,23 @@
+<% if @date_from %>
+  <h3><%= @date_from.year %>er</h3>
+  <p><%= link_to t("browse.back_to_list"), browse_dates_path %></p>
+  <% @archive_files.each do |archive_file| %>
+    <%= render ResultComponent.new(archive_file: archive_file) %>
+    <hr />
+  <% end %>
+  <div class="pagination">
+    <%= paginate @archive_files %>
+  </div>
+<% else %>
+  <% max_count = @decade_counts.map { |d| d["file_count"] }.max %>
+  <div class="browse-decades">
+    <% @decade_counts.each do |decade| %>
+      <% pct = (decade["file_count"].to_f / max_count * 100).round(1) %>
+      <%= link_to browse_dates_path(from: "#{decade["decade"]}-01-01", to: "#{decade["decade"].to_i + 10}-01-01"), class: "browse-decades__row" do %>
+        <span class="browse-decades__label"><%= decade["decade"] %>er</span>
+        <span class="browse-decades__bar" style="width: <%= pct %>%"></span>
+        <span class="browse-decades__count"><%= number_with_delimiter(decade["file_count"]) %></span>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>

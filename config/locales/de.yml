@@ -1,3 +1,9 @@
 de:
   search_button: "Suchen"
   search_placeholder: "%{total} Objekte durchsuchen"
+  browse:
+    label: "Stöbern:"
+    fonds: "Bestände"
+    origins: "Provenienz"
+    dates: "Zeitraum"
+    back_to_list: "Zurück zur Übersicht"

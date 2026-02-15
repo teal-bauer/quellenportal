@@ -1,0 +1,22 @@
+<% if @origin %>
+  <h3><%= @origin.name %></h3>
+  <p><%= link_to t("browse.back_to_list"), browse_origins_path %></p>
+  <% @archive_files.each do |archive_file| %>
+    <%= render ResultComponent.new(archive_file: archive_file) %>
+    <hr />
+  <% end %>
+  <div class="pagination">
+    <%= paginate @archive_files %>
+  </div>
+<% else %>
+  <ul class="browse-origins">
+    <% @origins.each do |origin| %>
+      <li class="browse-origins__item">
+        <%= link_to browse_origins_path(origin_id: origin.id) do %>
+          <span class="browse-origins__name"><%= origin.name %></span>
+          <span class="browse-origins__count"><%= number_with_delimiter(origin.file_count) %></span>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+<% end %>

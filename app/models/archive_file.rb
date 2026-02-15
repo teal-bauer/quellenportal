@@ -22,6 +22,7 @@
 #
 #  index_archive_files_on_archive_node_id    (archive_node_id)
 #  index_archive_files_on_call_number        (call_number)
+#  index_archive_files_on_source_date_start  (source_date_start)
 #  index_archive_files_on_source_id          (source_id) UNIQUE
 #  index_archive_files_on_summary            (summary)
 #  index_archive_files_on_title              (title)
@@ -39,6 +40,10 @@ class ArchiveFile < ApplicationRecord
   after_update :update_trigram
   after_destroy :delete_trigram
 
+  scope :in_date_range, ->(from, to) {
+    where("source_date_start >= ? AND source_date_start < ?", from, to)
+  }
+
   def self.update_cached_all_count
     count = self.all.count
     CachedCount.find_or_create_by(model: self.name, scope: :all).update(
@@ -48,6 +53,19 @@ class ArchiveFile < ApplicationRecord
 
   def self.cached_all_count
     CachedCount.find_by(model: self.name, scope: :all)&.count
+  end
+
+  def self.decade_counts
+    Rails.cache.fetch("archive_files/decade_counts", expires_in: 24.hours) do
+      connection.select_all(<<~SQL).to_a
+        SELECT (CAST(strftime('%Y', source_date_start) AS INTEGER) / 10) * 10 AS decade,
+               COUNT(*) AS file_count
+        FROM archive_files
+        WHERE source_date_start IS NOT NULL
+        GROUP BY decade
+        ORDER BY decade
+      SQL
+    end
   end
 
   def self.reindex(show_progress=false)

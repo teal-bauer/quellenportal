@@ -1,0 +1,134 @@
+/* Tab navigation */
+
+.browse-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.browse-tabs__tab {
+  padding: 0.4rem 0.75rem;
+  text-decoration: none;
+  color: #6b5d4f;
+  background-color: #ede6d8;
+  border-radius: 4px;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.browse-tabs__tab:hover {
+  color: #7a4419;
+  background-color: #e2d8c8;
+}
+
+.browse-tabs__tab--active {
+  color: white;
+  background-color: #7a4419;
+}
+
+.browse-tabs__tab--active:hover {
+  color: white;
+  background-color: #5e3412;
+}
+
+.browse-tabs__count {
+  font-size: 0.8em;
+  opacity: 0.7;
+}
+
+/* Fonds list */
+
+.browse-fonds {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+}
+
+.browse-fonds__item {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #ede6d8;
+}
+
+.browse-fonds__item a {
+  text-decoration: none;
+}
+
+.browse-fonds__item a:hover {
+  text-decoration: underline;
+}
+
+/* Origins list */
+
+.browse-origins {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+}
+
+.browse-origins__item {
+  border-bottom: 1px solid #ede6d8;
+}
+
+.browse-origins__item a {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0.5rem 0;
+  text-decoration: none;
+  gap: 1rem;
+}
+
+.browse-origins__item a:hover .browse-origins__name {
+  text-decoration: underline;
+}
+
+.browse-origins__count {
+  color: #998a78;
+  white-space: nowrap;
+  font-size: 0.9em;
+}
+
+/* Decade bar chart */
+
+.browse-decades {
+  margin: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.browse-decades__row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  padding: 0.25rem 0;
+  color: #2c2418;
+}
+
+.browse-decades__row:hover {
+  color: #7a4419;
+}
+
+.browse-decades__row:hover .browse-decades__bar {
+  background-color: #7a4419;
+}
+
+.browse-decades__label {
+  width: 4.5rem;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.browse-decades__bar {
+  height: 1.25rem;
+  background-color: #998a78;
+  border-radius: 2px;
+  transition: background-color 0.15s;
+  min-width: 2px;
+}
+
+.browse-decades__count {
+  color: #998a78;
+  font-size: 0.9em;
+  white-space: nowrap;
+}

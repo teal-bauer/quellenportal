@@ -10,6 +10,10 @@ Rails.application.routes.draw do
 
   get "legal-notice" => "pages#legal_notice"
 
+  get "browse/fonds" => "search#index", tab: "fonds", as: :browse_fonds
+  get "browse/origins" => "search#index", tab: "origins", as: :browse_origins
+  get "browse/dates" => "search#index", tab: "dates", as: :browse_dates
+
   resources :archive_files, only: [:show]
   resources :archive_nodes, only: [:show]
 end

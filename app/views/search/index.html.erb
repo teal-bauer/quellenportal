@@ -1,10 +1,25 @@
-<form class="<%= @query ? "" : "search__form--centered" %>">
-  <% if @archive_node %>
-    <input type="hidden" name="node_id" value="<%= @archive_node.id %>" />
+<div class="search-bar">
+  <% unless @query %>
+    <nav class="browse-tabs">
+      <%= link_to browse_fonds_path, class: "browse-tabs__tab #{"browse-tabs__tab--active" if @tab == "fonds"}" do %>
+        <%= t("browse.fonds") %> <span class="browse-tabs__count"><%= @browse_counts[:fonds] %></span>
+      <% end %>
+      <%= link_to browse_origins_path, class: "browse-tabs__tab #{"browse-tabs__tab--active" if @tab == "origins"}" do %>
+        <%= t("browse.origins") %> <span class="browse-tabs__count"><%= @browse_counts[:origins] %></span>
+      <% end %>
+      <%= link_to browse_dates_path, class: "browse-tabs__tab #{"browse-tabs__tab--active" if @tab == "dates"}" do %>
+        <%= t("browse.dates") %> <span class="browse-tabs__count"><%= @browse_counts[:decades] %></span>
+      <% end %>
+    </nav>
   <% end %>
-  <input type="text" name="q" value="<%= @query %>" placeholder="<%= t("search_placeholder", total: @total) %>" class="search__text-input" />
-  <input type="submit" value="<%= t("search_button") %>" class="search__button" />
-</form>
+  <form class="search-bar__form">
+    <% if @archive_node %>
+      <input type="hidden" name="node_id" value="<%= @archive_node.id %>" />
+    <% end %>
+    <input type="text" name="q" value="<%= @query %>" placeholder="<%= t("search_placeholder", total: @total) %>" class="search__text-input" />
+    <input type="submit" value="<%= t("search_button") %>" class="search__button" />
+  </form>
+</div>
 <% if @archive_node %>
   <p class="search__node-filter">
     Suche in: <%= link_to @archive_node.name, archive_node_path(@archive_node) %>
@@ -32,16 +47,25 @@
     <% end %>
   <% end %>
 <% else %>
-  <hr class="title-spacer">
-  <h2>Was ist Quellenportal?</h2>
-  <p>
-    Quellenportal bietet eine einfache und schnelle Möglichkeit, die Bestände des Bundesarchivs zu durchsuchen.
-    Dieses Angebot richtet sich vor allem an Personen, die für ihre Recherechen exakte textuelle Übereinstimmungen suchen und große Mengen an Ergebnissen schnell sichten möchten.
-    Die hierfür benötigten Erschließungsinformationen stammen aus dem <a href="https://www.bundesarchiv.de/DE/Content/Artikel/Ueber-uns/Aus-unserer-Arbeit/open-data.html">Open-Data-Angebot</a> des Bundesarchivs.
-  </p>
-  <p>
-    Weitere Optionen für die Suche in den Beständen des Bundesarchivs sind <a href="https://www.archivesportaleurope.net">Archives Portal Europe</a>,
-    <a href="https://www.archivportal-d.de">Archivportal-D</a> und <a href="https://invenio.bundesarchiv.de">Invenio</a>.
-    Invenio ist ein Angebot des Bundesarchivs und ist bei Treffern im Quellenportal verlinkt. Dort kann das Archivgut eingesehen und bestellt werden.
-  </p>
+  <% case @tab %>
+  <% when "fonds" %>
+    <%= render "browse_fonds" %>
+  <% when "origins" %>
+    <%= render "browse_origins" %>
+  <% when "dates" %>
+    <%= render "browse_dates" %>
+  <% else %>
+    <hr class="title-spacer">
+    <h2>Was ist Quellenportal?</h2>
+    <p>
+      Quellenportal bietet eine einfache und schnelle Möglichkeit, die Bestände des Bundesarchivs zu durchsuchen.
+      Dieses Angebot richtet sich vor allem an Personen, die für ihre Recherechen exakte textuelle Übereinstimmungen suchen und große Mengen an Ergebnissen schnell sichten möchten.
+      Die hierfür benötigten Erschließungsinformationen stammen aus dem <a href="https://www.bundesarchiv.de/DE/Content/Artikel/Ueber-uns/Aus-unserer-Arbeit/open-data.html">Open-Data-Angebot</a> des Bundesarchivs.
+    </p>
+    <p>
+      Weitere Optionen für die Suche in den Beständen des Bundesarchivs sind <a href="https://www.archivesportaleurope.net">Archives Portal Europe</a>,
+      <a href="https://www.archivportal-d.de">Archivportal-D</a> und <a href="https://invenio.bundesarchiv.de">Invenio</a>.
+      Invenio ist ein Angebot des Bundesarchivs und ist bei Treffern im Quellenportal verlinkt. Dort kann das Archivgut eingesehen und bestellt werden.
+    </p>
+  <% end %>
 <% end %>

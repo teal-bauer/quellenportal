@@ -2,7 +2,11 @@ class ArchiveNodesController < ApplicationController
   def show
     @archive_node = ArchiveNode.find(params[:id])
     respond_to do |format|
-      format.html
+      format.html do
+        parent_chain = @archive_node.parents
+        child_ids = ArchiveNode.where(parent_node_id: parent_chain.map(&:id)).pluck(:id)
+        @file_counts = ArchiveFile.where(archive_node_id: child_ids + [parent_chain.first.id]).group(:archive_node_id).count
+      end
       format.json { render json: archive_node_payload }
       format.xml { render xml: archive_node_payload.to_xml(root: "archive_node") }
     end

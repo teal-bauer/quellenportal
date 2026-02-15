@@ -1,0 +1,7 @@
+<ul class="browse-fonds">
+  <% @root_nodes.each do |node| %>
+    <li class="browse-fonds__item">
+      <%= link_to node.name, archive_node_path(node) %>
+    </li>
+  <% end %>
+</ul>

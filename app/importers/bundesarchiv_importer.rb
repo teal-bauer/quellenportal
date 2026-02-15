@@ -185,6 +185,9 @@ class BundesarchivImporter
     end
 
     ArchiveFile.update_cached_all_count
+    Rails.cache.delete("origins/with_file_counts")
+    Rails.cache.delete("archive_files/decade_counts")
+    Rails.cache.delete("browse/tab_counts")
 
     if show_progress
       puts "Finished. Imported #{archive_file_count} archive files in #{Time.now - start} seconds."

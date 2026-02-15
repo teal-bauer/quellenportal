@@ -18,4 +18,15 @@ class Origin < ApplicationRecord
 
   has_many :originations
   has_many :archive_files, through: :originations
+
+  def self.with_file_counts
+    Rails.cache.fetch("origins/with_file_counts", expires_in: 24.hours) do
+      Origin
+        .joins(:originations)
+        .group("origins.id", "origins.name", "origins.label")
+        .order("COUNT(originations.archive_file_id) DESC")
+        .select("origins.*, COUNT(originations.archive_file_id) AS file_count")
+        .to_a
+    end
+  end
 end

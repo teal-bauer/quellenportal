@@ -12,8 +12,16 @@
   color: #7a4419;
 }
 
-.search__form--centered {
-  text-align: center;
+.search-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.search-bar__form {
+  display: flex;
+  align-items: center;
 }
 
 .search__button {
@@ -56,10 +64,12 @@
 }
 
 @media (max-width: 600px) {
-  .search__form--centered {
-    display: flex;
-    flex-direction: column;
+  .search-bar {
+    flex-direction: column-reverse;
     align-items: stretch;
+  }
+  .search-bar__form {
+    flex-direction: column;
   }
   .search__text-input {
     min-width: 0;

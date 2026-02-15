@@ -4,22 +4,29 @@
   <input type="submit" value="Suchen" class="search__button" />
 </form>
 
-<div class="archive-node-menu">
-  <ul class="archive-node-mneu__list">
-    <li class="archive-node archive-node--selected">
-      <%= link_to @archive_node.parents.first.name, archive_node_path( @archive_node.parents.first), class: 'archive-node__link' %>
+<nav class="archive-node-menu">
+  <ul class="archive-node-level" style="--level: 0">
+    <li class="archive-node archive-node--tree archive-node--selected">
+      <%= link_to @archive_node.parents.first.name, archive_node_path(@archive_node.parents.first), class: 'archive-node__link' %>
     </li>
   </ul>
   <% @archive_node.parents.each.with_index do |node, index| %>
-    <ul class="archive-node-mneu__list">
-      <%  node.child_nodes.each do |child| %>
-        <li class="archive-node <%= "archive-node--selected" if child.id == @archive_node.parents[index+1]&.id %>">
-          <%= link_to child.name, archive_node_path(child), class: 'archive-node__link' %>
+    <ul class="archive-node-level" style="--level: <%= index + 1 %>">
+      <% node.child_nodes.includes(:child_nodes).each do |child| %>
+        <% is_selected = child.id == @archive_node.parents[index + 1]&.id %>
+        <% is_leaf = child.child_nodes.empty? %>
+        <li class="archive-node <%= "archive-node--selected" if is_selected %> <%= is_leaf ? "archive-node--leaf" : "archive-node--tree" %>">
+          <%= link_to archive_node_path(child), class: 'archive-node__link' do %>
+            <%= child.name %>
+            <% if (count = @file_counts[child.id]) && count > 0 %>
+              <span class="archive-node__count"><%= count %></span>
+            <% end %>
+          <% end %>
         </li>
       <% end %>
     </ul>
   <% end %>
-</div>
+</nav>
 
 <% @archive_node.archive_files.each do |archive_file| %>
   <%= render ResultComponent.new(archive_file: archive_file) %>
