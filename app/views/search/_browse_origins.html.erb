@@ -8,6 +8,12 @@
     <%= paginate @archive_files %>
   </div>
 <% else %>
+  <nav class="letter-index">
+    <%= link_to t("browse.all"), browse_origins_path, class: "letter-index__item #{"letter-index__item--active" unless @letter}" %>
+    <% @origin_letters.each do |letter| %>
+      <%= link_to letter, browse_origins_path(letter: letter), class: "letter-index__item #{"letter-index__item--active" if @letter == letter}" %>
+    <% end %>
+  </nav>
   <ul class="browse-origins">
     <% @origins.each do |origin| %>
       <li class="browse-origins__item">
@@ -19,6 +25,6 @@
     <% end %>
   </ul>
   <div class="pagination">
-    <%= paginate @origins %>
+    <%= paginate @origins, params: { letter: @letter } %>
   </div>
 <% end %>

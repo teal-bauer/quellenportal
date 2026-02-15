@@ -1,3 +1,9 @@
+<nav class="letter-index">
+  <%= link_to t("browse.all"), browse_fonds_path, class: "letter-index__item #{"letter-index__item--active" unless @letter}" %>
+  <% @fonds_letters.each do |letter| %>
+    <%= link_to letter, browse_fonds_path(letter: letter), class: "letter-index__item #{"letter-index__item--active" if @letter == letter}" %>
+  <% end %>
+</nav>
 <ul class="browse-fonds">
   <% @root_nodes.each do |node| %>
     <li class="browse-fonds__item">
@@ -6,5 +12,5 @@
   <% end %>
 </ul>
 <div class="pagination">
-  <%= paginate @root_nodes %>
+  <%= paginate @root_nodes, params: { letter: @letter } %>
 </div>

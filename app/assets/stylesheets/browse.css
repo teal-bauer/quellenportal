@@ -35,6 +35,40 @@
   opacity: 0.7;
 }
 
+/* Letter index */
+
+.letter-index {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 1rem 0;
+}
+
+.letter-index__item {
+  padding: 0.25rem 0.5rem;
+  text-decoration: none;
+  color: #6b5d4f;
+  background-color: #ede6d8;
+  border-radius: 3px;
+  font-size: 0.9em;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.letter-index__item:hover {
+  color: #7a4419;
+  background-color: #e2d8c8;
+}
+
+.letter-index__item--active {
+  color: white;
+  background-color: #7a4419;
+}
+
+.letter-index__item--active:hover {
+  color: white;
+  background-color: #5e3412;
+}
+
 /* Fonds list */
 
 .browse-fonds {

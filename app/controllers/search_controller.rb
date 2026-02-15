@@ -48,13 +48,21 @@ class SearchController < ApplicationController
   def load_browse_data
     case @tab
     when "fonds"
-      @root_nodes = ArchiveNode.where(parent_node_id: nil).order(:name).page(params[:page]).per(50)
+      @letter = params[:letter]
+      scope = ArchiveNode.where(parent_node_id: nil)
+      @fonds_letters = scope.pluck(Arel.sql("DISTINCT UPPER(SUBSTR(name, 1, 1))")).sort
+      scope = scope.where("UPPER(SUBSTR(name, 1, 1)) = ?", @letter) if @letter.present?
+      @root_nodes = scope.order(:name).page(params[:page]).per(50)
     when "origins"
       if params[:origin_id].present?
         @origin = Origin.find(params[:origin_id])
         @archive_files = @origin.archive_files.page(params[:page]).per(50)
       else
-        @origins = Kaminari.paginate_array(Origin.with_file_counts).page(params[:page]).per(50)
+        @letter = params[:letter]
+        all_origins = Origin.with_file_counts
+        @origin_letters = all_origins.map { |o| o.name[0]&.upcase }.compact.uniq.sort
+        filtered = @letter.present? ? all_origins.select { |o| o.name[0]&.upcase == @letter } : all_origins
+        @origins = Kaminari.paginate_array(filtered).page(params[:page]).per(50)
       end
     when "dates"
       if params[:from].present? && params[:to].present?
