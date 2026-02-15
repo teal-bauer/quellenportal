@@ -3,6 +3,11 @@ class ArchiveNodesController < ApplicationController
     @archive_node = ArchiveNode.find(params[:id])
     respond_to do |format|
       format.html do
+        @archive_node = drill_down(@archive_node)
+        if @archive_node.id != params[:id].to_i
+          redirect_to archive_node_path(@archive_node), status: :moved_permanently
+          return
+        end
         parent_chain = @archive_node.parents
         child_ids = ArchiveNode.where(parent_node_id: parent_chain.map(&:id)).pluck(:id)
         @file_counts = ArchiveFile.where(archive_node_id: child_ids + [parent_chain.first.id]).group(:archive_node_id).count
@@ -13,6 +18,13 @@ class ArchiveNodesController < ApplicationController
   end
 
   private
+
+  def drill_down(node)
+    while node.archive_files.none? && node.child_nodes.count == 1
+      node = node.child_nodes.first
+    end
+    node
+  end
 
   def archive_node_payload
     {
