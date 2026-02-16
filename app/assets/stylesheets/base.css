@@ -30,6 +30,10 @@ hr {
   width: 100%;
 }
 
+.container__inner--wide {
+  max-width: 1100pt;
+}
+
 .title-spacer {
   margin-top: 80pt;
   margin-bottom: 20pt;

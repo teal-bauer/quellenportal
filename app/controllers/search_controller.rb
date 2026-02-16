@@ -6,6 +6,10 @@ class SearchController < ApplicationController
     @query = params[:q]
     @node_id = params[:node_id]
     @archive_node = ArchiveNode.find_by(id: @node_id) if @node_id.present?
+    @date_from =
+      params[:from].present? ? Date.parse(params[:from]) : nil
+    @date_to =
+      params[:to].present? ? Date.parse(params[:to]) : nil
 
     if @query.present?
       begin
@@ -13,11 +17,12 @@ class SearchController < ApplicationController
           ArchiveFileTrigram
             .search(@query)
             .in_node(@node_id)
+            .in_date_range(@date_from, @date_to)
             .page(params[:page])
             .per(500)
             .includes(:archive_file)
 
-        cache_key = "controllers/search/pagination_cache_#{helpers.query_cache_key @query}_node_#{@node_id}"
+        cache_key = "controllers/search/pagination_cache_#{helpers.query_cache_key @query}_node_#{@node_id}_#{@date_from}_#{@date_to}"
         @pagination_cache =
           Rails
             .cache
@@ -27,6 +32,27 @@ class SearchController < ApplicationController
                 total_pages: @trigrams.total_pages
               }
             end
+
+        facet_cache_key = "controllers/search/facets_#{helpers.query_cache_key @query}_node_#{@node_id}_#{@date_from}_#{@date_to}"
+        @facets =
+          Rails.cache.fetch(facet_cache_key, expires_in: 24.hours) do
+            {
+              fonds:
+                ArchiveFileTrigram.fonds_facets(
+                  @query,
+                  node_id: @node_id,
+                  date_from: @date_from,
+                  date_to: @date_to
+                ),
+              decades:
+                ArchiveFileTrigram.decade_facets(
+                  @query,
+                  node_id: @node_id,
+                  date_from: @date_from,
+                  date_to: @date_to
+                )
+            }
+          end
       rescue ActiveRecord::StatementInvalid => e
         raise unless e.cause.is_a?(SQLite3::SQLException)
         @search_error = true
@@ -37,6 +63,16 @@ class SearchController < ApplicationController
       @tab = params[:tab]
       @browse_counts = browse_counts
       load_browse_data
+
+      if @tab.present?
+        @facets =
+          Rails.cache.fetch("browse/global_facets", expires_in: 24.hours) do
+            {
+              fonds: ArchiveFileTrigram.fonds_facets(nil),
+              decades: ArchiveFileTrigram.decade_facets(nil)
+            }
+          end
+      end
     end
   end
 

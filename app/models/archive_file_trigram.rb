@@ -102,10 +102,113 @@ class ArchiveFileTrigram < ApplicationRecord
           where(archive_node_id: node_ids)
         end
 
+  scope :in_date_range,
+        ->(from, to) do
+          return all if from.blank? || to.blank?
+
+          where(
+            "archive_file_id IN (SELECT id FROM archive_files " \
+              "WHERE source_date_start >= ? AND source_date_start < ?)",
+            from,
+            to
+          )
+        end
+
   scope :lookup_by_call_number,
         ->(call_number) do
           where(archive_file_trigrams: "call_number: \"#{query}\"").order(
             :call_number
           )
         end
+
+  def self.fonds_facets(query, node_id: nil, date_from: nil, date_to: nil)
+    conditions = []
+    binds = []
+
+    if query.present?
+      conditions << "archive_file_trigrams MATCH ?"
+      binds << sanitize_fts5(query)
+    end
+
+    if node_id.present?
+      node = ArchiveNode.find_by(id: node_id)
+      if node
+        ids = [node.id] + node.descendant_ids
+        conditions << "archive_file_trigrams.archive_node_id IN (#{ids.map { |i| connection.quote(i) }.join(",")})"
+      end
+    end
+
+    if date_from.present? && date_to.present?
+      conditions << "af.source_date_start >= ? AND af.source_date_start < ?"
+      binds.push(date_from, date_to)
+    end
+
+    where_sql = conditions.any? ? "WHERE #{conditions.join(" AND ")}" : ""
+
+    from_clause =
+      if query.present?
+        "archive_file_trigrams JOIN archive_files af ON af.id = archive_file_trigrams.archive_file_id"
+      else
+        "archive_files af"
+      end
+
+    statement = <<~SQL
+      SELECT json_extract(af.parents, '$[0].name') AS fonds_name,
+             CAST(json_extract(af.parents, '$[0].id') AS INTEGER) AS fonds_id,
+             COUNT(*) AS file_count
+      FROM #{from_clause}
+      #{where_sql}
+      GROUP BY fonds_name, fonds_id
+      ORDER BY file_count DESC
+      LIMIT 10
+    SQL
+
+    sql = binds.any? ? sanitize_sql_array([statement, *binds]) : statement
+    connection.select_all(sql).to_a
+  end
+
+  def self.decade_facets(query, node_id: nil, date_from: nil, date_to: nil)
+    conditions = []
+    binds = []
+
+    if query.present?
+      conditions << "archive_file_trigrams MATCH ?"
+      binds << sanitize_fts5(query)
+    end
+
+    if node_id.present?
+      node = ArchiveNode.find_by(id: node_id)
+      if node
+        ids = [node.id] + node.descendant_ids
+        conditions << "archive_file_trigrams.archive_node_id IN (#{ids.map { |i| connection.quote(i) }.join(",")})"
+      end
+    end
+
+    if date_from.present? && date_to.present?
+      conditions << "af.source_date_start >= ? AND af.source_date_start < ?"
+      binds.push(date_from, date_to)
+    end
+
+    conditions << "af.source_date_start IS NOT NULL"
+    where_sql = "WHERE #{conditions.join(" AND ")}"
+
+    from_clause =
+      if query.present?
+        "archive_file_trigrams JOIN archive_files af ON af.id = archive_file_trigrams.archive_file_id"
+      else
+        "archive_files af"
+      end
+
+    statement = <<~SQL
+      SELECT (CAST(strftime('%Y', af.source_date_start) AS INTEGER) / 10) * 10 AS decade,
+             COUNT(*) AS file_count
+      FROM #{from_clause}
+      #{where_sql}
+      GROUP BY decade
+      ORDER BY decade
+    SQL
+
+    sql = binds.any? ? sanitize_sql_array([statement, *binds]) : statement
+    connection.select_all(sql).to_a
+  end
 end

@@ -1,0 +1,69 @@
+<aside class="search-facets">
+  <% if @archive_node || @date_from %>
+    <div class="search-facets__chips">
+      <span class="search-facets__chips-label"><%= t("search.active_filters") %></span>
+      <% if @archive_node %>
+        <span class="search-facets__chip">
+          <%= @archive_node.name %>
+          <%= link_to "\u00d7", facet_url(remove: [:node_id]), class: "search-facets__chip-remove" %>
+        </span>
+      <% end %>
+      <% if @date_from %>
+        <span class="search-facets__chip">
+          <%= @date_from.year %>er
+          <%= link_to "\u00d7", facet_url(remove: [:from, :to]), class: "search-facets__chip-remove" %>
+        </span>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if @facets && @facets[:fonds].any? %>
+    <details open class="search-facets__section">
+      <summary><%= t("browse.fonds") %></summary>
+      <ul class="search-facets__list">
+        <% @facets[:fonds].each do |fonds| %>
+          <li class="search-facets__list-item">
+            <% if @query.present? %>
+              <%= link_to facet_url(add: { node_id: fonds["fonds_id"] }) do %>
+                <span class="search-facets__name"><%= fonds["fonds_name"] %></span>
+                <span class="search-facets__count"><%= number_with_delimiter(fonds["file_count"]) %></span>
+              <% end %>
+            <% else %>
+              <%= link_to archive_node_path(fonds["fonds_id"]) do %>
+                <span class="search-facets__name"><%= fonds["fonds_name"] %></span>
+                <span class="search-facets__count"><%= number_with_delimiter(fonds["file_count"]) %></span>
+              <% end %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </details>
+  <% end %>
+
+  <% if @facets && @facets[:decades].any? %>
+    <details open class="search-facets__section">
+      <summary><%= t("browse.dates") %></summary>
+      <% max_count = @facets[:decades].map { |d| d["file_count"] }.max %>
+      <div class="search-facets__decades">
+        <% @facets[:decades].each do |decade| %>
+          <% pct = (decade["file_count"].to_f / max_count * 100).round(1) %>
+          <% decade_start = "#{decade["decade"]}-01-01" %>
+          <% decade_end = "#{decade["decade"].to_i + 10}-01-01" %>
+          <% if @query.present? %>
+            <%= link_to facet_url(add: { from: decade_start, to: decade_end }), class: "search-facets__decade-row" do %>
+              <span class="search-facets__decade-label"><%= decade["decade"] %>er</span>
+              <span class="search-facets__decade-bar" style="width: <%= pct %>%"></span>
+              <span class="search-facets__decade-count"><%= number_with_delimiter(decade["file_count"]) %></span>
+            <% end %>
+          <% else %>
+            <%= link_to browse_dates_path(from: decade_start, to: decade_end), class: "search-facets__decade-row" do %>
+              <span class="search-facets__decade-label"><%= decade["decade"] %>er</span>
+              <span class="search-facets__decade-bar" style="width: <%= pct %>%"></span>
+              <span class="search-facets__decade-count"><%= number_with_delimiter(decade["file_count"]) %></span>
+            <% end %>
+          <% end %>
+        <% end %>
+      </div>
+    </details>
+  <% end %>
+</aside>

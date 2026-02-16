@@ -166,3 +166,174 @@
   font-size: 0.9em;
   white-space: nowrap;
 }
+
+/* Search layout (two-column with facets sidebar) */
+
+.search-layout {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  margin-top: 1rem;
+}
+
+.search-layout__content {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Facets sidebar */
+
+.search-facets {
+  width: 220px;
+  flex-shrink: 0;
+}
+
+.search-facets__chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.search-facets__chips-label {
+  font-size: 0.85em;
+  color: #998a78;
+}
+
+.search-facets__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.5rem;
+  background-color: #e2d8c8;
+  border-radius: 3px;
+  font-size: 0.85em;
+  color: #2c2418;
+}
+
+.search-facets__chip-remove {
+  color: #998a78;
+  text-decoration: none;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.search-facets__chip-remove:hover {
+  color: #7a4419;
+}
+
+.search-facets__section {
+  margin-bottom: 1rem;
+}
+
+.search-facets__section summary {
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 0.9em;
+  color: #6b5d4f;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid #ede6d8;
+  margin-bottom: 0.5rem;
+}
+
+.search-facets__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.search-facets__list-item a {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0.25rem 0;
+  text-decoration: none;
+  gap: 0.5rem;
+  font-size: 0.9em;
+}
+
+.search-facets__list-item a:hover .search-facets__name {
+  text-decoration: underline;
+}
+
+.search-facets__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-facets__count {
+  color: #998a78;
+  white-space: nowrap;
+  font-size: 0.9em;
+}
+
+/* Decade bar chart (facets sidebar variant) */
+
+.search-facets__decades {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.search-facets__decade-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  padding: 0.15rem 0;
+  color: #2c2418;
+  font-size: 0.85em;
+}
+
+.search-facets__decade-row:hover {
+  color: #7a4419;
+}
+
+.search-facets__decade-row:hover .search-facets__decade-bar {
+  background-color: #7a4419;
+}
+
+.search-facets__decade-label {
+  width: 3.5rem;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.search-facets__decade-bar {
+  height: 0.9rem;
+  background-color: #998a78;
+  border-radius: 2px;
+  transition: background-color 0.15s;
+  min-width: 2px;
+  flex: 1;
+  max-width: 100%;
+}
+
+.search-facets__decade-count {
+  color: #998a78;
+  font-size: 0.9em;
+  white-space: nowrap;
+}
+
+/* Responsive: sidebar collapses on mobile */
+
+@media (max-width: 768px) {
+  .search-layout {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .search-facets {
+    width: 100%;
+  }
+
+  .search-facets__section[open] {
+    /* keep open state but allow collapse */
+  }
+
+  .search-facets__section:not([open]) summary {
+    margin-bottom: 0;
+  }
+}

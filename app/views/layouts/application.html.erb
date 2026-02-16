@@ -19,7 +19,7 @@
   </head>
   <body>
     <div class="container__outer">
-      <main class="container__inner">
+      <main class="container__inner <%= yield :container_class %>">
         <h1 class="search__title">
           <%= link_to "Quellenportal", :root %>
         </h1>

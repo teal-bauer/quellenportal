@@ -16,6 +16,10 @@
     <% if @archive_node %>
       <input type="hidden" name="node_id" value="<%= @archive_node.id %>" />
     <% end %>
+    <% if @date_from %>
+      <input type="hidden" name="from" value="<%= @date_from %>" />
+      <input type="hidden" name="to" value="<%= @date_to %>" />
+    <% end %>
     <input type="text" name="q" value="<%= @query %>" placeholder="<%= t("search_placeholder", total: @total) %>" class="search__text-input" />
     <input type="submit" value="<%= t("search_button") %>" class="search__button" />
   </form>
@@ -23,7 +27,7 @@
 <% if @archive_node %>
   <p class="search__node-filter">
     Suche in: <%= link_to @archive_node.name, archive_node_path(@archive_node) %>
-    (<%= link_to "Filter entfernen", root_path(q: @query) %>)
+    (<%= link_to "Filter entfernen", root_path(q: @query, from: @date_from, to: @date_to) %>)
   </p>
 <% end %>
 <% if @query %>
@@ -32,31 +36,55 @@
     <h3>Suchanfrage konnte nicht verarbeitet werden.</h3>
     <p>Bitte prüfen Sie die Syntax Ihrer Anfrage. <%= link_to "Suchhinweise", search_help_path %></p>
   <% end %>
-  <% cache [controller.action_name, query_cache_key(@query), @trigrams.current_page] do %>
-    <% if @pagination_cache[:total_count] > 0 %>
-      <h3><%= @pagination_cache[:total_count] =%> Objekte gefunden.</h3>
-      <div class="pagination">
-        <%= paginate @trigrams, total_pages: @pagination_cache[:total_pages] %>
-      </div>
-      <% @trigrams.each do |archive_file_trigram| %>
-        <%= render ResultComponent.new(query: @query, archive_file: archive_file_trigram.archive_file) %>
+  <% content_for :container_class, "container__inner--wide" %>
+  <div class="search-layout">
+    <%= render "facets_sidebar" %>
+    <div class="search-layout__content">
+      <% cache [controller.action_name, query_cache_key(@query), @node_id, @date_from, @date_to, @trigrams.current_page] do %>
+        <% if @pagination_cache[:total_count] > 0 %>
+          <h3><%= @pagination_cache[:total_count] =%> Objekte gefunden.</h3>
+          <div class="pagination">
+            <%= paginate @trigrams, total_pages: @pagination_cache[:total_pages] %>
+          </div>
+          <% @trigrams.each do |archive_file_trigram| %>
+            <%= render ResultComponent.new(query: @query, archive_file: archive_file_trigram.archive_file) %>
+          <% end %>
+          <div class="pagination">
+            <%= paginate @trigrams, total_pages: @pagination_cache[:total_pages] %>
+          </div>
+        <% else %>
+          <hr />
+          <h3>Keine Akten gefunden.</h3>
+        <% end %>
       <% end %>
-      <div class="pagination">
-        <%= paginate @trigrams, total_pages: @pagination_cache[:total_pages] %>
-      </div>
-    <% else %>
-      <hr />
-      <h3>Keine Akten gefunden.</h3>
-    <% end %>
-  <% end %>
+    </div>
+  </div>
 <% else %>
   <% case @tab %>
   <% when "fonds" %>
-    <%= render "browse_fonds" %>
+    <% content_for :container_class, "container__inner--wide" %>
+    <div class="search-layout">
+      <%= render "facets_sidebar" %>
+      <div class="search-layout__content">
+        <%= render "browse_fonds" %>
+      </div>
+    </div>
   <% when "origins" %>
-    <%= render "browse_origins" %>
+    <% content_for :container_class, "container__inner--wide" %>
+    <div class="search-layout">
+      <%= render "facets_sidebar" %>
+      <div class="search-layout__content">
+        <%= render "browse_origins" %>
+      </div>
+    </div>
   <% when "dates" %>
-    <%= render "browse_dates" %>
+    <% content_for :container_class, "container__inner--wide" %>
+    <div class="search-layout">
+      <%= render "facets_sidebar" %>
+      <div class="search-layout__content">
+        <%= render "browse_dates" %>
+      </div>
+    </div>
   <% else %>
     <hr class="title-spacer">
     <h2>Was ist Quellenportal?</h2>

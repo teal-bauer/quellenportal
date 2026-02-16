@@ -1,6 +1,9 @@
 de:
   search_button: "Suchen"
   search_placeholder: "%{total} Objekte durchsuchen"
+  search:
+    active_filters: "Filter:"
+    remove_filter: "entfernen"
   browse:
     label: "Stöbern:"
     fonds: "Bestände"
