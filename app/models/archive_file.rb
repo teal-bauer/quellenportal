@@ -80,11 +80,18 @@ class ArchiveFile < ApplicationRecord
     connection.execute("DELETE FROM archive_file_trigrams")
     connection.execute(<<~SQL)
       INSERT INTO archive_file_trigrams(
-        archive_file_id, archive_node_id, title, summary,
-        call_number, parents, origin_names
+        archive_file_id, archive_node_id,
+        fonds_id, fonds_name, decade,
+        title, summary, call_number, parents, origin_names
       )
       SELECT
-        af.id, af.archive_node_id, af.title, af.summary, af.call_number,
+        af.id, af.archive_node_id,
+        CAST(json_extract(af.parents, '$[0].id') AS INTEGER),
+        json_extract(af.parents, '$[0].name'),
+        CASE WHEN af.source_date_start IS NOT NULL
+          THEN (CAST(strftime('%Y', af.source_date_start) AS INTEGER) / 10) * 10
+          ELSE NULL END,
+        af.title, af.summary, af.call_number,
         (SELECT GROUP_CONCAT(json_extract(value, '$.name'), ' ')
          FROM json_each(af.parents)),
         COALESCE((SELECT GROUP_CONCAT(o.name, ' ')
@@ -115,9 +122,15 @@ class ArchiveFile < ApplicationRecord
   end
 
   def insert_trigram
+    fonds = parents&.first
+    decade_val = source_date_start ? (source_date_start.year / 10) * 10 : nil
+
     trigram_attrs = {
       archive_file_id: id,
       archive_node_id: archive_node_id,
+      fonds_id: fonds&.dig("id"),
+      fonds_name: fonds&.dig("name"),
+      decade: decade_val,
       title: title,
       summary: summary,
       call_number: call_number,

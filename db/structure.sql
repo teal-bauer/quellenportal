@@ -19,13 +19,6 @@ CREATE TABLE IF NOT EXISTS "originations" ("archive_file_id" integer DEFAULT NUL
 CREATE INDEX "index_originations_on_origin_id" ON "originations" ("origin_id");
 CREATE UNIQUE INDEX "index_originations_on_archive_file_id_and_origin_id" ON "originations" ("archive_file_id", "origin_id");
 CREATE INDEX "index_originations_on_archive_file_id" ON "originations" ("archive_file_id");
-CREATE VIRTUAL TABLE archive_file_trigrams USING fts5(archive_file_id UNINDEXED, archive_node_id UNINDEXED, title, summary, call_number, parents, origin_names, tokenize = 'trigram')
-/* archive_file_trigrams(archive_file_id,archive_node_id,title,summary,call_number,parents,origin_names) */;
-CREATE TABLE IF NOT EXISTS 'archive_file_trigrams_data'(id INTEGER PRIMARY KEY, block BLOB);
-CREATE TABLE IF NOT EXISTS 'archive_file_trigrams_idx'(segid, term, pgno, PRIMARY KEY(segid, term)) WITHOUT ROWID;
-CREATE TABLE IF NOT EXISTS 'archive_file_trigrams_content'(id INTEGER PRIMARY KEY, c0, c1, c2, c3, c4, c5, c6);
-CREATE TABLE IF NOT EXISTS 'archive_file_trigrams_docsize'(id INTEGER PRIMARY KEY, sz BLOB);
-CREATE TABLE IF NOT EXISTS 'archive_file_trigrams_config'(k PRIMARY KEY, v) WITHOUT ROWID;
 CREATE TABLE IF NOT EXISTS "solid_queue_jobs" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "queue_name" varchar NOT NULL, "class_name" varchar NOT NULL, "arguments" text, "priority" integer DEFAULT 0 NOT NULL, "active_job_id" varchar, "scheduled_at" datetime(6), "finished_at" datetime(6), "concurrency_key" varchar, "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL);
 CREATE INDEX "index_solid_queue_jobs_on_active_job_id" ON "solid_queue_jobs" ("active_job_id") /*application='Bundessuche'*/;
 CREATE INDEX "index_solid_queue_jobs_on_class_name" ON "solid_queue_jobs" ("class_name") /*application='Bundessuche'*/;
@@ -83,7 +76,23 @@ FOREIGN KEY ("job_id")
 CREATE UNIQUE INDEX "index_solid_queue_scheduled_executions_on_job_id" ON "solid_queue_scheduled_executions" ("job_id") /*application='Bundessuche'*/;
 CREATE INDEX "index_solid_queue_dispatch_all" ON "solid_queue_scheduled_executions" ("scheduled_at", "priority", "job_id") /*application='Bundessuche'*/;
 CREATE INDEX "index_archive_files_on_source_date_start" ON "archive_files" ("source_date_start") /*application='Bundessuche'*/;
+CREATE VIRTUAL TABLE archive_file_trigrams USING fts5(
+  archive_file_id UNINDEXED,
+  archive_node_id UNINDEXED,
+  fonds_id UNINDEXED,
+  fonds_name UNINDEXED,
+  decade UNINDEXED,
+  title, summary, call_number, parents, origin_names,
+  tokenize = 'trigram'
+)
+/* archive_file_trigrams(archive_file_id,archive_node_id,fonds_id,fonds_name,decade,title,summary,call_number,parents,origin_names) */;
+CREATE TABLE IF NOT EXISTS 'archive_file_trigrams_data'(id INTEGER PRIMARY KEY, block BLOB);
+CREATE TABLE IF NOT EXISTS 'archive_file_trigrams_idx'(segid, term, pgno, PRIMARY KEY(segid, term)) WITHOUT ROWID;
+CREATE TABLE IF NOT EXISTS 'archive_file_trigrams_content'(id INTEGER PRIMARY KEY, c0, c1, c2, c3, c4, c5, c6, c7, c8, c9);
+CREATE TABLE IF NOT EXISTS 'archive_file_trigrams_docsize'(id INTEGER PRIMARY KEY, sz BLOB);
+CREATE TABLE IF NOT EXISTS 'archive_file_trigrams_config'(k PRIMARY KEY, v) WITHOUT ROWID;
 INSERT INTO "schema_migrations" (version) VALUES
+('20260216195107'),
 ('20260216141601'),
 ('20260215000730'),
 ('20240826215919'),

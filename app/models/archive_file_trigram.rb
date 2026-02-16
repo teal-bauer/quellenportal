@@ -134,31 +134,25 @@ class ArchiveFileTrigram < ApplicationRecord
       node = ArchiveNode.find_by(id: node_id)
       if node
         ids = [node.id] + node.descendant_ids
-        conditions << "archive_file_trigrams.archive_node_id IN (#{ids.map { |i| connection.quote(i) }.join(",")})"
+        conditions << "archive_node_id IN (#{ids.map { |i| connection.quote(i) }.join(",")})"
       end
     end
 
     if date_from.present? && date_to.present?
-      conditions << "af.source_date_start >= ? AND af.source_date_start < ?"
-      binds.push(date_from, date_to)
+      decade_from = (Date.parse(date_from.to_s).year / 10) * 10
+      decade_to = (Date.parse(date_to.to_s).year / 10) * 10
+      conditions << "decade >= ? AND decade <= ?"
+      binds.push(decade_from, decade_to)
     end
 
-    where_sql = conditions.any? ? "WHERE #{conditions.join(" AND ")}" : ""
-
-    from_clause =
-      if query.present?
-        "archive_file_trigrams JOIN archive_files af ON af.id = archive_file_trigrams.archive_file_id"
-      else
-        "archive_files af"
-      end
+    conditions << "fonds_id IS NOT NULL"
+    where_sql = "WHERE #{conditions.join(" AND ")}"
 
     statement = <<~SQL
-      SELECT json_extract(af.parents, '$[0].name') AS fonds_name,
-             CAST(json_extract(af.parents, '$[0].id') AS INTEGER) AS fonds_id,
-             COUNT(*) AS file_count
-      FROM #{from_clause}
+      SELECT fonds_name, fonds_id, COUNT(*) AS file_count
+      FROM archive_file_trigrams
       #{where_sql}
-      GROUP BY fonds_name, fonds_id
+      GROUP BY fonds_id, fonds_name
       ORDER BY file_count DESC
       LIMIT 10
     SQL
@@ -180,29 +174,23 @@ class ArchiveFileTrigram < ApplicationRecord
       node = ArchiveNode.find_by(id: node_id)
       if node
         ids = [node.id] + node.descendant_ids
-        conditions << "archive_file_trigrams.archive_node_id IN (#{ids.map { |i| connection.quote(i) }.join(",")})"
+        conditions << "archive_node_id IN (#{ids.map { |i| connection.quote(i) }.join(",")})"
       end
     end
 
     if date_from.present? && date_to.present?
-      conditions << "af.source_date_start >= ? AND af.source_date_start < ?"
-      binds.push(date_from, date_to)
+      decade_from = (Date.parse(date_from.to_s).year / 10) * 10
+      decade_to = (Date.parse(date_to.to_s).year / 10) * 10
+      conditions << "decade >= ? AND decade <= ?"
+      binds.push(decade_from, decade_to)
     end
 
-    conditions << "af.source_date_start IS NOT NULL"
+    conditions << "decade IS NOT NULL"
     where_sql = "WHERE #{conditions.join(" AND ")}"
 
-    from_clause =
-      if query.present?
-        "archive_file_trigrams JOIN archive_files af ON af.id = archive_file_trigrams.archive_file_id"
-      else
-        "archive_files af"
-      end
-
     statement = <<~SQL
-      SELECT (CAST(strftime('%Y', af.source_date_start) AS INTEGER) / 10) * 10 AS decade,
-             COUNT(*) AS file_count
-      FROM #{from_clause}
+      SELECT decade, COUNT(*) AS file_count
+      FROM archive_file_trigrams
       #{where_sql}
       GROUP BY decade
       ORDER BY decade
