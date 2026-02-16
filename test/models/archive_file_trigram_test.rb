@@ -52,6 +52,20 @@ class ArchiveFileTrigramTest < ActiveSupport::TestCase
     assert_equal 0, results.count
   end
 
+  test "sanitize_fts5 merges short tokens with next neighbor" do
+    assert_equal '"DK 107/11126"', ArchiveFileTrigram.sanitize_fts5("DK 107/11126")
+    assert_equal '"R 901"', ArchiveFileTrigram.sanitize_fts5("R 901")
+  end
+
+  test "sanitize_fts5 does not merge tokens that are both long enough" do
+    assert_equal '"hello" "world"', ArchiveFileTrigram.sanitize_fts5("hello world")
+  end
+
+  test "sanitize_fts5 does not merge negated or operator tokens" do
+    assert_equal '"hello" NOT "DK"', ArchiveFileTrigram.sanitize_fts5("hello -DK")
+    assert_equal '"hello" OR "world"', ArchiveFileTrigram.sanitize_fts5("hello OR world")
+  end
+
   test "in_node scope returns all when node_id is blank" do
     quoted_title = "\"#{@example_archive_file.title}\""
     all_results = ArchiveFileTrigram.search(quoted_title)

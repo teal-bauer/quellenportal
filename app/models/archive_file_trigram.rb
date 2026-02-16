@@ -26,6 +26,10 @@ class ArchiveFileTrigram < ApplicationRecord
     operators = %w[AND OR NOT]
     tokens = query.scan(/"[^"]*"|\S+/)
 
+    # Merge short tokens (< 3 chars) with their next neighbor into a single
+    # phrase so the trigram tokenizer can match them (e.g. "DK 107/11126").
+    tokens = merge_short_tokens(tokens, operators)
+
     result = []
     tokens.each do |token|
       if operators.include?(token.upcase)
@@ -54,6 +58,37 @@ class ArchiveFileTrigram < ApplicationRecord
     # Drop trailing operator
     result.pop if result.last && operators.include?(result.last)
     result.join(" ")
+  end
+
+  def self.merge_short_tokens(tokens, operators)
+    merged = []
+    skip_next = false
+
+    tokens.each_with_index do |token, i|
+      if skip_next
+        skip_next = false
+        next
+      end
+
+      bare = token.delete_prefix("-").chomp("*")
+      is_plain = !operators.include?(token.upcase) &&
+        !token.start_with?('"') &&
+        !token.start_with?("-")
+      next_token = tokens[i + 1]
+      next_plain = next_token &&
+        !operators.include?(next_token.upcase) &&
+        !next_token.start_with?('"') &&
+        !next_token.start_with?("-")
+
+      if is_plain && bare.length < 3 && next_plain
+        merged << "#{token} #{next_token}"
+        skip_next = true
+      else
+        merged << token
+      end
+    end
+
+    merged
   end
 
   scope :in_node,
