@@ -55,6 +55,8 @@ class ArchiveObject
           source_date_text: date.text,
           source_date_start: date.start_date,
           source_date_end: date.end_date,
+          source_date_start_uncorrected: date.start_date_uncorrected,
+          source_date_end_uncorrected: date.end_date_uncorrected,
           source_id: node.attr("id"),
           link: node.xpath("otherfindaid/p/extref")[0]&.attr("href"),
           location: node.xpath("did/physloc").text,
@@ -142,15 +144,22 @@ class BundesarchivImporter
     end
 
     archive_file_count = 0
-    ActiveRecord::Base.transaction do
-      archive_file_count =
-        archive_description
-          .xpath("//c[@level='fonds']")
-          .map do |fond|
-            object = ArchiveObject.new([], fond, caches)
-            object.descend + object.process_files
-          end
-          .sum
+    ArchiveFile.skip_callback(:create, :after, :insert_trigram)
+    ArchiveFile.skip_callback(:update, :after, :update_trigram)
+    begin
+      ActiveRecord::Base.transaction do
+        archive_file_count =
+          archive_description
+            .xpath("//c[@level='fonds']")
+            .map do |fond|
+              object = ArchiveObject.new([], fond, caches)
+              object.descend + object.process_files
+            end
+            .sum
+      end
+    ensure
+      ArchiveFile.set_callback(:create, :after, :insert_trigram)
+      ArchiveFile.set_callback(:update, :after, :update_trigram)
     end
 
     archive_file_count

@@ -8,6 +8,9 @@
     </h4>
     <p>
       <%= date %>
+      <% if date_corrected? %>
+        <span class="result__date-corrected" title="<%= date_correction_detail %>">korrigiert</span>
+      <% end %>
     </p>
   </div>
   <p class="result__summary">

@@ -2,21 +2,23 @@
 #
 # Table name: archive_files
 #
-#  id                :integer          not null, primary key
-#  call_number       :string
-#  language_code     :string
-#  link              :string
-#  location          :string
-#  parents           :json             not null
-#  source_date_end   :date
-#  source_date_start :date
-#  source_date_text  :string
-#  summary           :string
-#  title             :string
-#  created_at        :datetime         not null
-#  updated_at        :datetime         not null
-#  archive_node_id   :integer
-#  source_id         :string
+#  id                            :integer          not null, primary key
+#  call_number                   :string
+#  language_code                 :string
+#  link                          :string
+#  location                      :string
+#  parents                       :json             not null
+#  source_date_end               :date
+#  source_date_end_uncorrected   :date
+#  source_date_start             :date
+#  source_date_start_uncorrected :date
+#  source_date_text              :string
+#  summary                       :string
+#  title                         :string
+#  created_at                    :datetime         not null
+#  updated_at                    :datetime         not null
+#  archive_node_id               :integer
+#  source_id                     :string
 #
 # Indexes
 #
@@ -41,7 +43,11 @@ class ArchiveFile < ApplicationRecord
   after_destroy :delete_trigram
 
   scope :in_date_range, ->(from, to) {
-    where("source_date_start >= ? AND source_date_start < ?", from, to)
+    where(
+      "source_date_start >= :from AND source_date_start < :to
+       OR source_date_start_uncorrected >= :from AND source_date_start_uncorrected < :to",
+      from: from, to: to
+    )
   }
 
   def self.update_cached_all_count
@@ -68,29 +74,26 @@ class ArchiveFile < ApplicationRecord
     end
   end
 
-  def self.reindex(show_progress=false)
-    if show_progress
-      start = Time.now
+  def self.reindex(show_progress = false)
+    start = Time.now if show_progress
 
-      progress_bar = ProgressBar.create(
-        title: "Importing",
-        total: ArchiveFile.count,
-        format: "%t %p%% %a %e |%B|"
+    connection.execute("DELETE FROM archive_file_trigrams")
+    connection.execute(<<~SQL)
+      INSERT INTO archive_file_trigrams(
+        archive_file_id, archive_node_id, title, summary,
+        call_number, parents, origin_names
       )
-    end
+      SELECT
+        af.id, af.archive_node_id, af.title, af.summary, af.call_number,
+        (SELECT GROUP_CONCAT(json_extract(value, '$.name'), ' ')
+         FROM json_each(af.parents)),
+        COALESCE((SELECT GROUP_CONCAT(o.name, ' ')
+         FROM originations ori JOIN origins o ON ori.origin_id = o.id
+         WHERE ori.archive_file_id = af.id), '')
+      FROM archive_files af
+    SQL
 
-    ArchiveFileTrigram.delete_all
-
-    self.find_in_batches do |group|
-      group.each do |archive_file|
-        archive_file.insert_trigram
-        progress_bar.increment if show_progress
-      end
-    end
-
-    if show_progress
-      puts "Reindexing took #{Time.now - start} seconds"
-    end
+    puts "Reindexing took #{Time.now - start} seconds" if show_progress
   end
 
   def source_dates

@@ -14,7 +14,7 @@ class UnitDate
     try_fix_digit_typo if @start_date && @end_date
   end
 
-  attr_reader :start_date, :text
+  attr_reader :start_date, :text, :start_date_uncorrected, :end_date_uncorrected
 
   def range?
     @end_date.present?
@@ -49,11 +49,17 @@ class UnitDate
     if span > 150
       # Start year is suspiciously old relative to end year
       fixed = fix_single_digit(@start_date, @end_date)
-      @start_date = fixed if fixed
+      if fixed
+        @start_date_uncorrected = @start_date
+        @start_date = fixed
+      end
     elsif span < 0
       # Inverted range — try fixing whichever end is the outlier
       fixed = fix_single_digit(@end_date, @start_date)
-      @end_date = fixed if fixed
+      if fixed
+        @end_date_uncorrected = @end_date
+        @end_date = fixed
+      end
     end
   end
 

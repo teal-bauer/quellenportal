@@ -63,6 +63,15 @@
     color: #6b5d4f;
 }
 
+.result__date-corrected {
+    font-size: 0.75rem;
+    color: #8b6914;
+    background-color: #f5ecd0;
+    padding: 1px 5px;
+    border-radius: 3px;
+    cursor: help;
+}
+
 .cite {
     display: flex;
     align-items: center;

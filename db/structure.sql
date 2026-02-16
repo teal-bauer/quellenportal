@@ -5,7 +5,7 @@ CREATE UNIQUE INDEX "index_origins_on_label_and_name" ON "origins" ("label", "na
 CREATE INDEX "index_origins_on_name" ON "origins" ("name");
 CREATE TABLE IF NOT EXISTS "cached_counts" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL, "model" varchar, "scope" varchar, "count" integer);
 CREATE UNIQUE INDEX "index_cached_counts_on_model_and_scope" ON "cached_counts" ("model", "scope");
-CREATE TABLE IF NOT EXISTS "archive_files" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL, "title" varchar, "summary" varchar, "call_number" varchar, "source_date_text" varchar, "source_id" varchar, "link" varchar, "location" varchar, "language_code" varchar, "parents" json DEFAULT '[]' NOT NULL, "source_date_start" date, "source_date_end" date, "archive_node_id" integer, CONSTRAINT parents_is_array CHECK (JSON_TYPE(parents) = 'array'));
+CREATE TABLE IF NOT EXISTS "archive_files" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL, "title" varchar, "summary" varchar, "call_number" varchar, "source_date_text" varchar, "source_id" varchar, "link" varchar, "location" varchar, "language_code" varchar, "parents" json DEFAULT '[]' NOT NULL, "source_date_start" date, "source_date_end" date, "archive_node_id" integer, "source_date_start_uncorrected" date /*application='Bundessuche'*/, "source_date_end_uncorrected" date /*application='Bundessuche'*/, CONSTRAINT parents_is_array CHECK (JSON_TYPE(parents) = 'array'));
 CREATE TABLE IF NOT EXISTS "archive_nodes" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "name" varchar, "parent_node_id" integer, "source_id" varchar, "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL, "level" varchar);
 CREATE INDEX "index_archive_nodes_on_source_id" ON "archive_nodes" ("source_id");
 CREATE INDEX "index_archive_nodes_on_parent_node_id" ON "archive_nodes" ("parent_node_id");
@@ -84,6 +84,7 @@ CREATE UNIQUE INDEX "index_solid_queue_scheduled_executions_on_job_id" ON "solid
 CREATE INDEX "index_solid_queue_dispatch_all" ON "solid_queue_scheduled_executions" ("scheduled_at", "priority", "job_id") /*application='Bundessuche'*/;
 CREATE INDEX "index_archive_files_on_source_date_start" ON "archive_files" ("source_date_start") /*application='Bundessuche'*/;
 INSERT INTO "schema_migrations" (version) VALUES
+('20260216141601'),
 ('20260215000730'),
 ('20240826215919'),
 ('20240825103844'),

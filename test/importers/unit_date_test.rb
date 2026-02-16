@@ -86,6 +86,8 @@ class UnitDateTest < ActiveSupport::TestCase
 
     assert_equal 1940, date_parser.start_date.year
     assert_equal 1941, date_parser.end_date.year
+    assert_equal 1040, date_parser.start_date_uncorrected.year
+    assert_nil date_parser.end_date_uncorrected
   end
 
   test "fixes century-off typo 1800 to 1900 when end date is 1960" do
@@ -93,6 +95,7 @@ class UnitDateTest < ActiveSupport::TestCase
     date_parser = UnitDate.new(node)
 
     assert_equal 1900, date_parser.start_date.year
+    assert_equal 1800, date_parser.start_date_uncorrected.year
   end
 
   test "does not fix legitimate wide range within 150 years" do
@@ -101,6 +104,8 @@ class UnitDateTest < ActiveSupport::TestCase
 
     assert_equal 1853, date_parser.start_date.year
     assert_equal 1964, date_parser.end_date.year
+    assert_nil date_parser.start_date_uncorrected
+    assert_nil date_parser.end_date_uncorrected
   end
 
   test "does not fix legitimate pre-modern range" do
@@ -109,6 +114,8 @@ class UnitDateTest < ActiveSupport::TestCase
 
     assert_equal 1582, date_parser.start_date.year
     assert_equal 1683, date_parser.end_date.year
+    assert_nil date_parser.start_date_uncorrected
+    assert_nil date_parser.end_date_uncorrected
   end
 
   test "Fails gracefully when normalised date is not prsent" do

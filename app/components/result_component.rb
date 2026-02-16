@@ -28,6 +28,19 @@ class ResultComponent < ViewComponent::Base
     @archive_file.source_date_years.join("-")
   end
 
+  def date_corrected?
+    @archive_file.source_date_start_uncorrected.present? ||
+      @archive_file.source_date_end_uncorrected.present?
+  end
+
+  def date_correction_detail
+    if @archive_file.source_date_start_uncorrected.present?
+      "#{@archive_file.source_date_start_uncorrected.year} \u2192 #{@archive_file.source_date_start.year}"
+    elsif @archive_file.source_date_end_uncorrected.present?
+      "#{@archive_file.source_date_end_uncorrected.year} \u2192 #{@archive_file.source_date_end.year}"
+    end
+  end
+
   def summary
     highlight_query(@archive_file.summary)
   end
