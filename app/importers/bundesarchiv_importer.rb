@@ -147,14 +147,16 @@ class BundesarchivImporter
     ArchiveFile.skip_callback(:create, :after, :insert_trigram)
     ArchiveFile.skip_callback(:update, :after, :update_trigram)
     begin
-      archive_file_count =
-        archive_description
-          .xpath("//c[@level='fonds']")
-          .map do |fond|
-            object = ArchiveObject.new([], fond, caches)
-            object.descend + object.process_files
-          end
-          .sum
+      ActiveRecord::Base.transaction do
+        archive_file_count =
+          archive_description
+            .xpath("//c[@level='fonds']")
+            .map do |fond|
+              object = ArchiveObject.new([], fond, caches)
+              object.descend + object.process_files
+            end
+            .sum
+      end
     ensure
       ArchiveFile.set_callback(:create, :after, :insert_trigram)
       ArchiveFile.set_callback(:update, :after, :update_trigram)
@@ -168,6 +170,14 @@ class BundesarchivImporter
     puts "Importing data from XML files in #{@dir}..." if show_progress
     start = Time.now
     archive_file_count = 0
+
+    # Aggressive pragmas for bulk loading — only safe when no concurrent readers
+    unless ActiveRecord::Base.connection.open_transactions > 0
+      conn = ActiveRecord::Base.connection
+      conn.execute("PRAGMA synchronous = OFF")
+      conn.execute("PRAGMA journal_mode = MEMORY")
+      conn.execute("PRAGMA cache_size = -512000") # 512MB
+    end
 
     xml_files = Dir.glob("*.xml", base: @dir).sort
     total = xml_files.count
