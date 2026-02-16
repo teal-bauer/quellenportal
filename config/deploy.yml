@@ -12,6 +12,8 @@ proxy:
   app_port: 3000
   forward_headers: true
 
+error_pages_path: public
+
 registry:
   server: ghcr.io
   username: teal-bauer
