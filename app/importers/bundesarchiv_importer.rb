@@ -147,16 +147,14 @@ class BundesarchivImporter
     ArchiveFile.skip_callback(:create, :after, :insert_trigram)
     ArchiveFile.skip_callback(:update, :after, :update_trigram)
     begin
-      ActiveRecord::Base.transaction do
-        archive_file_count =
-          archive_description
-            .xpath("//c[@level='fonds']")
-            .map do |fond|
-              object = ArchiveObject.new([], fond, caches)
-              object.descend + object.process_files
-            end
-            .sum
-      end
+      archive_file_count =
+        archive_description
+          .xpath("//c[@level='fonds']")
+          .map do |fond|
+            object = ArchiveObject.new([], fond, caches)
+            object.descend + object.process_files
+          end
+          .sum
     ensure
       ArchiveFile.set_callback(:create, :after, :insert_trigram)
       ArchiveFile.set_callback(:update, :after, :update_trigram)
