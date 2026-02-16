@@ -25,9 +25,11 @@ class UnitDate
     return nil unless date_string.present?
 
     begin
-      return Date.iso8601(date_string)
+      date = Date.iso8601(date_string)
+      return nil unless date.year.between?(1900, 2100)
+      date
     rescue Date::Error
-      return nil
+      nil
     end
   end
 end
