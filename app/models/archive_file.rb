@@ -31,16 +31,30 @@
 #  index_archive_files_on_title_and_summary  (title,summary)
 #
 class ArchiveFile < ApplicationRecord
+  include MeiliSearch::Rails
+
   belongs_to :archive_node
 
   has_many :originations, inverse_of: :archive_file
   has_many :origins, through: :originations
 
-  has_one :archive_file_trigram
+  meilisearch auto_index: false, auto_remove: false, check_settings: false do
+    attribute :title, :summary, :call_number
+    attribute(:parent_names) { parents&.map { |p| p["name"] }&.join(" ") || "" }
+    attribute(:origin_names) { origins.pluck(:name).join(" ") }
+    attribute(:fonds_id) { parents&.first&.dig("id") }
+    attribute(:fonds_name) { parents&.first&.dig("name") }
+    attribute(:decade) { source_date_start ? (source_date_start.year / 10) * 10 : nil }
+    attribute(:archive_node_id) { archive_node_id }
+    attribute(:source_date_start_unix) { source_date_start&.to_time&.to_i }
 
-  after_create :insert_trigram
-  after_update :update_trigram
-  after_destroy :delete_trigram
+    searchable_attributes [:title, :summary, :call_number, :parent_names, :origin_names]
+    filterable_attributes [:fonds_id, :fonds_name, :decade, :archive_node_id, :source_date_start_unix]
+    sortable_attributes [:call_number]
+
+    faceting max_values_per_facet: 100
+    pagination max_total_hits: 100_000
+  end
 
   scope :in_date_range, ->(from, to) {
     where(
@@ -61,46 +75,27 @@ class ArchiveFile < ApplicationRecord
     CachedCount.find_by(model: self.name, scope: :all)&.count
   end
 
-  def self.decade_counts
-    Rails.cache.fetch("archive_files/decade_counts", expires_in: 24.hours) do
+  def self.period_counts
+    Rails.cache.fetch("archive_files/decade_counts") do
       connection.select_all(<<~SQL).to_a
-        SELECT (CAST(strftime('%Y', source_date_start) AS INTEGER) / 10) * 10 AS decade,
-               COUNT(*) AS file_count
+        SELECT
+          CASE
+            WHEN CAST(strftime('%Y', source_date_start) AS INTEGER) < 1800
+            THEN (CAST(strftime('%Y', source_date_start) AS INTEGER) / 100) * 100
+            ELSE (CAST(strftime('%Y', source_date_start) AS INTEGER) / 10) * 10
+          END AS period,
+          CASE
+            WHEN CAST(strftime('%Y', source_date_start) AS INTEGER) < 1800
+            THEN 100
+            ELSE 10
+          END AS span,
+          COUNT(*) AS file_count
         FROM archive_files
         WHERE source_date_start IS NOT NULL
-        GROUP BY decade
-        ORDER BY decade
+        GROUP BY period, span
+        ORDER BY period
       SQL
     end
-  end
-
-  def self.reindex(show_progress = false)
-    start = Time.now if show_progress
-
-    connection.execute("DELETE FROM archive_file_trigrams")
-    connection.execute(<<~SQL)
-      INSERT INTO archive_file_trigrams(
-        archive_file_id, archive_node_id,
-        fonds_id, fonds_name, decade,
-        title, summary, call_number, parents, origin_names
-      )
-      SELECT
-        af.id, af.archive_node_id,
-        CAST(json_extract(af.parents, '$[0].id') AS INTEGER),
-        json_extract(af.parents, '$[0].name'),
-        CASE WHEN af.source_date_start IS NOT NULL
-          THEN (CAST(strftime('%Y', af.source_date_start) AS INTEGER) / 10) * 10
-          ELSE NULL END,
-        af.title, af.summary, af.call_number,
-        (SELECT GROUP_CONCAT(json_extract(value, '$.name'), ' ')
-         FROM json_each(af.parents)),
-        COALESCE((SELECT GROUP_CONCAT(o.name, ' ')
-         FROM originations ori JOIN origins o ON ori.origin_id = o.id
-         WHERE ori.archive_file_id = af.id), '')
-      FROM archive_files af
-    SQL
-
-    puts "Reindexing took #{Time.now - start} seconds" if show_progress
   end
 
   def source_dates
@@ -119,41 +114,5 @@ class ArchiveFile < ApplicationRecord
     end
 
     [source_date_start.year.to_s, source_date_end.year.to_s]
-  end
-
-  def insert_trigram
-    fonds = parents&.first
-    decade_val = source_date_start ? (source_date_start.year / 10) * 10 : nil
-
-    trigram_attrs = {
-      archive_file_id: id,
-      archive_node_id: archive_node_id,
-      fonds_id: fonds&.dig("id"),
-      fonds_name: fonds&.dig("name"),
-      decade: decade_val,
-      title: title,
-      summary: summary,
-      call_number: call_number,
-      parents: parents.map { |p| p['name'] }.join(" "),
-      origin_names: origins.pluck(:name).join(" ")
-    }
-
-    values = trigram_attrs.values.map { |v| ArchiveFile.connection.quote(v) }
-    sql_insert = <<~SQL.strip
-      INSERT INTO archive_file_trigrams(#{trigram_attrs.keys.join(", ")}) VALUES(#{values.join(", ")});
-    SQL
-    self.class.connection.execute(sql_insert)
-  end
-
-  def delete_trigram
-    delete_statement =
-      "DELETE FROM archive_file_trigrams WHERE archive_file_id = #{attributes["id"]}"
-    self.class.connection.execute(delete_statement)
-  end
-
-  def update_trigram
-    # Not very efficient, but fine for now as this should basically never happen
-    delete_trigram
-    insert_trigram
   end
 end

@@ -39,8 +39,8 @@ namespace :data do
     BundesarchivImporter.new(args[:dir]).run(show_progress: true)
   end
 
-  desc "Recreate search index"
+  desc "Recreate Meilisearch index (bulk, bypasses ActiveRecord)"
   task reindex: [:environment] do
-    ArchiveFile.reindex(show_progress: true)
+    MeilisearchBulkIndexer.new(verbose: true).call
   end
 end

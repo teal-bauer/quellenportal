@@ -23,6 +23,8 @@ registry:
 env:
   secret:
     - RAILS_MASTER_KEY
+    - MEILISEARCH_HOST
+    - MEILISEARCH_API_KEY
   clear:
     WEB_CONCURRENCY: 2
     SOLID_QUEUE_IN_PUMA: false
@@ -36,13 +38,25 @@ asset_path: /rails/public/assets
 
 builder:
   arch: amd64
-  remote: ssh://root@100.91.49.44
-  local: false
+
+accessories:
+  meilisearch:
+    image: getmeili/meilisearch:v1.12
+    host: 100.91.49.44
+    port: "127.0.0.1:7700:7700"
+    env:
+      clear:
+        MEILI_ENV: production
+        MEILI_NO_ANALYTICS: "true"
+      secret:
+        - MEILI_MASTER_KEY
+    directories:
+      - meili_data:/meili_data
 
 aliases:
   console: app exec --interactive --reuse "bin/rails console"
   shell: app exec --interactive --reuse "bash"
   logs: app logs -f
-  download: app exec --interactive --reuse "bin/rails data:download"
-  import: app exec --interactive --reuse "bin/rails data:import"
-  reindex: app exec --interactive --reuse "bin/rails data:reindex"
+  download: app exec "bin/rails data:download"
+  import: app exec "bin/rails data:import"
+  reindex: app exec "bin/rails data:reindex"

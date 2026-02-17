@@ -76,15 +76,7 @@ FOREIGN KEY ("job_id")
 CREATE UNIQUE INDEX "index_solid_queue_scheduled_executions_on_job_id" ON "solid_queue_scheduled_executions" ("job_id") /*application='Bundessuche'*/;
 CREATE INDEX "index_solid_queue_dispatch_all" ON "solid_queue_scheduled_executions" ("scheduled_at", "priority", "job_id") /*application='Bundessuche'*/;
 CREATE INDEX "index_archive_files_on_source_date_start" ON "archive_files" ("source_date_start") /*application='Bundessuche'*/;
-CREATE VIRTUAL TABLE archive_file_trigrams USING fts5(
-  archive_file_id UNINDEXED,
-  archive_node_id UNINDEXED,
-  fonds_id UNINDEXED,
-  fonds_name UNINDEXED,
-  decade UNINDEXED,
-  title, summary, call_number, parents, origin_names,
-  tokenize = 'trigram'
-)
+CREATE VIRTUAL TABLE archive_file_trigrams USING fts5(archive_file_id UNINDEXED, archive_node_id UNINDEXED, fonds_id UNINDEXED, fonds_name UNINDEXED, decade UNINDEXED, title, summary, call_number, parents, origin_names, tokenize = 'trigram')
 /* archive_file_trigrams(archive_file_id,archive_node_id,fonds_id,fonds_name,decade,title,summary,call_number,parents,origin_names) */;
 CREATE TABLE IF NOT EXISTS 'archive_file_trigrams_data'(id INTEGER PRIMARY KEY, block BLOB);
 CREATE TABLE IF NOT EXISTS 'archive_file_trigrams_idx'(segid, term, pgno, PRIMARY KEY(segid, term)) WITHOUT ROWID;
