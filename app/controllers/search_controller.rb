@@ -13,73 +13,66 @@ class SearchController < ApplicationController
 
     if @query.present?
       begin
-        @trigrams =
-          ArchiveFileTrigram
-            .search(@query)
-            .in_node(@node_id)
-            .in_date_range(@date_from, @date_to)
-            .page(params[:page])
-            .per(500)
-            .includes(:archive_file)
+        filter = build_meilisearch_filter
+        sort = params[:sort] == "call_number" ? ["call_number:asc"] : nil
 
-        cache_key = "controllers/search/pagination_cache_#{helpers.query_cache_key @query}_node_#{@node_id}_#{@date_from}_#{@date_to}"
-        @pagination_cache =
-          Rails
-            .cache
-            .fetch(cache_key) do
-              {
-                total_count: @trigrams.total_count,
-                total_pages: @trigrams.total_pages
-              }
-            end
+        search_opts = {
+          filter: filter,
+          facets: ["fonds_name", "decade"],
+          sort: sort,
+          hits_per_page: 100,
+          page: (params[:page] || 1).to_i
+        }.compact
 
-        facet_cache_key = "controllers/search/facets_#{helpers.query_cache_key @query}_node_#{@node_id}_#{@date_from}_#{@date_to}"
-        @facets =
-          Rails.cache.fetch(facet_cache_key, expires_in: 24.hours) do
-            {
-              fonds:
-                ArchiveFileTrigram.fonds_facets(
-                  @query,
-                  node_id: @node_id,
-                  date_from: @date_from,
-                  date_to: @date_to
-                ),
-              decades:
-                ArchiveFileTrigram.decade_facets(
-                  @query,
-                  node_id: @node_id,
-                  date_from: @date_from,
-                  date_to: @date_to
-                )
-            }
-          end
-      rescue ActiveRecord::StatementInvalid => e
-        raise unless e.cause.is_a?(SQLite3::SQLException)
+        @results = ArchiveFile.search(@query, **search_opts)
+
+        raw = @results.raw_answer
+        @facets = raw["facetDistribution"]
+        @total_count = raw["totalHits"] || raw["estimatedTotalHits"] || 0
+
+        # Map fonds_name → fonds_id for facet links
+        if @facets && @facets["fonds_name"]&.any?
+          fonds_names = @facets["fonds_name"].keys
+          @fonds_id_map = ArchiveNode.where(parent_node_id: nil, name: fonds_names)
+            .pluck(:name, :id).to_h
+        end
+      rescue MeiliSearch::ApiError, Socket::ResolutionError,
+             Errno::ECONNREFUSED, Net::OpenTimeout, Net::ReadTimeout => e
+        Rails.logger.error "Meilisearch error: #{e.class}: #{e.message}"
         @search_error = true
-        @trigrams = ArchiveFileTrigram.none.page(1)
-        @pagination_cache = { total_count: 0, total_pages: 0 }
+        @results = ArchiveFile.none.page(1)
+        @total_count = 0
       end
     else
       @tab = params[:tab]
       @browse_counts = browse_counts
       load_browse_data
-
-      if @tab.present?
-        @facets =
-          Rails.cache.fetch("browse/global_facets", expires_in: 24.hours) do
-            {
-              fonds: ArchiveFileTrigram.fonds_facets(nil),
-              decades: ArchiveFileTrigram.decade_facets(nil)
-            }
-          end
-      end
     end
   end
 
   private
 
+  def build_meilisearch_filter
+    parts = []
+
+    if @node_id.present?
+      node = ArchiveNode.find_by(id: @node_id)
+      if node
+        ids = [node.id] + node.descendant_ids
+        parts << "archive_node_id IN [#{ids.join(",")}]"
+      end
+    end
+
+    if @date_from.present? && @date_to.present?
+      parts << "source_date_start_unix >= #{@date_from.to_time.to_i}"
+      parts << "source_date_start_unix < #{@date_to.to_time.to_i}"
+    end
+
+    parts.join(" AND ").presence
+  end
+
   def browse_counts
-    Rails.cache.fetch("browse/tab_counts", expires_in: 24.hours) do
+    Rails.cache.fetch("browse/tab_counts") do
       {
         fonds: ArchiveNode.where(parent_node_id: nil).count,
         origins: Origin.count,
@@ -93,7 +86,9 @@ class SearchController < ApplicationController
     when "fonds"
       @letter = params[:letter]
       scope = ArchiveNode.where(parent_node_id: nil)
-      @fonds_letters = scope.pluck(Arel.sql("DISTINCT UPPER(SUBSTR(name, 1, 1))")).sort
+      @fonds_letters = Rails.cache.fetch("browse/fonds_letters") do
+        scope.pluck(Arel.sql("DISTINCT UPPER(SUBSTR(name, 1, 1))")).sort
+      end
       scope = scope.where("UPPER(SUBSTR(name, 1, 1)) = ?", @letter) if @letter.present?
       @root_nodes = scope.order(:name).page(params[:page]).per(50)
     when "origins"
@@ -103,7 +98,9 @@ class SearchController < ApplicationController
       else
         @letter = params[:letter]
         all_origins = Origin.with_file_counts
-        @origin_letters = all_origins.map { |o| o.name[0]&.upcase }.compact.uniq.sort
+        @origin_letters = Rails.cache.fetch("browse/origin_letters") do
+          all_origins.map { |o| o.name[0]&.upcase }.compact.uniq.sort
+        end
         filtered = @letter.present? ? all_origins.select { |o| o.name[0]&.upcase == @letter } : all_origins
         @origins = Kaminari.paginate_array(filtered).page(params[:page]).per(50)
       end
@@ -113,7 +110,7 @@ class SearchController < ApplicationController
         @date_to = Date.parse(params[:to])
         @archive_files = ArchiveFile.in_date_range(@date_from, @date_to).page(params[:page]).per(50)
       else
-        @decade_counts = ArchiveFile.decade_counts
+        @period_counts = ArchiveFile.period_counts
       end
     end
   end

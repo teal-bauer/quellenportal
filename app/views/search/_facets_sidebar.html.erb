@@ -17,22 +17,26 @@
     </div>
   <% end %>
 
-  <% if @facets && @facets[:fonds].any? %>
+  <% if @facets && @facets["fonds_name"]&.any? %>
     <details open class="search-facets__section">
       <summary><%= t("browse.fonds") %></summary>
       <ul class="search-facets__list">
-        <% @facets[:fonds].each do |fonds| %>
+        <% @facets["fonds_name"].sort_by { |_, count| -count }.each do |fonds_name, file_count| %>
+          <% fonds_id = @fonds_id_map&.dig(fonds_name) %>
           <li class="search-facets__list-item">
-            <% if @query.present? %>
-              <%= link_to facet_url(add: { node_id: fonds["fonds_id"] }) do %>
-                <span class="search-facets__name"><%= fonds["fonds_name"] %></span>
-                <span class="search-facets__count"><%= number_with_delimiter(fonds["file_count"]) %></span>
+            <% if fonds_id && @query.present? %>
+              <%= link_to facet_url(add: { node_id: fonds_id }) do %>
+                <span class="search-facets__name"><%= fonds_name %></span>
+                <span class="search-facets__count"><%= number_with_delimiter(file_count) %></span>
+              <% end %>
+            <% elsif fonds_id %>
+              <%= link_to archive_node_path(fonds_id) do %>
+                <span class="search-facets__name"><%= fonds_name %></span>
+                <span class="search-facets__count"><%= number_with_delimiter(file_count) %></span>
               <% end %>
             <% else %>
-              <%= link_to archive_node_path(fonds["fonds_id"]) do %>
-                <span class="search-facets__name"><%= fonds["fonds_name"] %></span>
-                <span class="search-facets__count"><%= number_with_delimiter(fonds["file_count"]) %></span>
-              <% end %>
+              <span class="search-facets__name"><%= fonds_name %></span>
+              <span class="search-facets__count"><%= number_with_delimiter(file_count) %></span>
             <% end %>
           </li>
         <% end %>
@@ -40,26 +44,26 @@
     </details>
   <% end %>
 
-  <% if @facets && @facets[:decades].any? %>
+  <% if @facets && @facets["decade"]&.any? %>
     <details open class="search-facets__section">
       <summary><%= t("browse.dates") %></summary>
-      <% max_count = @facets[:decades].map { |d| d["file_count"] }.max %>
+      <% log_max = Math.log(@facets["decade"].values.max + 1) %>
       <div class="search-facets__decades">
-        <% @facets[:decades].each do |decade| %>
-          <% pct = (decade["file_count"].to_f / max_count * 100).round(1) %>
-          <% decade_start = "#{decade["decade"]}-01-01" %>
-          <% decade_end = "#{decade["decade"].to_i + 10}-01-01" %>
+        <% @facets["decade"].sort_by { |k, _| k.to_i }.each do |decade, file_count| %>
+          <% pct = (Math.log(file_count + 1) / log_max * 100).round(1) %>
+          <% decade_start = "#{decade}-01-01" %>
+          <% decade_end = "#{decade.to_i + 10}-01-01" %>
           <% if @query.present? %>
             <%= link_to facet_url(add: { from: decade_start, to: decade_end }), class: "search-facets__decade-row" do %>
-              <span class="search-facets__decade-label"><%= decade["decade"] %>er</span>
-              <span class="search-facets__decade-bar" style="width: <%= pct %>%"></span>
-              <span class="search-facets__decade-count"><%= number_with_delimiter(decade["file_count"]) %></span>
+              <span class="search-facets__decade-label"><%= decade %>er</span>
+              <span class="search-facets__decade-bar-track"><span class="search-facets__decade-bar" style="width: <%= pct %>%"></span></span>
+              <span class="search-facets__decade-count"><%= number_with_delimiter(file_count) %></span>
             <% end %>
           <% else %>
             <%= link_to browse_dates_path(from: decade_start, to: decade_end), class: "search-facets__decade-row" do %>
-              <span class="search-facets__decade-label"><%= decade["decade"] %>er</span>
-              <span class="search-facets__decade-bar" style="width: <%= pct %>%"></span>
-              <span class="search-facets__decade-count"><%= number_with_delimiter(decade["file_count"]) %></span>
+              <span class="search-facets__decade-label"><%= decade %>er</span>
+              <span class="search-facets__decade-bar-track"><span class="search-facets__decade-bar" style="width: <%= pct %>%"></span></span>
+              <span class="search-facets__decade-count"><%= number_with_delimiter(file_count) %></span>
             <% end %>
           <% end %>
         <% end %>

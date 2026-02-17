@@ -7,7 +7,7 @@ class ResultComponent < ViewComponent::Base
   def parents
     @parents ||=
       @archive_file.parents.map do |parent|
-        text = highlight_query(CGI.escapeHTML(parent['name'].strip))
+        text = highlight_query(CGI.escapeHTML(parent['name'].strip).html_safe)
         if parent["id"].present?
           text = link_to text, archive_node_path(parent["id"]), class: "parents__item__link"
         end

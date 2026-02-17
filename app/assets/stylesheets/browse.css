@@ -291,7 +291,7 @@
   color: #7a4419;
 }
 
-.search-facets__decade-row:hover .search-facets__decade-bar {
+.search-facets__decade-row:hover .search-facets__decade-bar-track .search-facets__decade-bar {
   background-color: #7a4419;
 }
 
@@ -301,14 +301,18 @@
   flex-shrink: 0;
 }
 
+.search-facets__decade-bar-track {
+  flex: 1;
+  min-width: 0;
+}
+
 .search-facets__decade-bar {
+  display: block;
   height: 0.9rem;
   background-color: #998a78;
   border-radius: 2px;
   transition: background-color 0.15s;
   min-width: 2px;
-  flex: 1;
-  max-width: 100%;
 }
 
 .search-facets__decade-count {

@@ -36,55 +36,48 @@
     <h3>Suchanfrage konnte nicht verarbeitet werden.</h3>
     <p>Bitte prüfen Sie die Syntax Ihrer Anfrage. <%= link_to "Suchhinweise", search_help_path %></p>
   <% end %>
-  <% content_for :container_class, "container__inner--wide" %>
-  <div class="search-layout">
-    <%= render "facets_sidebar" %>
-    <div class="search-layout__content">
-      <% cache [controller.action_name, query_cache_key(@query), @node_id, @date_from, @date_to, @trigrams.current_page] do %>
-        <% if @pagination_cache[:total_count] > 0 %>
-          <h3><%= @pagination_cache[:total_count] =%> Objekte gefunden.</h3>
-          <div class="pagination">
-            <%= paginate @trigrams, total_pages: @pagination_cache[:total_pages] %>
-          </div>
-          <% @trigrams.each do |archive_file_trigram| %>
-            <%= render ResultComponent.new(query: @query, archive_file: archive_file_trigram.archive_file) %>
-          <% end %>
-          <div class="pagination">
-            <%= paginate @trigrams, total_pages: @pagination_cache[:total_pages] %>
-          </div>
-        <% else %>
-          <hr />
-          <h3>Keine Akten gefunden.</h3>
+  <% if @facets %>
+    <% content_for :container_class, "container__inner--wide" %>
+    <div class="search-layout">
+      <%= render "facets_sidebar" %>
+      <div class="search-layout__content">
+  <% end %>
+      <% if @total_count > 0 %>
+        <div class="search-results__header">
+          <h3><%= @total_count %> Objekte gefunden.</h3>
+          <span class="search-results__sort">
+            <% if params[:sort] == "call_number" %>
+              <%= link_to "Relevanz", facet_url(remove: [:sort]) %> | <strong>Signatur</strong>
+            <% else %>
+              <strong>Relevanz</strong> | <%= link_to "Signatur", facet_url(add: { sort: "call_number" }) %>
+            <% end %>
+          </span>
+        </div>
+        <div class="pagination">
+          <%= paginate @results %>
+        </div>
+        <% @results.each do |archive_file| %>
+          <%= render ResultComponent.new(query: @query, archive_file: archive_file) %>
         <% end %>
+        <div class="pagination">
+          <%= paginate @results %>
+        </div>
+      <% else %>
+        <hr />
+        <h3>Keine Akten gefunden.</h3>
       <% end %>
+  <% if @facets %>
+      </div>
     </div>
-  </div>
+  <% end %>
 <% else %>
   <% case @tab %>
   <% when "fonds" %>
-    <% content_for :container_class, "container__inner--wide" %>
-    <div class="search-layout">
-      <%= render "facets_sidebar" %>
-      <div class="search-layout__content">
-        <%= render "browse_fonds" %>
-      </div>
-    </div>
+    <%= render "browse_fonds" %>
   <% when "origins" %>
-    <% content_for :container_class, "container__inner--wide" %>
-    <div class="search-layout">
-      <%= render "facets_sidebar" %>
-      <div class="search-layout__content">
-        <%= render "browse_origins" %>
-      </div>
-    </div>
+    <%= render "browse_origins" %>
   <% when "dates" %>
-    <% content_for :container_class, "container__inner--wide" %>
-    <div class="search-layout">
-      <%= render "facets_sidebar" %>
-      <div class="search-layout__content">
-        <%= render "browse_dates" %>
-      </div>
-    </div>
+    <%= render "browse_dates" %>
   <% else %>
     <hr class="title-spacer">
     <h2>Was ist Quellenportal?</h2>

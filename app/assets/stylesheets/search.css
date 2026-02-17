@@ -64,6 +64,22 @@
   box-shadow: 0 0 0 2px rgba(122, 68, 25, 0.2);
 }
 
+.search-results__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.search-results__sort {
+  font-size: 14px;
+  white-space: nowrap;
+  color: #998a78;
+}
+.search-results__sort a {
+  color: #7a4419;
+}
+
 @media (max-width: 600px) {
   .search-bar {
     flex-direction: column-reverse;
