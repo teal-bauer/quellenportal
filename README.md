@@ -56,9 +56,7 @@ bin/rails data:reindex       # rebuild Meilisearch index
 
 ## License
 
-Quellenportal is licensed under the GNU Affero General Public License (AGPL) — see the LICENSE file for details. The AGPL is a strong copyleft license that requires you to provide the source code of a modified version to users even if those users only access the software via a network.
-
-If you would like to use a modified version of Quellenportal in a commercial setting please contact <info@quellenportal.de> for more information!
+Quellenportal is licensed under the GNU Affero General Public License (AGPL) — see the LICENSE file for details.
 
 This does not cover the fonts used (found in `app/assets/fonts/`). Both are covered by the [SIL Open Font License](https://openfontlicense.org). For details see the fonts section and the respective `LICENSE` file.
 
@@ -72,6 +70,6 @@ Atkinson Hyperlegible is the default font for all text and EB Garamond is used f
 
 ## Authors
 
-Michael Emhofer, [emi.industries](https://emi.industries)
+Teal Bauer <teal@starsong.eu>, [Starsong Consulting](https://starsong.consulting)
 
-Extended by Teal Bauer <teal@starsong.eu>
+Based on Bundessuche by Michael Emhofer, [emi.industries](https://emi.industries)
