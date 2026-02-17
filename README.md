@@ -2,13 +2,18 @@
 
 <img src="public/favicon.svg" alt="Quellenportal logo" width="80" align="right">
 
-Quellenportal is a Rails application for searching the [German Federal Archive (Bundesarchiv)](https://www.bundesarchiv.de/). It imports [apeEAD](http://apex-project.eu/index.php/en/outcomes/standards/apeead) formatted XML files and makes them searchable. You can use it at [quellenportal.de](https://quellenportal.de) (also available at [archivfinder.de](https://archivfinder.de)).
+Quellenportal is a Rails application for searching the [German Federal Archive (Bundesarchiv)](https://www.bundesarchiv.de/). It imports [apeEAD](http://apex-project.eu/index.php/en/outcomes/standards/apeead) formatted XML files and makes them searchable. You can use it at [quellenportal.de](https://quellenportal.de).
 
 The search is optimized for quickly skimming large volumes of archival records.
 
 ## Features
 
-Quellenportal extends the upstream Bundesarchiv search with:
+Bundessuche supported:
+
+- **Citation export** — copy or download citations in RIS and BibTeX formats
+- **Direct Invenio links** — links to the Bundesarchiv's Invenio system for accessing actual archival objects
+
+Quellenportal extends upstream with:
 
 - **Fast full-text search** — sub-100ms search with relevance ranking and typo tolerance via Meilisearch
 - **Faceted search** — filter by fonds (archival collection) and decade directly from search results, with a log-scale histogram for date distribution and results sorted by hit count
@@ -16,10 +21,8 @@ Quellenportal extends the upstream Bundesarchiv search with:
 - **Browsable entry points** — browse by fonds, provenance (origins), or time period, with letter index navigation
 - **Node-scoped search** — search within a specific archival hierarchy branch
 - **Auto-drill navigation** — automatically skips through single-child archive nodes
-- **Citation export** — copy or download citations in RIS and BibTeX formats
 - **Search help page** — documents available query syntax and operators
 - **Background import** — imports XML data via Solid Queue background jobs
-- **Direct Invenio links** — links to the Bundesarchiv's Invenio system for accessing actual archival objects
 
 ## Architecture
 
@@ -30,7 +33,7 @@ Quellenportal extends the upstream Bundesarchiv search with:
 
 ## Database
 
-This application uses SQLite (even in production). Database creation and migration is done with the standard Rails tasks. Make sure to mount a volume into the docker image to persist your database. The default location is `/rails/db/sqlite`.
+This application uses SQLite. Database creation and migration is done with the standard Rails tasks. Make sure to mount a volume into the docker image to persist your database. The default location is `/rails/db/sqlite`.
 
 The Rails cache is also stored on this volume (`/rails/db/sqlite/cache`), so browse data and counts survive container restarts and deploys.
 
@@ -56,7 +59,7 @@ bin/rails data:reindex       # rebuild Meilisearch index
 
 ## License
 
-Quellenportal is licensed under the GNU Affero General Public License (AGPL) — see the LICENSE file for details.
+Quellenportal is licensed under the GNU Affero General Public License (AGPL) — see the [LICENSE](LICENSE) file for details. The AGPL is a strong copyleft license that requires you to provide the source code of a modified version to users, even if those users only access the software via a network.
 
 This does not cover the fonts used (found in `app/assets/fonts/`). Both are covered by the [SIL Open Font License](https://openfontlicense.org). For details see the fonts section and the respective `LICENSE` file.
 
