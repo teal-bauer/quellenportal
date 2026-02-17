@@ -1,5 +1,7 @@
 # Quellenportal
 
+<img src="public/favicon.svg" alt="Quellenportal logo" width="80" align="right">
+
 Quellenportal is a Rails application for searching the [German Federal Archive (Bundesarchiv)](https://www.bundesarchiv.de/). It imports [apeEAD](http://apex-project.eu/index.php/en/outcomes/standards/apeead) formatted XML files and makes them searchable. You can use it at [quellenportal.de](https://quellenportal.de) (also available at [archivfinder.de](https://archivfinder.de)).
 
 The search is optimized for quickly skimming large volumes of archival records.
@@ -8,9 +10,10 @@ The search is optimized for quickly skimming large volumes of archival records.
 
 Quellenportal extends the upstream Bundesarchiv search with:
 
-- **Full-text trigram search** — substring matching via SQLite FTS5, including call numbers, titles, summaries, and provenance
-- **Search operators** — AND, OR, NOT, phrase search (`"..."`), prefix matching (`term*`), and negation (`-term`)
-- **Browsable entry points** — browse by fonds, provenance (origins), or decade, with letter index navigation
+- **Fast full-text search** — sub-100ms search with relevance ranking and typo tolerance via Meilisearch
+- **Faceted search** — filter by fonds (archival collection) and decade directly from search results, with a log-scale histogram for date distribution and results sorted by hit count
+- **Search operators** — AND, OR, NOT, phrase search (`"..."`), and negation (`-term`)
+- **Browsable entry points** — browse by fonds, provenance (origins), or time period, with letter index navigation
 - **Node-scoped search** — search within a specific archival hierarchy branch
 - **Auto-drill navigation** — automatically skips through single-child archive nodes
 - **Citation export** — copy or download citations in RIS and BibTeX formats
@@ -18,19 +21,38 @@ Quellenportal extends the upstream Bundesarchiv search with:
 - **Background import** — imports XML data via Solid Queue background jobs
 - **Direct Invenio links** — links to the Bundesarchiv's Invenio system for accessing actual archival objects
 
+## Architecture
+
+- **Rails 8** + SQLite (data storage, browse queries)
+- **Meilisearch** (full-text search, faceting, typo tolerance)
+- **Solid Queue** (background job processing for imports)
+- **Kamal 2** (deployment, with Meilisearch as a managed accessory)
+
 ## Database
 
-This application uses SQLite (even in production), database creation and migration is done with the standard Rails tasks.
-Make sure to mount a volume into the docker image to persist your database. The default location for this is `/rails/db/sqlite`.
+This application uses SQLite (even in production). Database creation and migration is done with the standard Rails tasks. Make sure to mount a volume into the docker image to persist your database. The default location is `/rails/db/sqlite`.
+
+The Rails cache is also stored on this volume (`/rails/db/sqlite/cache`), so browse data and counts survive container restarts and deploys.
 
 ## Included XML Data
 
 The `test/fixtures/files/dataset*` folders contain excerpts of the [CC0](https://creativecommons.org/public-domain/cc0/) licensed data from the German Federal Archive. You can find the full dataset on [open-data.bundesarchiv.de](https://open-data.bundesarchiv.de/apex-ead/) and more information on the open data program on their [website](https://www.bundesarchiv.de/DE/Content/Artikel/Ueber-uns/Aus-unserer-Arbeit/open-data.html).
 
-## Downloading the full XML Data for import
+## Downloading the full XML data
 
-In order to run your own instance you need the full dataset. It's available on [open-data.bundesarchiv.de](https://open-data.bundesarchiv.de/apex-ead/). Since the files are linked individually it's easiest to use an [auto downloader](https://www.downthemall.net/) to get all the data.
-The default location that the importer looks for is the `data` folder, it's easiest to place your XML files there.
+Download all XML files from the Bundesarchiv open data portal with the built-in rake task:
+
+```bash
+bin/rails data:download
+```
+
+This fetches the file listing from [open-data.bundesarchiv.de](https://open-data.bundesarchiv.de/apex-ead/) and downloads all XML files into the `data/` directory, skipping any that already exist. After downloading, import with:
+
+```bash
+bin/rails data:import_sync   # synchronous (~110 min for 4.3M records)
+bin/rails data:import        # background via Solid Queue
+bin/rails data:reindex       # rebuild Meilisearch index
+```
 
 ## License
 
