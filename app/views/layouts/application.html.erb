@@ -2,20 +2,16 @@
 <html lang="<%= I18n.locale %>">
   <head>
     <title>Quellenportal</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="apple-touch-icon" href="/favicon.png">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
-    <script
-      src="https://cdn.telemetrydeck.com/websdk/telemetrydeck.min.js"
-      data-app-id="4D04C4F8-7914-4E67-88E4-1563561BA088"
-    ></script>
-    <%= preload_link_tag asset_path('Atkinson_Hyperlegible/WOFF2/Atkinson-Hyperlegible-Regular-102a.woff2') %>
-    <%= preload_link_tag asset_path('Atkinson_Hyperlegible/WOFF2/Atkinson-Hyperlegible-Bold-102a.woff2') %>
-    <%= preload_link_tag asset_path('Atkinson_Hyperlegible/WOFF2/Atkinson-Hyperlegible-Italic-102a.woff2') %>
-    <%= preload_link_tag asset_path('Atkinson_Hyperlegible/WOFF2/Atkinson-Hyperlegible-BoldItalic-102a.woff2') %>
-    <%= preload_link_tag asset_path('EB_Garamond/WOFF2/EBGaramond12-Regular.woff2') %>
+    <%= preload_link_tag asset_path('Atkinson_Hyperlegible/WOFF2/Atkinson-Hyperlegible-Regular-102a.woff2'), as: "font", type: "font/woff2", crossorigin: "anonymous" %>
+    <%= preload_link_tag asset_path('Atkinson_Hyperlegible/WOFF2/Atkinson-Hyperlegible-Bold-102a.woff2'), as: "font", type: "font/woff2", crossorigin: "anonymous" %>
+    <%= preload_link_tag asset_path('EB_Garamond/WOFF2/EBGaramond12-Regular.woff2'), as: "font", type: "font/woff2", crossorigin: "anonymous" %>
   </head>
   <body>
     <div class="container__outer">
@@ -28,7 +24,7 @@
     </div>
     <footer>
       <%= link_to "Impressum", :legal_notice  %>
-      <small>basierend auf <a href="https://bundessuche.de">Bundessuche</a> von Michael Emhofer</small>
+      <small><a href="https://github.com/teal-bauer/quellenportal">GitHub</a> &middot; basierend auf <a href="https://bundessuche.de">Bundessuche</a> von Michael Emhofer</small>
     </footer>
   </body>
 </html>

@@ -48,14 +48,14 @@ FROM base
 RUN rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Run and own only the runtime files as a non-root user for security
-RUN useradd rails --create-home --shell /bin/bash
+RUN useradd rails --create-home --shell /bin/bash && \
+    mkdir -p /rails/db/sqlite /rails/log /rails/storage /rails/tmp /rails/data && \
+    chown -R rails:rails /rails
 
 # Copy built artifacts: gems, application
 COPY --from=build --chown=rails:rails /usr/local/bundle /usr/local/bundle
 COPY --from=build --chown=rails:rails /rails /rails
 
-RUN mkdir -p db/sqlite log storage tmp data && \
-    chown -R rails:rails db log storage tmp data
 USER rails:rails
 
 # Entrypoint prepares the database.
