@@ -30,3 +30,18 @@
 en:
   search_button: "search"
   search_placeholder: "Search %{total} objects"
+  browse:
+    fonds: "Fonds"
+    origins: "Provenance"
+    dates: "Period"
+  archive_node:
+    unitid: "Call Number"
+    unitdate: "Dates"
+    physdesc: "Extent"
+    langmaterial: "Language"
+    origination: "Provenance"
+    repository: "Repository"
+    scopecontent: "Scope and Content"
+    relatedmaterial: "Related Material"
+    prefercite: "Preferred Citation"
+    children: "Subordinate Levels"

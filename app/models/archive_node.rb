@@ -2,13 +2,22 @@
 #
 # Table name: archive_nodes
 #
-#  id             :integer          not null, primary key
-#  level          :string
-#  name           :string
-#  created_at     :datetime         not null
-#  updated_at     :datetime         not null
-#  parent_node_id :integer
-#  source_id      :string
+#  id              :integer          not null, primary key
+#  langmaterial    :string
+#  level           :string
+#  name            :string
+#  origination     :text
+#  physdesc        :text
+#  prefercite      :text
+#  relatedmaterial :text
+#  repository      :text
+#  scopecontent    :text
+#  unitdate        :string
+#  unitid          :string
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#  parent_node_id  :integer
+#  source_id       :string
 #
 # Indexes
 #
@@ -20,6 +29,10 @@ class ArchiveNode < ApplicationRecord
 
   has_many :child_nodes, class_name: 'ArchiveNode', foreign_key: 'parent_node_id'
   has_many :archive_files
+
+  attribute :physdesc, :json
+  attribute :origination, :json
+  attribute :repository, :json
 
   def parents
     next_node = self

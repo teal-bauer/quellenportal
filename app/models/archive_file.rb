@@ -40,23 +40,25 @@ class ArchiveFile < ApplicationRecord
 
   meilisearch auto_index: false, auto_remove: false, check_settings: false do
     attribute :title, :summary, :call_number
-    attribute(:parent_names) { parents&.map { |p| p["name"] }&.join(" ") || "" }
-    attribute(:origin_names) { origins.pluck(:name).join(" ") }
-    attribute(:fonds_id) { parents&.first&.dig("id") }
-    attribute(:fonds_name) { parents&.first&.dig("name") }
+    attribute(:parent_names) { parents&.map { |p| p['name'] }&.join(' ') || '' }
+    attribute(:origin_names) { origins.pluck(:name).join(' ') }
+    attribute(:fonds_id) { parents&.first&.dig('id') }
+    attribute(:fonds_name) { parents&.first&.dig('name') }
+    attribute(:fonds_unitid) { parents&.first&.dig('unitid') }
+    attribute(:fonds_unitid_prefix) { parents&.first&.dig('unitid')&.split(' ')&.first }
     attribute(:decade) { source_date_start ? (source_date_start.year / 10) * 10 : nil }
     attribute(:archive_node_id) { archive_node_id }
     attribute(:source_date_start_unix) { source_date_start&.to_time&.to_i }
 
-    searchable_attributes [:title, :summary, :call_number, :parent_names, :origin_names]
-    filterable_attributes [:fonds_id, :fonds_name, :decade, :archive_node_id, :source_date_start_unix]
+    searchable_attributes %i[title summary call_number parent_names origin_names]
+    filterable_attributes %i[fonds_id fonds_name fonds_unitid fonds_unitid_prefix decade archive_node_id source_date_start_unix]
     sortable_attributes [:call_number]
 
     faceting max_values_per_facet: 100
     pagination max_total_hits: 100_000
   end
 
-  scope :in_date_range, ->(from, to) {
+  scope :in_date_range, lambda { |from, to|
     where(
       "source_date_start >= :from AND source_date_start < :to
        OR source_date_start_uncorrected >= :from AND source_date_start_uncorrected < :to",
@@ -65,18 +67,18 @@ class ArchiveFile < ApplicationRecord
   }
 
   def self.update_cached_all_count
-    count = self.all.count
-    CachedCount.find_or_create_by(model: self.name, scope: :all).update(
+    count = all.count
+    CachedCount.find_or_create_by(model: name, scope: :all).update(
       count: count
     )
   end
 
   def self.cached_all_count
-    CachedCount.find_by(model: self.name, scope: :all)&.count
+    CachedCount.find_by(model: name, scope: :all)&.count
   end
 
   def self.period_counts
-    Rails.cache.fetch("archive_files/decade_counts") do
+    Rails.cache.fetch('archive_files/decade_counts') do
       connection.select_all(<<~SQL).to_a
         SELECT
           CASE
@@ -99,9 +101,7 @@ class ArchiveFile < ApplicationRecord
   end
 
   def source_dates
-    if source_date_end.blank? || source_date_start == source_date_end
-      return [source_date_start.to_s]
-    end
+    return [source_date_start.to_s] if source_date_end.blank? || source_date_start == source_date_end
 
     [source_date_start.to_s, source_date_end.to_s]
   end
@@ -109,9 +109,7 @@ class ArchiveFile < ApplicationRecord
   def source_date_years
     return [] if source_date_start.blank? && source_date_end.blank?
 
-    if source_date_end.blank? || source_date_start.year == source_date_end.year
-      return [source_date_start.year.to_s]
-    end
+    return [source_date_start.year.to_s] if source_date_end.blank? || source_date_start.year == source_date_end.year
 
     [source_date_start.year.to_s, source_date_end.year.to_s]
   end

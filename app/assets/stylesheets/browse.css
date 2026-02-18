@@ -82,12 +82,27 @@
   border-bottom: 1px solid #ede6d8;
 }
 
-.browse-fonds__item a {
+.browse-fonds__link {
+  display: flex;
+  gap: 1rem;
+  align-items: baseline;
   text-decoration: none;
+  color: inherit;
 }
 
-.browse-fonds__item a:hover {
+.browse-fonds__link:hover .browse-fonds__name {
   text-decoration: underline;
+}
+
+.browse-fonds__unitid {
+  font-weight: bold;
+  color: #7a4419;
+  flex-shrink: 0;
+  min-width: 80px;
+}
+
+.browse-fonds__name {
+  color: #2c2418;
 }
 
 /* Origins list */
