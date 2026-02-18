@@ -7,12 +7,12 @@ class BundesarchivImporterTest < ActiveSupport::TestCase
     assert_equal 794, ArchiveFile.count
   end
 
-  # DE-1958_ed3ff8a0-c65e-4efd-b5d3-96950687d291 is part of DE-1958_B_153.xml in the fixture files
-  test 'importer extracts the correct date for DE-1958_ed3ff8a0-c65e-4efd-b5d3-96950687d291' do
+  # ed3ff8a0-c65e-4efd-b5d3-96950687d291 is part of DE-1958_B_153.xml in the fixture files
+  test 'importer extracts the correct date for ed3ff8a0-c65e-4efd-b5d3-96950687d291' do
     BundesarchivImporter.new('test/fixtures/files/dataset-tiny').run
 
     archive_file =
-      ArchiveFile.find_by(source_id: 'DE-1958_ed3ff8a0-c65e-4efd-b5d3-96950687d291')
+      ArchiveFile.find_by(id: 'ed3ff8a0-c65e-4efd-b5d3-96950687d291')
     assert_equal Date.iso8601('1961-01-01'), archive_file.source_date_start
     assert_equal Date.iso8601('1963-12-31'), archive_file.source_date_end
     assert_equal '', archive_file.source_date_text

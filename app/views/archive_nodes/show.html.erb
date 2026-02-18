@@ -46,78 +46,96 @@
   <% end %>
 </nav>
 
-<% if false # Hide for now %>
-<div class="archive-node-details">
-  <h1 class="archive-node-details__title"><%= @archive_node.name %></h1>
+<% 
+  has_grid_data = @archive_node.unitdate.present? || 
+                  (@archive_node.physdesc.present? && (@archive_node.physdesc['genreform'].present? || @archive_node.physdesc['extent']&.any?)) ||
+                  @archive_node.langmaterial.present? ||
+                  (@archive_node.origination.present? && @archive_node.origination.any?) ||
+                  (@archive_node.repository.present? && @archive_node.repository['corpname'].present?)
+  
+  has_sections = @archive_node.scopecontent.present? || 
+                 @archive_node.relatedmaterial.present? || 
+                 @archive_node.prefercite.present?
+  
+  has_details = has_grid_data || has_sections
+%>
 
-  <div class="archive-node-details__grid">
-    <% if @archive_node.unitid.present? %>
-      <div class="archive-node-details__item">
-        <strong><%= t('archive_node.unitid') %>:</strong> <%= @archive_node.unitid %>
-      </div>
-    <% end %>
+<% if has_details %>
+  <div class="archive-node-details">
+    <h1 class="archive-node-details__title">
+      <% if @archive_node.unitid.present? %><span class="archive-node__unitid"><%= @archive_node.unitid %></span><% end %>
+      <%= @archive_node.name %>
+    </h1>
 
-    <% if @archive_node.unitdate.present? %>
-      <div class="archive-node-details__item">
-        <strong><%= t('archive_node.unitdate') %>:</strong> <%= @archive_node.unitdate %>
-      </div>
-    <% end %>
+    <% if has_grid_data %>
+      <div class="archive-node-details__grid">
+        <% if @archive_node.unitdate.present? %>
+          <div class="archive-node-details__item">
+            <strong><%= t('archive_node.unitdate') %>:</strong> <%= @archive_node.unitdate %>
+          </div>
+        <% end %>
 
-    <% if @archive_node.physdesc.present? %>
-      <div class="archive-node-details__item">
-        <strong><%= t('archive_node.physdesc') %>:</strong>
-        <%= @archive_node.physdesc['genreform'] %>
-        <% if @archive_node.physdesc['extent']&.any? %>
-          (<%= @archive_node.physdesc['extent'].join(', ') %>)
+        <% if @archive_node.physdesc.present? && (@archive_node.physdesc['genreform'].present? || @archive_node.physdesc['extent']&.any?) %>
+          <div class="archive-node-details__item">
+            <strong><%= t('archive_node.physdesc') %>:</strong>
+            <%= @archive_node.physdesc['genreform'] %>
+            <% if @archive_node.physdesc['extent']&.any? %>
+              (<%= @archive_node.physdesc['extent'].join(', ') %>)
+            <% end %>
+          </div>
+        <% end %>
+
+        <% if @archive_node.langmaterial.present? %>
+          <div class="archive-node-details__item">
+            <strong><%= t('archive_node.langmaterial') %>:</strong> <%= @archive_node.langmaterial %>
+          </div>
+        <% end %>
+
+        <% if @archive_node.origination.present? && @archive_node.origination.any? %>
+          <div class="archive-node-details__item">
+            <strong><%= t('archive_node.origination') %>:</strong>
+            <%= @archive_node.origination.map { |o| o['name'] }.join(', ') %>
+          </div>
+        <% end %>
+
+        <% if @archive_node.repository.present? && @archive_node.repository['corpname'].present? %>
+          <div class="archive-node-details__item">
+            <strong><%= t('archive_node.repository') %>:</strong>
+            <%= @archive_node.repository['corpname'] %>
+            <% if @archive_node.repository['address']&.any? %>
+              - <%= @archive_node.repository['address'].join(', ') %>
+            <% end %>
+          </div>
         <% end %>
       </div>
     <% end %>
 
-    <% if @archive_node.langmaterial.present? %>
-      <div class="archive-node-details__item">
-        <strong><%= t('archive_node.langmaterial') %>:</strong> <%= @archive_node.langmaterial %>
+    <% if @archive_node.scopecontent.present? %>
+      <div class="archive-node-details__section">
+        <h2><%= t('archive_node.scopecontent') %></h2>
+        <div class="archive-node-details__text"><%= simple_format(@archive_node.scopecontent) %></div>
       </div>
     <% end %>
 
-    <% if @archive_node.origination.present? %>
-      <div class="archive-node-details__item">
-        <strong><%= t('archive_node.origination') %>:</strong>
-        <%= @archive_node.origination.map { |o| o['name'] }.join(', ') %>
+    <% if @archive_node.relatedmaterial.present? %>
+      <div class="archive-node-details__section">
+        <h2><%= t('archive_node.relatedmaterial') %></h2>
+        <div class="archive-node-details__text"><%= simple_format(@archive_node.relatedmaterial) %></div>
       </div>
     <% end %>
 
-    <% if @archive_node.repository.present? %>
-      <div class="archive-node-details__item">
-        <strong><%= t('archive_node.repository') %>:</strong>
-        <%= @archive_node.repository['corpname'] %>
-        <% if @archive_node.repository['address']&.any? %>
-          - <%= @archive_node.repository['address'].join(', ') %>
-        <% end %>
+    <% if @archive_node.prefercite.present? %>
+      <div class="archive-node-details__section">
+        <h2><%= t('archive_node.prefercite') %></h2>
+        <div class="archive-node-details__text"><%= simple_format(@archive_node.prefercite) %></div>
       </div>
     <% end %>
   </div>
-
-  <% if @archive_node.scopecontent.present? %>
-    <div class="archive-node-details__section">
-      <h2><%= t('archive_node.scopecontent') %></h2>
-      <div class="archive-node-details__text"><%= simple_format(@archive_node.scopecontent) %></div>
-    </div>
-  <% end %>
-
-  <% if @archive_node.relatedmaterial.present? %>
-    <div class="archive-node-details__section">
-      <h2><%= t('archive_node.relatedmaterial') %></h2>
-      <div class="archive-node-details__text"><%= simple_format(@archive_node.relatedmaterial) %></div>
-    </div>
-  <% end %>
-
-  <% if @archive_node.prefercite.present? %>
-    <div class="archive-node-details__section">
-      <h2><%= t('archive_node.prefercite') %></h2>
-      <div class="archive-node-details__text"><%= simple_format(@archive_node.prefercite) %></div>
-    </div>
-  <% end %>
-</div>
+<% else %>
+  <h1 class="archive-node-title-only">
+    <% if @archive_node.unitid.present? %><span class="archive-node__unitid"><%= @archive_node.unitid %></span><% end %>
+    <%= @archive_node.name %>
+  </h1>
 <% end %>
 
 <% if @archive_node.archive_files.any? %>

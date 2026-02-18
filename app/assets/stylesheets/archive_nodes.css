@@ -2,7 +2,7 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    margin: 1rem 0;
+    margin: 1rem 0 2rem 0;
 }
 
 .archive-node-level {
@@ -70,7 +70,6 @@
     background-color: #f8f5f0;
     padding: 1.5rem;
     border: 1px solid #c4b8a6;
-    margin-bottom: 2rem;
     border-radius: 4px;
 }
 
@@ -112,7 +111,7 @@
 }
 
 .archive-node-files {
-    margin-top: 2rem;
+    margin-top: 0;
 }
 
 .archive-node-children-list {

@@ -1,55 +1,71 @@
 class ArchiveObject
-  def initialize(parent_nodes, node, caches, progress_bar: nil, progress_step: 0)
+  def initialize(parent_nodes, node, caches, progress_bar: nil, progress_step: 0, archive_node: nil)
     @parent_nodes = parent_nodes
     @node = node
     @caches = caches
     @progress_bar = progress_bar
     @progress_step = progress_step
-    @archive_node = store
+    @archive_node = archive_node || store
   end
 
   def store
-    source_id = @node.attr('id')
-    if source_id.blank?
+    node_id = clean_id(@node.attr('id'))
+    if node_id.blank?
       # Fallback for archdesc which might not have an id
       unitid_text = @node.xpath('did/unitid').text
-      source_id = "ROOT_#{clean_unitid(unitid_text).gsub(/[^a-zA-Z0-9]/, '_')}"
+      node_id = "ROOT_#{clean_unitid(unitid_text).gsub(/[^a-zA-Z0-9]/, '_')}"
     end
 
-    return @caches[:nodes][source_id] if @caches[:nodes][source_id]
+    # If we already have this node in cache, return it
+    return @caches[:nodes][node_id] if @caches[:nodes][node_id]
 
-    node = ArchiveNode.find_or_initialize_by(source_id: source_id)
+    node = ArchiveNode.find_or_initialize_by(id: node_id)
 
     did = @node.xpath('did')
     unitid = clean_unitid(did.xpath('unitid[@type="call number"]').text)
-    unittitle = did.xpath('unittitle').text
+    unittitle = did.xpath('unittitle').text.strip
+
+    if unitid.blank?
+      # Try extracting from title: e.g. "B 112 Bundesrechnungshof" or "DL 210 Betriebe..."
+      # Pattern: optional BArch, 1-4 uppercase letters, space, digits, optional suffix, then the rest
+      if unittitle =~ /\A(?:BArch\s+)?([A-Z]{1,4}\s+\d+[A-Z0-9\-\.\/\s]*?)\s+(.*)\z/
+        potential_id = $1.strip
+        potential_title = $2.strip
+        
+        # Only accept if the potential title isn't just another number or empty
+        if potential_title.length > 2
+          unitid = potential_id
+          unittitle = potential_title
+        end
+      end
+    end
 
     # Extract metadata
     metadata = {
       name: unittitle,
       level: @node.attr('level') || 'fonds',
       parent_node: @parent_nodes.last,
-      unitid: unitid,
-      unitdate: did.xpath('unitdate').text,
+      unitid: unitid.presence || node.unitid,
+      unitdate: did.xpath('unitdate').text.presence || node.unitdate,
       physdesc: {
-        genreform: did.xpath('physdesc/genreform').text,
-        extent: did.xpath('physdesc/extent').map(&:text)
+        genreform: did.xpath('physdesc/genreform').text.presence || node.physdesc&.dig('genreform'),
+        extent: (did.xpath('physdesc/extent').map(&:text).presence || node.physdesc&.dig('extent') || [])
       },
-      langmaterial: did.xpath('langmaterial').text.strip,
-      origination: did.xpath('origination').map { |o| { name: o.text, label: o.attr('label') } },
+      langmaterial: did.xpath('langmaterial').text.strip.presence || node.langmaterial,
+      origination: (did.xpath('origination').map { |o| { name: o.text, label: o.attr('label') } }.presence || node.origination || []),
       repository: {
-        corpname: did.xpath('repository/corpname').text,
-        address: did.xpath('repository/address/addressline').map(&:text),
-        extref: did.xpath('repository/extref').attr('href')&.value
+        corpname: did.xpath('repository/corpname').text.presence || node.repository&.dig('corpname'),
+        address: (did.xpath('repository/address/addressline').map(&:text).presence || node.repository&.dig('address') || []),
+        extref: (did.xpath('repository/extref').attr('href')&.value.presence || node.repository&.dig('extref'))
       },
-      scopecontent: @node.xpath('scopecontent/p').map(&:text).join("\n\n"),
-      relatedmaterial: @node.xpath('relatedmaterial/p').map(&:text).join("\n\n"),
-      prefercite: @node.xpath('prefercite/p').map(&:text).join("\n\n")
+      scopecontent: @node.xpath('scopecontent/p').map(&:text).join("\n\n").presence || node.scopecontent,
+      relatedmaterial: @node.xpath('relatedmaterial/p').map(&:text).join("\n\n").presence || node.relatedmaterial,
+      prefercite: @node.xpath('prefercite/p').map(&:text).join("\n\n").presence || node.prefercite
     }
 
     node.assign_attributes(metadata)
     node.save! if node.new_record? || node.changed?
-    @caches[:nodes][source_id] = node
+    @caches[:nodes][node_id] = node
 
     increment_progress
 
@@ -81,6 +97,7 @@ class ArchiveObject
         end
 
         {
+          id: clean_id(node.attr('id')),
           archive_node_id: @archive_node.id,
           title: node.xpath('did/unittitle').text,
           parents: parents_cache,
@@ -90,7 +107,6 @@ class ArchiveObject
           source_date_end: date.end_date,
           source_date_start_uncorrected: date.start_date_uncorrected,
           source_date_end_uncorrected: date.end_date_uncorrected,
-          source_id: node.attr('id'),
           link: node.xpath('otherfindaid/p/extref')[0]&.attr('href'),
           location: node.xpath('did/physloc').text,
           language_code: node.xpath('did/langmaterial/language')[0]&.attr('langcode'),
@@ -98,11 +114,10 @@ class ArchiveObject
         }
       end
 
-      results = ArchiveFile.upsert_all(data, unique_by: :source_id, returning: %i[id source_id])
-      id_map = results.to_h { |r| [r['source_id'], r['id']] }
-
+      results = ArchiveFile.upsert_all(data, unique_by: :id, returning: %i[id])
+      
       data.zip(origin_data).each do |file_data, origins|
-        file_id = id_map[file_data[:source_id]]
+        file_id = file_data[:id]
         origins.each do |origin_attrs|
           origin = get_or_create_origin(origin_attrs[:name], origin_attrs[:label])
           originations_to_insert << { archive_file_id: file_id, origin_id: origin.id }
@@ -134,6 +149,64 @@ class ArchiveObject
     @node
       .xpath("#{child_xpath}[@level!='file']")
       .map do |node|
+        # Avoid redundant "double header" nodes where the child is just a 
+        # repetition of the parent (archdesc or structural node).
+        child_title = node.xpath('did/unittitle').text
+        parent_title = @archive_node.name
+        parent_unitid = @archive_node.unitid
+
+        # Normalize for comparison
+        norm_child = child_title.downcase.gsub(/[^a-z0-9]/, '')
+        norm_parent = parent_title.downcase.gsub(/[^a-z0-9]/, '')
+        norm_unitid = parent_unitid&.downcase&.gsub(/[^a-z0-9]/, '') || ''
+
+        is_redundant = false
+        
+        # 1. Exact or normalized match
+        if norm_child == norm_parent
+          is_redundant = true
+        # 2. Child title is "UnitID ParentTitle" (normalized)
+        elsif norm_unitid.present? && norm_child.include?(norm_unitid) && norm_child.include?(norm_parent)
+          is_redundant = true
+        # 3. Child title starts with UnitID and is very similar
+        elsif norm_unitid.present? && norm_child.start_with?(norm_unitid) && norm_child.length < (norm_parent.length + norm_unitid.length + 20)
+          is_redundant = true
+        end
+
+        if is_redundant
+          # Adopt the child's proper ID if we are currently using a ROOT_ fallback
+          child_id = clean_id(node.attr('id'))
+          if @archive_node.id.start_with?('ROOT_') && child_id.present?
+            old_id = @archive_node.id
+            
+            # If a node with child_id already exists, we should merge metadata and delete the ROOT_ node
+            existing_node = ArchiveNode.find_by(id: child_id)
+            if existing_node
+              # Transfer metadata from @archive_node to existing_node if existing_node is missing it
+              existing_node.update!(
+                unitid: existing_node.unitid.presence || @archive_node.unitid,
+                scopecontent: existing_node.scopecontent.presence || @archive_node.scopecontent,
+              )
+              @archive_node.delete # Remove the ROOT_ orphan
+              @archive_node = existing_node
+            else
+              @archive_node.update_column(:id, child_id)
+            end
+            
+            @caches[:nodes].delete(old_id)
+            @caches[:nodes][child_id] = @archive_node
+          end
+
+          # Skip this node but process its content into the EXISTING @archive_node
+          phantom = ArchiveObject.new(@parent_nodes, node, @caches, 
+                                     progress_bar: @progress_bar, 
+                                     progress_step: @progress_step, 
+                                     archive_node: @archive_node)
+          files_count = phantom.process_files
+          decendend_count = phantom.descend
+          next files_count + decendend_count
+        end
+
         descendent = ArchiveObject.new(@parent_nodes + [@archive_node], node, @caches, progress_bar: @progress_bar, progress_step: @progress_step)
         files_count = descendent.process_files
         decendend_count = descendent.descend
@@ -144,6 +217,10 @@ class ArchiveObject
   end
 
   private
+
+  def clean_id(id)
+    id&.sub(/\ADE-1958_/, '')
+  end
 
   def clean_unitid(unitid)
     unitid&.sub(/\ABArch /, '')&.strip
@@ -220,6 +297,9 @@ class BundesarchivImporter
       archive_file_count = root_object.process_files
       archive_file_count += root_object.descend
     end
+
+    # Ensure we consume the full line count budget for this file to avoid drift
+    progress_bar.progress = file_start_progress + file_lines if progress_bar
 
     archive_file_count
   end
