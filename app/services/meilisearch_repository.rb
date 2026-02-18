@@ -144,6 +144,20 @@ class MeilisearchRepository
     end
   end
 
+  def get(path)
+    req = Net::HTTP::Get.new(path)
+    req['Authorization'] = "Bearer #{@meili_key}"
+    perform(req)
+  end
+
+  def post(path, body)
+    req = Net::HTTP::Post.new(path)
+    req['Authorization'] = "Bearer #{@meili_key}"
+    req['Content-Type'] = 'application/json'
+    req.body = body.to_json
+    perform(req)
+  end
+
   private
 
   def delete(path)
@@ -157,20 +171,6 @@ class MeilisearchRepository
     resp['numberOfDocuments'] || 0
   rescue
     0
-  end
-
-  def get(path)
-    req = Net::HTTP::Get.new(path)
-    req['Authorization'] = "Bearer #{@meili_key}"
-    perform(req)
-  end
-
-  def post(path, body)
-    req = Net::HTTP::Post.new(path)
-    req['Authorization'] = "Bearer #{@meili_key}"
-    req['Content-Type'] = 'application/json'
-    req.body = body.to_json
-    perform(req)
   end
 
   def perform(req)
