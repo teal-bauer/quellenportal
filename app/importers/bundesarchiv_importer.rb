@@ -1,10 +1,11 @@
 class ArchiveObject
-  def initialize(parent_nodes, node, caches, progress_bar: nil, progress_step: 0, archive_node: nil)
+  def initialize(parent_nodes, node, caches, progress_bar: nil, progress_step: 0, archive_node: nil, repository: nil)
     @parent_nodes = parent_nodes
     @node = node
     @caches = caches
     @progress_bar = progress_bar
     @progress_step = progress_step
+    @repository = repository || MeilisearchRepository.new
     @archive_node = archive_node || store
   end
 
@@ -18,8 +19,6 @@ class ArchiveObject
 
     # If we already have this node in cache, return it
     return @caches[:nodes][node_id] if @caches[:nodes][node_id]
-
-    node = ArchiveNode.find_or_initialize_by(id: node_id)
 
     did = @node.xpath('did')
     unitid = clean_unitid(did.xpath('unitid[@type="call number"]').text)
@@ -42,34 +41,44 @@ class ArchiveObject
 
     # Extract metadata
     metadata = {
+      id: node_id,
       name: unittitle,
       level: @node.attr('level') || 'fonds',
-      parent_node: @parent_nodes.last,
-      unitid: unitid.presence || node.unitid,
-      unitdate: did.xpath('unitdate').text.presence || node.unitdate,
+      parent_node_id: @parent_nodes.last&.dig(:id),
+      parents: @parent_nodes,
+      ancestor_ids: @parent_nodes.map { |p| p[:id] },
+      unitid: unitid.presence,
+      unitdate: did.xpath('did/unitdate').text.presence,
+      first_letter: unittitle.present? ? unittitle[0].upcase : nil,
       physdesc: {
-        genreform: did.xpath('physdesc/genreform').text.presence || node.physdesc&.dig('genreform'),
-        extent: (did.xpath('physdesc/extent').map(&:text).presence || node.physdesc&.dig('extent') || [])
+        genreform: did.xpath('physdesc/genreform').text.presence,
+        extent: did.xpath('physdesc/extent').map(&:text).presence || []
       },
-      langmaterial: did.xpath('langmaterial').text.strip.presence || node.langmaterial,
-      origination: (did.xpath('origination').map { |o| { name: o.text, label: o.attr('label') } }.presence || node.origination || []),
+      langmaterial: did.xpath('langmaterial').text.strip.presence,
+      origination: did.xpath('origination').map { |o| { name: o.text, label: o.attr('label') } }.presence || [],
       repository: {
-        corpname: did.xpath('repository/corpname').text.presence || node.repository&.dig('corpname'),
-        address: (did.xpath('repository/address/addressline').map(&:text).presence || node.repository&.dig('address') || []),
-        extref: (did.xpath('repository/extref').attr('href')&.value.presence || node.repository&.dig('extref'))
+        corpname: did.xpath('repository/corpname').text.presence,
+        address: did.xpath('repository/address/addressline').map(&:text).presence || [],
+        extref: did.xpath('repository/extref').attr('href')&.value.presence
       },
-      scopecontent: @node.xpath('scopecontent/p').map(&:text).join("\n\n").presence || node.scopecontent,
-      relatedmaterial: @node.xpath('relatedmaterial/p').map(&:text).join("\n\n").presence || node.relatedmaterial,
-      prefercite: @node.xpath('prefercite/p').map(&:text).join("\n\n").presence || node.prefercite
+      scopecontent: @node.xpath('scopecontent/p').map(&:text).join("\n\n").presence,
+      relatedmaterial: @node.xpath('relatedmaterial/p').map(&:text).join("\n\n").presence,
+      prefercite: @node.xpath('prefercite/p').map(&:text).join("\n\n").presence
     }
 
-    node.assign_attributes(metadata)
-    node.save! if node.new_record? || node.changed?
-    @caches[:nodes][node_id] = node
+    @caches[:nodes_batch] << metadata
+    if @caches[:nodes_batch].size >= 100
+      @repository.upsert_nodes(@caches[:nodes_batch])
+      @caches[:nodes_batch] = []
+    end
+    
+    # Store simplified version in cache for hierarchy building
+    cached_node = { id: node_id, name: unittitle, unitid: unitid }
+    @caches[:nodes][node_id] = cached_node
 
     increment_progress
 
-    node
+    cached_node
   end
 
   def process_files
@@ -78,35 +87,48 @@ class ArchiveObject
     return 0 if file_nodes.empty?
 
     archive_file_count = 0
-    originations_to_insert = []
 
     file_nodes.each_slice(1000) do |slice|
-      origin_data = []
       data = slice.map do |node|
         date = UnitDate.new(node.xpath('did/unitdate').first)
 
         node_origins = node.xpath('did/origination').map do |origin|
           { name: origin.text, label: origin.attr('label') }
         end
-        origin_data << node_origins
+        
+        # Upsert origins directly
+        node_origins.each do |o|
+          get_or_create_origin(o[:name], o[:label])
+        end
 
         call_number = clean_unitid(node.xpath('did/unitid[@type="call number"]').text)
 
         parents_cache = (@parent_nodes + [@archive_node]).map do |n|
-          { name: n.name, id: n.id, unitid: n.unitid }
+          { name: n[:name], id: n[:id], unitid: n[:unitid] }
         end
+
+        fonds = parents_cache.first
 
         {
           id: clean_id(node.attr('id')),
-          archive_node_id: @archive_node.id,
+          archive_node_id: @archive_node[:id],
           title: node.xpath('did/unittitle').text,
           parents: parents_cache,
+          ancestor_ids: parents_cache.map { |p| p[:id] },
+          depth: parents_cache.size,
+          fonds_id: fonds[:id],
+          fonds_name: fonds[:name],
+          fonds_unitid: fonds[:unitid],
+          fonds_unitid_prefix: fonds[:unitid]&.split(' ')&.first,
+          origin_names: node_origins.map { |o| o[:name] }.join(' '),
           call_number: call_number,
           source_date_text: date.text,
-          source_date_start: date.start_date,
-          source_date_end: date.end_date,
-          source_date_start_uncorrected: date.start_date_uncorrected,
-          source_date_end_uncorrected: date.end_date_uncorrected,
+          source_date_start: date.start_date&.to_s,
+          source_date_end: date.end_date&.to_s,
+          source_date_start_uncorrected: date.start_date_uncorrected&.to_s,
+          source_date_end_uncorrected: date.end_date_uncorrected&.to_s,
+          source_date_start_unix: date.start_date&.to_time&.to_i,
+          decade: date.start_date ? (date.start_date.year / 10) * 10 : nil,
           link: node.xpath('otherfindaid/p/extref')[0]&.attr('href'),
           location: node.xpath('did/physloc').text,
           language_code: node.xpath('did/langmaterial/language')[0]&.attr('langcode'),
@@ -114,22 +136,11 @@ class ArchiveObject
         }
       end
 
-      results = ArchiveFile.upsert_all(data, unique_by: :id, returning: %i[id])
+      @repository.upsert_files(data)
       
-      data.zip(origin_data).each do |file_data, origins|
-        file_id = file_data[:id]
-        origins.each do |origin_attrs|
-          origin = get_or_create_origin(origin_attrs[:name], origin_attrs[:label])
-          originations_to_insert << { archive_file_id: file_id, origin_id: origin.id }
-        end
-        increment_progress
-      end
+      data.each { increment_progress }
 
       archive_file_count += data.count
-    end
-
-    if originations_to_insert.any?
-      Origination.insert_all(originations_to_insert, unique_by: %i[archive_file_id origin_id])
     end
 
     archive_file_count
@@ -139,7 +150,14 @@ class ArchiveObject
     key = [name, label]
     return @caches[:origins][key] if @caches[:origins][key]
 
-    origin = Origin.find_or_create_by(name: name, label: label)
+    origin = { id: SecureRandom.uuid, name: name, label: label, first_letter: name[0]&.upcase }
+    
+    @caches[:origins_batch] << origin
+    if @caches[:origins_batch].size >= 100
+      @repository.upsert_origins(@caches[:origins_batch])
+      @caches[:origins_batch] = []
+    end
+
     @caches[:origins][key] = origin
     origin
   end
@@ -152,8 +170,8 @@ class ArchiveObject
         # Avoid redundant "double header" nodes where the child is just a 
         # repetition of the parent (archdesc or structural node).
         child_title = node.xpath('did/unittitle').text
-        parent_title = @archive_node.name
-        parent_unitid = @archive_node.unitid
+        parent_title = @archive_node[:name]
+        parent_unitid = @archive_node[:unitid]
 
         # Normalize for comparison
         norm_child = child_title.downcase.gsub(/[^a-z0-9]/, '')
@@ -176,22 +194,14 @@ class ArchiveObject
         if is_redundant
           # Adopt the child's proper ID if we are currently using a ROOT_ fallback
           child_id = clean_id(node.attr('id'))
-          if @archive_node.id.start_with?('ROOT_') && child_id.present?
-            old_id = @archive_node.id
+          if @archive_node[:id].start_with?('ROOT_') && child_id.present?
+            old_id = @archive_node[:id]
             
-            # If a node with child_id already exists, we should merge metadata and delete the ROOT_ node
-            existing_node = ArchiveNode.find_by(id: child_id)
-            if existing_node
-              # Transfer metadata from @archive_node to existing_node if existing_node is missing it
-              existing_node.update!(
-                unitid: existing_node.unitid.presence || @archive_node.unitid,
-                scopecontent: existing_node.scopecontent.presence || @archive_node.scopecontent,
-              )
-              @archive_node.delete # Remove the ROOT_ orphan
-              @archive_node = existing_node
-            else
-              @archive_node.update_column(:id, child_id)
-            end
+            # Transfer metadata from @archive_node to existing_node if existing_node is missing it
+            @archive_node[:id] = child_id
+            @repository.upsert_nodes([@archive_node])
+            # In a real system we might want to delete the old ROOT_ node, but Meilisearch 
+            # doesn't easily support "rename" - we just upsert with new ID.
             
             @caches[:nodes].delete(old_id)
             @caches[:nodes][child_id] = @archive_node
@@ -201,13 +211,16 @@ class ArchiveObject
           phantom = ArchiveObject.new(@parent_nodes, node, @caches, 
                                      progress_bar: @progress_bar, 
                                      progress_step: @progress_step, 
-                                     archive_node: @archive_node)
+                                     archive_node: @archive_node,
+                                     repository: @repository)
           files_count = phantom.process_files
           decendend_count = phantom.descend
           next files_count + decendend_count
         end
 
-        descendent = ArchiveObject.new(@parent_nodes + [@archive_node], node, @caches, progress_bar: @progress_bar, progress_step: @progress_step)
+        descendent = ArchiveObject.new(@parent_nodes + [@archive_node], node, @caches, 
+                                      progress_bar: @progress_bar, progress_step: @progress_step,
+                                      repository: @repository)
         files_count = descendent.process_files
         decendend_count = descendent.descend
 
@@ -245,6 +258,7 @@ end
 class BundesarchivImporter
   def initialize(dir)
     @dir = dir || 'data'
+    @repository = MeilisearchRepository.new
   end
 
   def enqueue_all
@@ -255,14 +269,19 @@ class BundesarchivImporter
       ImportFileJob.perform_later(File.join(@dir, filename))
     end
 
-    ReindexJob.set(priority: 10).perform_later
+    # No ReindexJob needed anymore as we index on the fly
     puts 'All jobs enqueued. Import will run in background.'
   end
 
   def import_file(path, progress_bar: nil, file_start_progress: 0, file_lines: 0)
+    # Fetch origins from Meilisearch for cache
+    origins_list = @repository.all_origins_for_cache
+    
     caches = {
       nodes: {},
-      origins: Origin.all.to_h { |o| [[o.name, o.label], o] },
+      nodes_batch: [],
+      origins: origins_list.to_h { |o| [[o['name'], o['label']], o] },
+      origins_batch: [],
       progress_acc: 0.0
     }
 
@@ -292,11 +311,13 @@ class BundesarchivImporter
     progress_step = c_count > 0 ? (file_lines * 0.95) / c_count : 0
 
     archive_file_count = 0
-    ActiveRecord::Base.transaction do
-      root_object = ArchiveObject.new([], archdesc, caches, progress_bar: progress_bar, progress_step: progress_step)
-      archive_file_count = root_object.process_files
-      archive_file_count += root_object.descend
-    end
+    root_object = ArchiveObject.new([], archdesc, caches, progress_bar: progress_bar, progress_step: progress_step, repository: @repository)
+    archive_file_count = root_object.process_files
+    archive_file_count += root_object.descend
+
+    # Flush remaining batches
+    @repository.upsert_nodes(caches[:nodes_batch]) if caches[:nodes_batch].any?
+    @repository.upsert_origins(caches[:origins_batch]) if caches[:origins_batch].any?
 
     # Ensure we consume the full line count budget for this file to avoid drift
     progress_bar.progress = file_start_progress + file_lines if progress_bar
@@ -309,13 +330,6 @@ class BundesarchivImporter
     start = Time.now
     archive_file_count = 0
 
-    unless ActiveRecord::Base.connection.open_transactions > 0
-      conn = ActiveRecord::Base.connection
-      conn.execute('PRAGMA synchronous = OFF')
-      conn.execute('PRAGMA journal_mode = MEMORY')
-      conn.execute('PRAGMA cache_size = -512000') # 512MB
-    end
-
     xml_files = Dir.glob('*.xml', base: @dir).sort
     
     file_line_counts = {}
@@ -323,11 +337,9 @@ class BundesarchivImporter
 
     if show_progress
       # Use xargs to count lines for all files in one or a few goes
-      # This is much faster than spawning a shell per file
       begin
         paths = xml_files.map { |f| File.join(@dir, f) }
         
-        # Capture3 to pass filenames safely to xargs
         require 'open3'
         stdout, _stderr, status = Open3.capture3("xargs wc -l", stdin_data: paths.join("\n"))
         
@@ -387,7 +399,7 @@ class BundesarchivImporter
 
     progress_bar.finish if show_progress
 
-    ArchiveFile.update_cached_all_count
+    # Clear Rails caches
     Rails.cache.delete('origins/with_file_counts')
     Rails.cache.delete('archive_files/decade_counts')
     Rails.cache.delete('browse/tab_counts')

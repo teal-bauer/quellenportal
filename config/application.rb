@@ -4,7 +4,7 @@ require 'rails'
 # Pick the frameworks you want:
 require 'active_model/railtie'
 require 'active_job/railtie'
-require 'active_record/railtie'
+# require 'active_record/railtie' # SQLite removed
 # require "active_storage/engine"
 require 'action_controller/railtie'
 # require "action_mailer/railtie"
@@ -39,9 +39,8 @@ module Bundessuche
 
     config.i18n.default_locale = :de
 
-    config.active_record.schema_format = :sql
+    # config.active_record.schema_format = :sql # SQLite removed
 
-    config.active_job.queue_adapter = :solid_queue
-    config.solid_queue.connects_to = { database: { writing: :queue } }
+    config.active_job.queue_adapter = :async
   end
 end

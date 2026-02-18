@@ -38,9 +38,4 @@ namespace :data do
   task :import_sync, [:dir] => [:environment] do |_task, args|
     BundesarchivImporter.new(args[:dir]).run(show_progress: true)
   end
-
-  desc 'Recreate Meilisearch index (bulk, bypasses ActiveRecord)'
-  task reindex: [:environment] do
-    MeilisearchBulkIndexer.new(verbose: true).call
-  end
 end

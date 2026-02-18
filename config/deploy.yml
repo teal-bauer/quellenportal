@@ -30,7 +30,6 @@ env:
     SOLID_QUEUE_IN_PUMA: false
 
 volumes:
-  - "quellenportal_sqlite:/rails/db/sqlite"
   - "quellenportal_storage:/rails/storage"
   - "quellenportal_data:/rails/data"
 

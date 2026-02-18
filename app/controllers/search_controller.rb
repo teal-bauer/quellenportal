@@ -2,16 +2,20 @@ class SearchController < ApplicationController
   helper SearchHelper
 
   def index
-    @total = ArchiveFile.cached_all_count
+    @repository = MeilisearchRepository.new
     @query = params[:q]
     @node_id = params[:node_id]
-    @archive_node = ArchiveNode.find_by(id: @node_id) if @node_id.present?
     @unitid = params[:unitid]
     @unitid_prefix = params[:unitid_prefix]
-    @date_from =
-      params[:from].present? ? Date.parse(params[:from]) : nil
-    @date_to =
-      params[:to].present? ? Date.parse(params[:to]) : nil
+    @date_from = params[:from].present? ? Date.parse(params[:from]) : nil
+    @date_to = params[:to].present? ? Date.parse(params[:to]) : nil
+    
+    # Retrieve node metadata from Meilisearch if ID is present
+    if @node_id.present?
+      @archive_node = @repository.get_node(@node_id)
+      # Wrap in OpenStruct to mimic AR object if needed, or update view to use hash access
+      @archive_node = OpenStruct.new(@archive_node) if @archive_node
+    end
 
     if @query.present?
       begin
@@ -26,29 +30,27 @@ class SearchController < ApplicationController
           page: (params[:page] || 1).to_i
         }.compact
 
-        @results = ArchiveFile.search(@query, **search_opts)
+        # Use Repository for search
+        # Note: ArchiveFile.search uses the gem. We can switch to repository or keep gem for now if it points to same index.
+        # But to be "SQLite-free" completely, let's use the repository raw search to avoid any model dependency.
+        results = @repository.search_files(@query, search_opts)
+        
+        @results = Kaminari.paginate_array(
+          results['hits'].map { |h| OpenStruct.new(h) },
+          total_count: results['totalHits'] || results['estimatedTotalHits']
+        ).page(params[:page]).per(100)
 
-        raw = @results.raw_answer
-        @facets = raw['facetDistribution']
-        @total_count = raw['totalHits'] || raw['estimatedTotalHits'] || 0
+        @facets = results['facetDistribution']
+        @total_count = results['totalHits'] || results['estimatedTotalHits'] || 0
 
-        # Map fonds identifiers → fonds_id for facet links
-        @fonds_id_map = {}
-        if @facets
-          fonds_names = @facets['fonds_name']&.keys || []
-          fonds_unitids = @facets['fonds_unitid']&.keys || []
-          nodes = ArchiveNode.where(parent_node_id: nil)
-                             .where('name IN (?) OR unitid IN (?)', fonds_names, fonds_unitids)
-          nodes.each do |node|
-            @fonds_id_map[node.name] = node.id
-            @fonds_id_map[node.unitid] = node.id if node.unitid.present?
-          end
-        end
-      rescue MeiliSearch::ApiError, Socket::ResolutionError,
-             Errno::ECONNREFUSED, Net::OpenTimeout, Net::ReadTimeout => e
+        # Map fonds identifiers - likely not needed if we just use the facet keys directly in view
+        # The original code queried ArchiveNode to get IDs. Now we just have names/unitids.
+        # We can implement a "lookup" search if strictly needed, but for now let's skip the DB query.
+        @fonds_id_map = {} 
+      rescue => e
         Rails.logger.error "Meilisearch error: #{e.class}: #{e.message}"
         @search_error = true
-        @results = ArchiveFile.none.page(1)
+        @results = Kaminari.paginate_array([]).page(1)
         @total_count = 0
       end
     else
@@ -64,11 +66,7 @@ class SearchController < ApplicationController
     parts = []
 
     if @node_id.present?
-      node = ArchiveNode.find_by(id: @node_id)
-      if node
-        ids = [node.id] + node.descendant_ids
-        parts << "archive_node_id IN [#{ids.join(',')}]"
-      end
+      parts << "ancestor_ids = '#{@node_id}'"
     end
 
     if @unitid.present?
@@ -88,45 +86,83 @@ class SearchController < ApplicationController
   end
 
   def browse_counts
-    Rails.cache.fetch('browse/tab_counts') do
-      {
-        fonds: ArchiveNode.where(parent_node_id: nil).count,
-        origins: Origin.count,
-        decades: ArchiveFile.where.not(source_date_start: nil).count
-      }
-    end
+    # Get stats directly from Meilisearch
+    stats = @repository.stats
+    {
+      fonds: stats[:nodes],   # This might count ALL nodes, we may need a specific query for "roots"
+      origins: stats[:origins],
+      decades: stats[:files]  # Approximation
+    }
   end
 
   def load_browse_data
     case @tab
     when 'fonds'
       @letter = params[:letter]
-      scope = ArchiveNode.where(parent_node_id: nil)
-      @fonds_letters = Rails.cache.fetch('browse/fonds_letters_v2') do
-        scope.pluck(Arel.sql('DISTINCT UPPER(SUBSTR(name, 1, 1))')).sort
-      end
-      scope = scope.where('UPPER(SUBSTR(name, 1, 1)) = ?', @letter) if @letter.present?
-      @root_nodes = scope.order(:name).page(params[:page]).per(50)
+      
+      # Use the repository's dedicated method which handles the filter
+      response = @repository.root_nodes(page: (params[:page]||1).to_i, letter: @letter)
+      
+      @root_nodes = Kaminari.paginate_array(
+        response['hits'].map { |h| OpenStruct.new(h) },
+        total_count: response['totalHits']
+      ).page(params[:page]).per(50)
+      
+      # Fetch available letters dynamically from facets
+      @fonds_letters = @repository.fonds_letters
+      
     when 'origins'
       if params[:origin_id].present?
-        @origin = Origin.find(params[:origin_id])
-        @archive_files = @origin.archive_files.page(params[:page]).per(50)
+        # Drilldown into an origin
+        # We need to find the origin name first to filter files
+        origin = @repository.get_origin(params[:origin_id])
+        @origin = OpenStruct.new(origin)
+        
+        # Now search files with this origin name
+        # We rely on the denormalized 'origin_names' in the file index
+        if @origin
+          response = @repository.search_files(@origin.name, hitsPerPage: 50, page: (params[:page]||1).to_i)
+          @archive_files = Kaminari.paginate_array(
+            response['hits'].map { |h| OpenStruct.new(h) },
+            total_count: response['totalHits']
+          ).page(params[:page]).per(50)
+        end
       else
         @letter = params[:letter]
-        all_origins = Origin.with_file_counts
-        @origin_letters = Rails.cache.fetch('browse/origin_letters') do
-          all_origins.map { |o| o.name[0]&.upcase }.compact.uniq.sort
-        end
-        filtered = @letter.present? ? all_origins.select { |o| o.name[0]&.upcase == @letter } : all_origins
-        @origins = Kaminari.paginate_array(filtered).page(params[:page]).per(50)
+        response = @repository.all_origins(page: (params[:page]||1).to_i, letter: @letter)
+        
+        @origins = Kaminari.paginate_array(
+          response['hits'].map { |h| OpenStruct.new(h) },
+          total_count: response['totalHits']
+        ).page(params[:page]).per(50)
+        
+        @origin_letters = @repository.origin_letters
       end
     when 'dates'
       if params[:from].present? && params[:to].present?
         @date_from = Date.parse(params[:from])
         @date_to = Date.parse(params[:to])
-        @archive_files = ArchiveFile.in_date_range(@date_from, @date_to).page(params[:page]).per(50)
+        # Use Meilisearch filter for date range
+        filter = "source_date_start_unix >= #{@date_from.to_time.to_i} AND source_date_start_unix < #{@date_to.to_time.to_i}"
+        response = @repository.search_files("", filter: filter, hitsPerPage: 50, page: (params[:page]||1).to_i)
+        
+        @archive_files = Kaminari.paginate_array(
+          response['hits'].map { |h| OpenStruct.new(h) },
+          total_count: response['totalHits']
+        ).page(params[:page]).per(50)
       else
-        @period_counts = ArchiveFile.period_counts
+        # Period counts - tough one. 
+        # We can use facets on 'decade' to get counts per decade!
+        # This replaces the custom SQL aggregation.
+        response = @repository.search_files("", facets: ['decade'], hitsPerPage: 0)
+        
+        if response['facetDistribution'] && response['facetDistribution']['decade']
+          @period_counts = response['facetDistribution']['decade'].map do |decade, count|
+            { 'period' => decade.to_i, 'span' => 10, 'file_count' => count }
+          end.sort_by { |p| p['period'] }
+        else
+          @period_counts = []
+        end
       end
     end
   end

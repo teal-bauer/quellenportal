@@ -11,15 +11,13 @@ gem 'importmap-rails'
 gem 'propshaft'
 
 # Database
-gem 'activerecord-enhancedsqlite3-adapter', '~> 0.8.0' # Performance improvements for SQLite
-gem 'sqlite3', '~> 2.6' # Use SQLite for production
+# SQLite removed as per user request to move entirely to Meilisearch
 
 gem 'bibtex-ruby', '~> 6.1' # Export bibtex citations
 gem 'bootsnap', require: false # Reduces boot times through caching; required in config/boot.rb
 gem 'kaminari' # Pagination
-gem 'meilisearch-rails' # Full-text search via Meilisearch
+gem 'meilisearch' # Raw Meilisearch client (replacing meilisearch-rails which is AR-bound)
 gem 'progressbar', '~> 1.13' # Used in the import task
-gem 'solid_queue' # Background job processing
 gem 'view_component' # Reusable view components
 
 group :development, :test do
