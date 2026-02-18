@@ -29,13 +29,12 @@ namespace :data do
     puts "\nDone."
   end
 
-  desc 'Import data from XML files (synchronous)'
+  desc 'Import data from XML files (background via async queue)'
   task :import, [:dir] => [:environment] do |_task, args|
-    # Run synchronously because we don't have a persistent job worker in this setup
-    BundesarchivImporter.new(args[:dir]).run(show_progress: true)
+    BundesarchivImporter.new(args[:dir]).enqueue_all
   end
 
-  desc 'Import data from XML files (synchronous - alias)'
+  desc 'Import data from XML files (synchronous)'
   task :import_sync, [:dir] => [:environment] do |_task, args|
     BundesarchivImporter.new(args[:dir]).run(show_progress: true)
   end

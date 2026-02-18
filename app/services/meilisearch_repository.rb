@@ -120,6 +120,15 @@ class MeilisearchRepository
     post("/indexes/#{@origin_index}/documents", documents)
   end
 
+  def stats
+    # Quick stats from Meilisearch
+    {
+      files: get_stats(@file_index),
+      nodes: get_stats(@node_index),
+      origins: get_stats(@origin_index)
+    }
+  end
+
   def all_origins_for_cache
     # Fetch all origins without pagination for the importer cache
     # Meilisearch default limit is 20, so we need a large number
