@@ -2,7 +2,7 @@
 #
 # Table name: archive_files
 #
-#  id                            :integer          not null, primary key
+#  id                            :string           not null, primary key
 #  call_number                   :string
 #  language_code                 :string
 #  link                          :string
@@ -13,25 +13,24 @@
 #  source_date_start             :date
 #  source_date_start_uncorrected :date
 #  source_date_text              :string
-#  summary                       :string
+#  summary                       :text
 #  title                         :string
 #  created_at                    :datetime         not null
 #  updated_at                    :datetime         not null
-#  archive_node_id               :integer
-#  source_id                     :string
+#  archive_node_id               :string
 #
 # Indexes
 #
 #  index_archive_files_on_archive_node_id    (archive_node_id)
 #  index_archive_files_on_call_number        (call_number)
 #  index_archive_files_on_source_date_start  (source_date_start)
-#  index_archive_files_on_source_id          (source_id) UNIQUE
-#  index_archive_files_on_summary            (summary)
 #  index_archive_files_on_title              (title)
 #  index_archive_files_on_title_and_summary  (title,summary)
 #
 class ArchiveFile < ApplicationRecord
   include MeiliSearch::Rails
+
+  self.primary_key = :id
 
   belongs_to :archive_node
 

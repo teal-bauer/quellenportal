@@ -1,11 +1,11 @@
-require "test_helper"
+require 'test_helper'
 
 class ArchiveNodeTest < ActiveSupport::TestCase
   def setup
-    BundesarchivImporter.new("test/fixtures/files/dataset-tiny").run
+    BundesarchivImporter.new('test/fixtures/files/dataset-tiny').run
   end
 
-  test "descendant_ids includes child nodes" do
+  test 'descendant_ids includes child nodes' do
     # Find a node with children
     parent_node = ArchiveNode.joins(:child_nodes).distinct.first
     descendant_ids = parent_node.descendant_ids
@@ -16,7 +16,7 @@ class ArchiveNodeTest < ActiveSupport::TestCase
     end
   end
 
-  test "descendant_ids includes grandchildren" do
+  test 'descendant_ids includes grandchildren' do
     # Find a node whose children also have children
     grandparent = ArchiveNode.find_by(parent_node_id: nil)
     next unless grandparent
@@ -31,14 +31,14 @@ class ArchiveNodeTest < ActiveSupport::TestCase
     end
   end
 
-  test "descendant_ids returns empty array for leaf node" do
+  test 'descendant_ids returns empty array for leaf node' do
     # Find a node with no children by checking child_nodes count
     leaf_node = ArchiveNode.all.find { |n| n.child_nodes.empty? }
-    assert_not_nil leaf_node, "Should have at least one leaf node"
+    assert_not_nil leaf_node, 'Should have at least one leaf node'
     assert_equal [], leaf_node.descendant_ids
   end
 
-  test "parents returns nodes from root to self" do
+  test 'parents returns nodes from root to self' do
     deepest_node = ArchiveNode.order(:id).last
     parents = deepest_node.parents
 

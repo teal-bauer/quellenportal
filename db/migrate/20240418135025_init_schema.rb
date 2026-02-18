@@ -17,7 +17,7 @@ class InitSchema < ActiveRecord::Migration[7.1]
       # https://fractaledmind.github.io/2023/09/12/enhancing-rails-sqlite-array-columns/
       t.json :parents, default: [], null: false
       t.check_constraint "JSON_TYPE(parents) = 'array'",
-                         name: "parents_is_array"
+                         name: 'parents_is_array'
 
       t.date :source_date_start
       t.date :source_date_end
@@ -63,6 +63,6 @@ class InitSchema < ActiveRecord::Migration[7.1]
 
   def down
     raise ActiveRecord::IrreversibleMigration,
-          "The initial migration is not revertable"
+          'The initial migration is not revertable'
   end
 end

@@ -1,4 +1,4 @@
-require "test_helper"
+require 'test_helper'
 
 class ResultComponentTest < ViewComponent::TestCase
   setup do
@@ -6,11 +6,11 @@ class ResultComponentTest < ViewComponent::TestCase
   end
 
   def test_title_highlight
-    @archive_file.expect(:title, "Rechenzentrum Duisburg")
+    @archive_file.expect(:title, 'Rechenzentrum Duisburg')
 
     component =
       ResultComponent.new(
-        query: "rechenzentrum",
+        query: 'rechenzentrum',
         archive_file: @archive_file
       )
 
@@ -20,25 +20,25 @@ class ResultComponentTest < ViewComponent::TestCase
   end
 
   def test_date
-    @archive_file.expect(:source_date_text, "1989")
-    @archive_file.expect(:source_date_text, "1989")
+    @archive_file.expect(:source_date_text, '1989')
+    @archive_file.expect(:source_date_text, '1989')
 
     component =
       ResultComponent.new(
-        query: "rechenzentrum",
+        query: 'rechenzentrum',
         archive_file: @archive_file
       )
 
-    assert_equal "1989", component.date
+    assert_equal '1989', component.date
     @archive_file.verify
   end
 
   def test_summary_highlight
-    @archive_file.expect(:summary, "Das Rechenzentrum in Duisburg")
+    @archive_file.expect(:summary, 'Das Rechenzentrum in Duisburg')
 
     component =
       ResultComponent.new(
-        query: "rechenzentrum",
+        query: 'rechenzentrum',
         archive_file: @archive_file
       )
 

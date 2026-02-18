@@ -6,6 +6,6 @@ class AddSearchTable < ActiveRecord::Migration[7.1]
   end
 
   def down
-    execute("DROP TABLE IF EXISTS record_trigrams")
+    execute('DROP TABLE IF EXISTS record_trigrams')
   end
 end

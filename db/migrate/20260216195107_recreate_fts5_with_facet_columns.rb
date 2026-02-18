@@ -1,6 +1,6 @@
 class RecreateFts5WithFacetColumns < ActiveRecord::Migration[8.0]
   def up
-    execute "DROP TABLE IF EXISTS archive_file_trigrams"
+    execute 'DROP TABLE IF EXISTS archive_file_trigrams'
     execute <<~SQL
       CREATE VIRTUAL TABLE archive_file_trigrams USING fts5(
         archive_file_id UNINDEXED,
@@ -15,7 +15,7 @@ class RecreateFts5WithFacetColumns < ActiveRecord::Migration[8.0]
   end
 
   def down
-    execute "DROP TABLE IF EXISTS archive_file_trigrams"
+    execute 'DROP TABLE IF EXISTS archive_file_trigrams'
     execute <<~SQL
       CREATE VIRTUAL TABLE archive_file_trigrams USING fts5(
         archive_file_id UNINDEXED,

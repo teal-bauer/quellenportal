@@ -44,6 +44,17 @@
   background-color: #5e3412;
 }
 
+.search__help-link {
+  font-size: 14px;
+  color: #7a4419;
+  text-decoration: none;
+  margin-left: 12px;
+  white-space: nowrap;
+}
+.search__help-link:hover {
+  text-decoration: underline;
+}
+
 .search__text-input {
   background-color: #faf7f2;
   border-radius: 4px;

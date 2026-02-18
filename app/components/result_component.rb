@@ -1,5 +1,5 @@
 class ResultComponent < ViewComponent::Base
-  def initialize(archive_file:, query: "")
+  def initialize(archive_file:, query: '')
     @query = query
     @archive_file = archive_file
   end
@@ -8,9 +8,7 @@ class ResultComponent < ViewComponent::Base
     @parents ||=
       @archive_file.parents.map do |parent|
         text = highlight_query(CGI.escapeHTML(parent['name'].strip).html_safe)
-        if parent["id"].present?
-          text = link_to text, archive_node_path(parent["id"]), class: "parents__item__link"
-        end
+        text = link_to text, archive_node_path(parent['id']), class: 'parents__item__link' if parent['id'].present?
 
         "<div class=\"parents__item\">#{text}</div>"
       end.join '<div class="parents__separator">/</div>'
@@ -25,7 +23,7 @@ class ResultComponent < ViewComponent::Base
   def date
     return @archive_file.source_date_text if @archive_file.source_date_text.present?
 
-    @archive_file.source_date_years.join("-")
+    @archive_file.source_date_years.join('-')
   end
 
   def date_corrected?
@@ -53,6 +51,7 @@ class ResultComponent < ViewComponent::Base
 
   def highlight_query(text)
     return text if @query.blank? || text.blank?
+
     text.gsub(
       /(#{CGI.escapeHTML(@query)})/i,
       '<span class="result__highlight">\1</span>'

@@ -1,18 +1,18 @@
-require "net/http"
-require "json"
+require 'net/http'
+require 'json'
 
 class MeilisearchBulkIndexer
   BATCH_SIZE = 5_000
 
   def initialize(verbose: false)
     @verbose = verbose
-    @meili_url = ENV.fetch("MEILISEARCH_HOST", "http://localhost:7700")
-    @meili_key = ENV.fetch("MEILISEARCH_API_KEY", "")
+    @meili_url = ENV.fetch('MEILISEARCH_HOST', 'http://localhost:7700')
+    @meili_key = ENV.fetch('MEILISEARCH_API_KEY', '')
     @index_name = "ArchiveFile_#{Rails.env}"
 
     uri = URI.parse(@meili_url)
     @http = Net::HTTP.new(uri.host, uri.port)
-    @http.use_ssl = uri.scheme == "https"
+    @http.use_ssl = uri.scheme == 'https'
     @http.read_timeout = 120
   end
 
@@ -21,11 +21,11 @@ class MeilisearchBulkIndexer
     create_index
     configure_settings
     bulk_load_documents
-    Rails.cache.delete("browse/tab_counts")
-    Rails.cache.delete("browse/fonds_letters")
-    Rails.cache.delete("browse/origin_letters")
-    Rails.cache.delete("archive_files/decade_counts")
-    Rails.cache.delete("origins/with_file_counts")
+    Rails.cache.delete('browse/tab_counts')
+    Rails.cache.delete('browse/fonds_letters')
+    Rails.cache.delete('browse/origin_letters')
+    Rails.cache.delete('archive_files/decade_counts')
+    Rails.cache.delete('origins/with_file_counts')
   end
 
   private
@@ -38,7 +38,7 @@ class MeilisearchBulkIndexer
 
   def create_index
     log "Creating index #{@index_name}..."
-    meili_request(:post, "/indexes", { uid: @index_name, primaryKey: "id" })
+    meili_request(:post, '/indexes', { uid: @index_name, primaryKey: 'id' })
     sleep 1
   end
 
@@ -63,27 +63,27 @@ class MeilisearchBulkIndexer
   ].freeze
 
   def configure_settings
-    log "Configuring index settings..."
+    log 'Configuring index settings...'
     meili_request(:patch, "/indexes/#{@index_name}/settings", {
-      searchableAttributes: %w[title summary call_number parent_names origin_names],
-      filterableAttributes: %w[fonds_id fonds_name decade archive_node_id source_date_start_unix],
-      sortableAttributes: %w[call_number],
-      stopWords: GERMAN_STOP_WORDS,
-      typoTolerance: {
-        enabled: true,
-        minWordSizeForTypos: { oneTypo: 4, twoTypos: 8 }
-      },
-      faceting: { maxValuesPerFacet: 100 },
-      pagination: { maxTotalHits: 100_000 }
-    })
+                    searchableAttributes: %w[title summary call_number parent_names origin_names],
+                    filterableAttributes: %w[fonds_id fonds_name decade archive_node_id source_date_start_unix],
+                    sortableAttributes: %w[call_number],
+                    stopWords: GERMAN_STOP_WORDS,
+                    typoTolerance: {
+                      enabled: true,
+                      minWordSizeForTypos: { oneTypo: 4, twoTypos: 8 }
+                    },
+                    faceting: { maxValuesPerFacet: 100 },
+                    pagination: { maxTotalHits: 100_000 }
+                  })
   end
 
   def bulk_load_documents
     pool = ActiveRecord::Base.connection_pool
 
     total, max_id = pool.with_connection do |conn|
-      [conn.select_value("SELECT COUNT(*) FROM archive_files"),
-       conn.select_value("SELECT MAX(id) FROM archive_files")]
+      [conn.select_value('SELECT COUNT(*) FROM archive_files'),
+       conn.select_value('SELECT MAX(id) FROM archive_files')]
     end
 
     log "Indexing #{total} documents in batches of #{BATCH_SIZE}..."
@@ -133,15 +133,15 @@ class MeilisearchBulkIndexer
 
   def meili_request(method, path, body = nil, retries: 5)
     req = case method
-    when :get then Net::HTTP::Get.new(path)
-    when :post then Net::HTTP::Post.new(path)
-    when :patch then Net::HTTP::Patch.new(path)
-    when :delete then Net::HTTP::Delete.new(path)
-    end
+          when :get then Net::HTTP::Get.new(path)
+          when :post then Net::HTTP::Post.new(path)
+          when :patch then Net::HTTP::Patch.new(path)
+          when :delete then Net::HTTP::Delete.new(path)
+          end
 
-    req["Authorization"] = "Bearer #{@meili_key}"
+    req['Authorization'] = "Bearer #{@meili_key}"
     if body
-      req["Content-Type"] = "application/json"
+      req['Content-Type'] = 'application/json'
       req.body = body.to_json
     end
 
@@ -153,6 +153,7 @@ class MeilisearchBulkIndexer
     rescue Socket::ResolutionError, Errno::ECONNREFUSED, Errno::ECONNRESET,
            Net::OpenTimeout, Net::ReadTimeout, EOFError => e
       raise if attempts > retries
+
       wait = 2**attempts
       log "  Connection error (#{e.class}), retry #{attempts}/#{retries} in #{wait}s..."
       sleep wait
@@ -164,7 +165,7 @@ class MeilisearchBulkIndexer
   def reconnect_http!
     uri = URI.parse(@meili_url)
     @http = Net::HTTP.new(uri.host, uri.port)
-    @http.use_ssl = uri.scheme == "https"
+    @http.use_ssl = uri.scheme == 'https'
     @http.read_timeout = 120
   end
 

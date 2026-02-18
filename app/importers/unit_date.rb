@@ -4,9 +4,9 @@ class UnitDate
 
   def initialize(node)
     @text = node&.text
-    @normal = node&.attr("normal")
+    @normal = node&.attr('normal')
 
-    @start_string, @end_string = @normal&.split("/")
+    @start_string, @end_string = @normal&.split('/')
 
     @start_date = parse_iso8601_string(@start_string)
     @end_date = parse_iso8601_string(@end_string)
@@ -33,6 +33,7 @@ class UnitDate
       date = Date.iso8601(date_string)
       return nil if date.year == SENTINEL_YEAR
       return nil if date.year > MAX_PLAUSIBLE_YEAR
+
       date
     rescue Date::Error
       nil
@@ -67,14 +68,14 @@ class UnitDate
   # plausible relative to `good_date` (within 100 years, and maintaining
   # start <= end ordering).
   def fix_single_digit(bad_date, good_date)
-    bad_year = bad_date.year.to_s.rjust(4, "0")
+    bad_year = bad_date.year.to_s.rjust(4, '0')
     good_year = good_date.year
 
     best = nil
     best_distance = Float::INFINITY
 
     4.times do |i|
-      ("0".."9").each do |d|
+      ('0'..'9').each do |d|
         next if d == bad_year[i]
 
         candidate_year = (bad_year[0...i] + d + bad_year[i + 1..]).to_i

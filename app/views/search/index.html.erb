@@ -22,6 +22,7 @@
     <% end %>
     <input type="text" name="q" value="<%= @query %>" placeholder="<%= t("search_placeholder", total: @total) %>" class="search__text-input" />
     <input type="submit" value="<%= t("search_button") %>" class="search__button" />
+    <%= link_to "Suchhinweise", search_help_path, class: "search__help-link" %>
   </form>
 </div>
 <% if @archive_node %>
@@ -83,7 +84,7 @@
     <h2>Was ist Quellenportal?</h2>
     <p>
       Quellenportal bietet eine einfache und schnelle Möglichkeit, die Bestände des Bundesarchivs zu durchsuchen.
-      Dieses Angebot richtet sich vor allem an Personen, die für ihre Recherechen exakte textuelle Übereinstimmungen suchen und große Mengen an Ergebnissen schnell sichten möchten.
+      Dieses Angebot richtet sich vor allem an Personen, die für ihre Recherchen exakte textuelle Übereinstimmungen suchen und große Mengen an Ergebnissen schnell sichten möchten.
       Die hierfür benötigten Erschließungsinformationen stammen aus dem <a href="https://www.bundesarchiv.de/DE/Content/Artikel/Ueber-uns/Aus-unserer-Arbeit/open-data.html">Open-Data-Angebot</a> des Bundesarchivs.
     </p>
     <p>
