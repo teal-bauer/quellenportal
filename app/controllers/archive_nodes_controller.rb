@@ -14,30 +14,24 @@ class ArchiveNodesController < ApplicationController
         @browse_counts = browse_counts
         
         # Prepare Tree Menu Data
-        # parents is an array of hashes: [{id: '...', name: '...', unitid: '...'}, ...]
+        # @archive_node.parents contains the chain ABOVE the current node
         @parents = (@archive_node.parents || []).map { |p| OpenStruct.new(p) }
         
-        # We need siblings for each level of the hierarchy to build the menu
-        # Level 0: Root nodes
-        # Level N: Children of parent[N-1]
+        # The full path from root to current node
+        path_nodes = @parents + [@archive_node]
+        root_node = path_nodes.first
         
         @levels = []
         
-        # Level 0: Root siblings
-        root_resp = @repository.search_nodes("", filter: "level = 'fonds'", sort: ['name:asc'], hitsPerPage: 1000)
-        @levels << root_resp['hits'].map { |h| OpenStruct.new(h) }
+        # Level 0: Just the single root of this tree
+        @levels << [root_node]
         
-        # Subsequent levels: Siblings of each parent in the chain
-        @parents.each do |parent|
-          siblings_resp = @repository.search_nodes("", filter: "parent_node_id = '#{parent.id}'", sort: ['name:asc'], hitsPerPage: 1000)
-          @levels << siblings_resp['hits'].map { |h| OpenStruct.new(h) }
+        # Subsequent levels: Children of each node in the path (up to the current node)
+        path_nodes.each do |node|
+          children_resp = @repository.search_nodes("", filter: "parent_node_id = '#{node.id}'", sort: ['name:asc'], hitsPerPage: 1000)
+          children = children_resp['hits'].map { |h| OpenStruct.new(h) }
+          @levels << children if children.any?
         end
-        
-        # Final level: Children of the current node
-        child_resp = @repository.search_nodes("", filter: "parent_node_id = '#{@archive_node.id}'", sort: ['name:asc'], hitsPerPage: 1000)
-        @child_nodes = child_resp['hits'].map { |h| OpenStruct.new(h) }
-        # Only add the final level if there are children
-        @levels << @child_nodes if @child_nodes.any?
 
         # Fetch file counts for all nodes in the visible menu levels
         all_visible_node_ids = @levels.flatten.map(&:id)
