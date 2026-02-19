@@ -28,7 +28,7 @@ class ArchiveNodesController < ApplicationController
         
         # Subsequent levels: Children of each node in the path (up to the current node)
         path_nodes.each do |node|
-          children_resp = @repository.search_nodes("", filter: "parent_node_id = '#{node.id}'", sort: ['name:asc'], hitsPerPage: 1000)
+          children_resp = @repository.search_nodes("", filter: "parent_node_id = #{MeilisearchRepository.quote(node.id)}", sort: ['name:asc'], hitsPerPage: 1000)
           children = children_resp['hits'].map { |h| OpenStruct.new(h) }
           @levels << children if children.any?
         end
@@ -36,10 +36,10 @@ class ArchiveNodesController < ApplicationController
         # Fetch file counts for all nodes in the visible menu levels
         all_visible_node_ids = @levels.flatten.map(&:id)
         if all_visible_node_ids.any?
-          # We can get counts by faceting on archive_node_id for files matching these IDs
-          # Using a filter with many IDs might be slow, but let's try
+          # Use quoted IDs for the IN filter
+          quoted_ids = all_visible_node_ids.map { |id| MeilisearchRepository.quote(id) }
           count_resp = @repository.search_files("", 
-            filter: "archive_node_id IN [#{all_visible_node_ids.join(',')}]", 
+            filter: "archive_node_id IN [#{quoted_ids.join(',')}]", 
             hitsPerPage: 0, 
             facets: ['archive_node_id']
           )
@@ -49,7 +49,7 @@ class ArchiveNodesController < ApplicationController
         end
 
         # Files for the current node
-        current_files_resp = @repository.search_files("", filter: "archive_node_id = '#{@archive_node.id}'", sort: ['call_number:asc'], hitsPerPage: 100)
+        current_files_resp = @repository.search_files("", filter: "archive_node_id = #{MeilisearchRepository.quote(@archive_node.id)}", sort: ['call_number:asc'], hitsPerPage: 100)
         @archive_files = current_files_resp['hits'].map { |h| OpenStruct.new(h) }
       end
       format.json { render json: archive_node_payload }
@@ -70,8 +70,8 @@ class ArchiveNodesController < ApplicationController
 
   def archive_node_payload
     # Fetch children and files for the payload
-    child_resp = @repository.search_nodes("", filter: "parent_node_id = '#{@archive_node.id}'", sort: ['name:asc'])
-    file_resp = @repository.search_files("", filter: "archive_node_id = '#{@archive_node.id}'", sort: ['call_number:asc'])
+    child_resp = @repository.search_nodes("", filter: "parent_node_id = #{MeilisearchRepository.quote(@archive_node.id)}", sort: ['name:asc'])
+    file_resp = @repository.search_files("", filter: "archive_node_id = #{MeilisearchRepository.quote(@archive_node.id)}", sort: ['call_number:asc'])
     
     {
       id: @archive_node.id,

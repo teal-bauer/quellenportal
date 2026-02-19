@@ -49,9 +49,10 @@ class ArchiveObject
       ancestor_ids: @parent_nodes.map { |p| p[:id] },
       unitid: unitid.presence,
       unitdate: did.xpath('did/unitdate').text.presence,
-      name_first_letter: unittitle.present? ? unittitle.gsub(/\A[\d\.\s]+/, '')[0]&.upcase : nil,
-      unitid_first_letter: unitid.present? ? unitid[0]&.upcase : nil,
-      first_letter: unittitle.present? ? unittitle.gsub(/\A[\d\.\s]+/, '')[0]&.upcase : nil,
+      name_first_letter: normalize_letter(unittitle),
+      unitid_first_letter: normalize_letter(unitid),
+      # Keep first_letter for backward compatibility or default
+      first_letter: normalize_letter(unittitle),
       physdesc: {
         genreform: did.xpath('physdesc/genreform').text.presence,
         extent: did.xpath('physdesc/extent').map(&:text).presence || []
@@ -155,7 +156,7 @@ class ArchiveObject
     key = [name, label]
     return @caches[:origins][key] if @caches[:origins][key]
 
-    origin = { id: SecureRandom.uuid, name: name, label: label, first_letter: name[0]&.upcase }
+    origin = { id: SecureRandom.uuid, name: name, label: label, first_letter: normalize_letter(name) }
     
     @caches[:origins_batch] << origin
     if @caches[:origins_batch].size >= 100
@@ -235,6 +236,14 @@ class ArchiveObject
   end
 
   private
+
+  def normalize_letter(str)
+    return nil if str.blank?
+    # Remove leading non-alphanumeric (including German characters)
+    # Then take the first character
+    clean = str.gsub(/\A[^a-zA-Z0-9äöüÄÖÜß]+/, '')
+    clean[0]&.upcase
+  end
 
   def clean_id(id)
     id&.sub(/\ADE-1958_/, '')

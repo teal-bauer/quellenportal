@@ -2,6 +2,10 @@ require 'net/http'
 require 'json'
 
 class MeilisearchRepository
+  def self.quote(value)
+    "\"#{value.to_s.gsub('"', '\"')}\""
+  end
+
   def initialize
     @meili_url = ENV.fetch('MEILISEARCH_HOST', 'http://localhost:7700')
     @meili_key = ENV.fetch('MEILISEARCH_API_KEY', '')
@@ -129,7 +133,7 @@ class MeilisearchRepository
     sort_field = sort_by == 'unitid' ? 'unitid' : 'name'
     letter_field = sort_by == 'unitid' ? 'unitid_first_letter' : 'name_first_letter'
     
-    filter << "#{letter_field} = '#{letter}'" if letter.present?
+    filter << "#{letter_field} = #{self.class.quote(letter)}" if letter.present?
     
     options = {
       filter: filter.join(' AND '),
@@ -157,7 +161,7 @@ class MeilisearchRepository
 
   def all_origins(page: 1, per_page: 50, letter: nil)
     filter = []
-    filter << "first_letter = '#{letter}'" if letter.present?
+    filter << "first_letter = #{self.class.quote(letter)}" if letter.present?
 
     options = {
       filter: filter.join(' AND '),

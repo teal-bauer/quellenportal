@@ -64,15 +64,15 @@ class SearchController < ApplicationController
     parts = []
 
     if @node_id.present?
-      parts << "ancestor_ids = '#{@node_id}'"
+      parts << "ancestor_ids = #{MeilisearchRepository.quote(@node_id)}"
     end
 
     if @unitid.present?
-      parts << "fonds_unitid = '#{@unitid}'"
+      parts << "fonds_unitid = #{MeilisearchRepository.quote(@unitid)}"
     end
 
     if @unitid_prefix.present?
-      parts << "fonds_unitid_prefix = '#{@unitid_prefix}'"
+      parts << "fonds_unitid_prefix = #{MeilisearchRepository.quote(@unitid_prefix)}"
     end
 
     if @date_from.present? && @date_to.present?
@@ -109,25 +109,21 @@ class SearchController < ApplicationController
       
       @root_nodes = Kaminari.paginate_array(
         response['hits'].map { |h| OpenStruct.new(h) },
-        total_count: response['totalHits']
+        total_count: response['totalHits'] || response['estimatedTotalHits']
       ).page(params[:page]).per(50)
       
       # Fetch available letters dynamically from facets
-      # Pass the current sort mode to get relevant letters (Name or UnitID)
       @fonds_letters = @repository.fonds_letters(sort_by: @fonds_sort)
       
     when 'origins'
       if params[:origin_id].present?
         # Drilldown into an origin
-        # We need to find the origin name first to filter files
         origin = @repository.get_origin(params[:origin_id])
         @origin = OpenStruct.new(origin)
         
-        # Now search files with this origin name
-        # We rely on the denormalized 'origin_names' in the file index
         if @origin
           response = @repository.search_files("", 
-            filter: "origin_names = '#{@origin.name}'", 
+            filter: "origin_names = #{MeilisearchRepository.quote(@origin.name)}", 
             hitsPerPage: 50, 
             page: (params[:page]||1).to_i
           )
