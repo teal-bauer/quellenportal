@@ -12,7 +12,7 @@ class MeilisearchRepository
     uri = URI.parse(@meili_url)
     @http = Net::HTTP.new(uri.host, uri.port)
     @http.use_ssl = uri.scheme == 'https'
-    @http.read_timeout = 5
+    @http.read_timeout = 60
   end
 
   # -- Configuration --
