@@ -1,19 +1,13 @@
 <% if @origin %>
-  <div class="search-results__header">
-    <div class="search-results__info">
-      <h3><%= @origin.name %></h3>
-      <%= page_entries_info @archive_files, entry_name: 'Aktenstück' %>
-    </div>
-    <div class="search-results__tools">
-      <%= link_to t("browse.back_to_list"), browse_origins_path, class: "search__help-link" %>
-    </div>
-  </div>
+  <%= render "pagination_controls", paginatable: @archive_files, entry_name: 'Aktenstück', suffix: 'top' %>
+  
   <% @archive_files.each do |archive_file| %>
     <%= render ResultComponent.new(archive_file: archive_file) %>
   <% end %>
   <div class="pagination">
-    <%= paginate @archive_files %>
+    <%= paginate @archive_files, window: 4, outer_window: 1 %>
   </div>
+  <%= render "pagination_controls", paginatable: @archive_files, entry_name: 'Aktenstück', suffix: 'bottom' %>
 <% else %>
   <nav class="letter-index">
     <%= link_to t("browse.all"), browse_origins_path, class: "letter-index__item #{"letter-index__item--active" unless @letter}" %>
@@ -21,21 +15,9 @@
       <%= link_to letter, browse_origins_path(letter: letter), class: "letter-index__item #{"letter-index__item--active" if @letter == letter}" %>
     <% end %>
   </nav>
-  <div class="search-results__header">
-    <div class="search-results__info">
-      <%= page_entries_info @origins, entry_name: 'Provenienz' %>
-    </div>
-    <div class="search-results__tools">
-      <form class="jump-to-page" action="<%= request.path %>" method="get">
-        <% request.query_parameters.except(:page).each do |k, v| %>
-          <input type="hidden" name="<%= k %>" value="<%= v %>" />
-        <% end %>
-        <label for="page-input"><%= t("browse.page") %>:</label>
-        <input type="number" name="page" id="page-input" value="<%= @origins.current_page %>" min="1" max="<%= @origins.total_pages %>" class="jump-to-page__input" />
-        <button type="submit" class="jump-to-page__button"><%= t("browse.go") %></button>
-      </form>
-    </div>
-  </div>
+  
+  <%= render "pagination_controls", paginatable: @origins, entry_name: 'Provenienz', suffix: 'top' %>
+
   <ul class="browse-origins">
     <% @origins.each do |origin| %>
       <li class="browse-origins__item">
@@ -47,6 +29,7 @@
     <% end %>
   </ul>
   <div class="pagination">
-    <%= paginate @origins, params: { letter: @letter } %>
+    <%= paginate @origins, params: { letter: @letter }, window: 4, outer_window: 1 %>
   </div>
+  <%= render "pagination_controls", paginatable: @origins, entry_name: 'Provenienz', suffix: 'bottom' %>
 <% end %>

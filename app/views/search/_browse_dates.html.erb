@@ -1,19 +1,13 @@
 <% if @date_from %>
-  <div class="search-results__header">
-    <div class="search-results__info">
-      <h3><%= @date_from.year %><%= @date_to.year - @date_from.year >= 100 ? ". Jhd." : "er" %></h3>
-      <%= page_entries_info @archive_files, entry_name: 'Aktenstück' %>
-    </div>
-    <div class="search-results__tools">
-      <%= link_to t("browse.back_to_list"), browse_dates_path, class: "search__help-link" %>
-    </div>
-  </div>
+  <%= render "pagination_controls", paginatable: @archive_files, entry_name: 'Aktenstück', suffix: 'top' %>
+
   <% @archive_files.each do |archive_file| %>
     <%= render ResultComponent.new(archive_file: archive_file) %>
   <% end %>
   <div class="pagination">
-    <%= paginate @archive_files %>
+    <%= paginate @archive_files, window: 4, outer_window: 1 %>
   </div>
+  <%= render "pagination_controls", paginatable: @archive_files, entry_name: 'Aktenstück', suffix: 'bottom' %>
 <% else %>
   <% max_count = @period_counts.map { |d| d["file_count"] }.max %>
   <div class="browse-decades">

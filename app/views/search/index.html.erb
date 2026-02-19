@@ -44,37 +44,21 @@
       <div class="search-layout__content">
   <% end %>
       <% if @total_count > 0 %>
-        <div class="search-results__header">
-          <div class="search-results__info">
-            <%= page_entries_info @results, entry_name: 'Aktenstück' %>
-          </div>
-          <div class="search-results__tools">
-            <span class="search-results__sort">
-              <% if params[:sort] == "call_number" %>
-                <%= link_to "Relevanz", facet_url(remove: [:sort]) %> | <strong>Signatur</strong>
-              <% else %>
-                <strong>Relevanz</strong> | <%= link_to "Signatur", facet_url(add: { sort: "call_number" }) %>
-              <% end %>
-            </span>
-            <form class="jump-to-page" action="<%= request.path %>" method="get">
-              <% request.query_parameters.except(:page).each do |k, v| %>
-                <input type="hidden" name="<%= k %>" value="<%= v %>" />
-              <% end %>
-              <label for="page-input"><%= t("browse.page") %>:</label>
-              <input type="number" name="page" id="page-input" value="<%= @results.current_page %>" min="1" max="<%= @results.total_pages %>" class="jump-to-page__input" />
-              <button type="submit" class="jump-to-page__button"><%= t("browse.go") %></button>
-            </form>
-          </div>
-        </div>
+        <%= render "pagination_controls", paginatable: @results, entry_name: 'Aktenstück', suffix: 'top', show_sort: true %>
+        
         <div class="pagination">
-          <%= paginate @results %>
+          <%= paginate @results, window: 4, outer_window: 1 %>
         </div>
+
         <% @results.each do |archive_file| %>
           <%= render ResultComponent.new(query: @query, archive_file: archive_file) %>
         <% end %>
+
         <div class="pagination">
-          <%= paginate @results %>
+          <%= paginate @results, window: 4, outer_window: 1 %>
         </div>
+
+        <%= render "pagination_controls", paginatable: @results, entry_name: 'Aktenstück', suffix: 'bottom' %>
       <% else %>
         <hr />
         <h3>Keine Akten gefunden.</h3>

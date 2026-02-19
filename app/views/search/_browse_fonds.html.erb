@@ -1,23 +1,4 @@
-<div class="search-results__header">
-  <div class="search-results__info">
-    <%= page_entries_info @root_nodes, entry_name: 'Bestand' %>
-  </div>
-  <div class="search-results__tools">
-    <div class="sort-toggle">
-      <span class="sort-toggle__label"><%= t("browse.sort_by") %>:</span>
-      <%= link_to t("browse.sort_name"), browse_fonds_path(letter: @letter, fonds_sort: 'name'), class: "sort-toggle__item #{"sort-toggle__item--active" if @fonds_sort == 'name'}" %>
-      <%= link_to t("browse.sort_unitid"), browse_fonds_path(letter: @letter, fonds_sort: 'unitid'), class: "sort-toggle__item #{"sort-toggle__item--active" if @fonds_sort == 'unitid'}" %>
-    </div>
-    <form class="jump-to-page" action="<%= request.path %>" method="get">
-      <% request.query_parameters.except(:page).each do |k, v| %>
-        <input type="hidden" name="<%= k %>" value="<%= v %>" />
-      <% end %>
-      <label for="page-input"><%= t("browse.page") %>:</label>
-      <input type="number" name="page" id="page-input" value="<%= @root_nodes.current_page %>" min="1" max="<%= @root_nodes.total_pages %>" class="jump-to-page__input" />
-      <button type="submit" class="jump-to-page__button"><%= t("browse.go") %></button>
-    </form>
-  </div>
-</div>
+<%= render "pagination_controls", paginatable: @root_nodes, entry_name: 'Bestand', suffix: 'top' %>
 
 <nav class="letter-index">
   <%= link_to t("browse.all"), browse_fonds_path(fonds_sort: @fonds_sort), class: "letter-index__item #{"letter-index__item--active" unless @letter}" %>
@@ -36,5 +17,7 @@
   <% end %>
 </ul>
 <div class="pagination">
-  <%= paginate @root_nodes, params: { letter: @letter, fonds_sort: @fonds_sort } %>
+  <%= paginate @root_nodes, params: { letter: @letter, fonds_sort: @fonds_sort }, window: 4, outer_window: 1 %>
 </div>
+
+<%= render "pagination_controls", paginatable: @root_nodes, entry_name: 'Bestand', suffix: 'bottom' %>
