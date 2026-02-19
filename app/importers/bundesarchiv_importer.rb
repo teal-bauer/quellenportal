@@ -122,7 +122,7 @@ class ArchiveObject
           fonds_name: fonds[:name],
           fonds_unitid: fonds[:unitid],
           fonds_unitid_prefix: fonds[:unitid]&.split(' ')&.first,
-          origin_names: node_origins.map { |o| o[:name] }.join(' '),
+          origin_names: node_origins.map { |o| o[:name] },
           call_number: call_number,
           source_date_text: date.text,
           source_date_start: date.start_date&.to_s,

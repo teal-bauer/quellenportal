@@ -26,13 +26,11 @@ class SearchController < ApplicationController
           filter: filter,
           facets: %w[fonds_name fonds_unitid fonds_unitid_prefix decade],
           sort: sort,
-          hits_per_page: 100,
+          hitsPerPage: 100,
           page: (params[:page] || 1).to_i
         }.compact
 
         # Use Repository for search
-        # Note: ArchiveFile.search uses the gem. We can switch to repository or keep gem for now if it points to same index.
-        # But to be "SQLite-free" completely, let's use the repository raw search to avoid any model dependency.
         results = @repository.search_files(@query, search_opts)
         
         @results = Kaminari.paginate_array(
@@ -128,10 +126,14 @@ class SearchController < ApplicationController
         # Now search files with this origin name
         # We rely on the denormalized 'origin_names' in the file index
         if @origin
-          response = @repository.search_files(@origin.name, hitsPerPage: 50, page: (params[:page]||1).to_i)
+          response = @repository.search_files("", 
+            filter: "origin_names = '#{@origin.name}'", 
+            hitsPerPage: 50, 
+            page: (params[:page]||1).to_i
+          )
           @archive_files = Kaminari.paginate_array(
             response['hits'].map { |h| OpenStruct.new(h) },
-            total_count: response['totalHits']
+            total_count: response['totalHits'] || response['estimatedTotalHits']
           ).page(params[:page]).per(50)
         end
       else
