@@ -38,6 +38,15 @@ class MeilisearchRepository
   ].freeze
 
   def configure_indices
+    # Ensure indices exist with correct primary key
+    [@file_index, @node_index, @origin_index].each do |idx|
+      begin
+        post("/indexes", { uid: idx, primaryKey: 'id' })
+      rescue
+        # Ignore if index already exists
+      end
+    end
+
     # ArchiveFile settings
     patch("/indexes/#{@file_index}/settings", {
       searchableAttributes: %w[title summary call_number parent_names origin_names],
