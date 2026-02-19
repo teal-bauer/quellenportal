@@ -44,4 +44,10 @@ namespace :data do
     MeilisearchRepository.new.configure_indices
     puts "Indices configured."
   end
+
+  desc 'Delete and recreate all Meilisearch indices with correct primary keys'
+  task recreate_indices: :environment do
+    MeilisearchRepository.new.recreate_indices
+    puts "Indices recreated and configured."
+  end
 end

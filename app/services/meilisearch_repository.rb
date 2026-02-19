@@ -211,8 +211,24 @@ class MeilisearchRepository
 
   def delete_all
     [@file_index, @node_index, @origin_index].each do |idx|
-      delete("/indexes/#{idx}/documents")
+      delete("/indexes/#{idx}")
     end
+  end
+
+  def delete_index(name)
+    delete("/indexes/#{name}")
+  rescue
+    nil
+  end
+
+  def recreate_indices
+    [@file_index, @node_index, @origin_index].each do |idx|
+      delete_index(idx)
+      # Wait a bit for deletion to process
+      sleep 1 
+      post("/indexes", { uid: idx, primaryKey: 'id' })
+    end
+    configure_indices
   end
 
   def get(path)
