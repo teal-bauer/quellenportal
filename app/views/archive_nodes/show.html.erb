@@ -18,25 +18,25 @@
 </div>
 
 <nav class="archive-node-menu">
-  <ul class="archive-node-level" style="--level: 0">
-    <li class="archive-node archive-node--tree <%= "archive-node--selected" if @archive_node.parents.first.id == @archive_node.id %>">
-      <% root_node = @archive_node.parents.first %>
-      <%= link_to archive_node_path(root_node), class: 'archive-node__link' do %>
-        <% if root_node.unitid.present? %><span class="archive-node__unitid"><%= root_node.unitid %></span><% end %>
-        <%= root_node.name %>
-      <% end %>
-    </li>
-  </ul>
-  <% @archive_node.parents.each.with_index do |node, index| %>
-    <ul class="archive-node-level" style="--level: <%= index + 1 %>">
-      <% node.child_nodes.includes(:child_nodes).each do |child| %>
-        <% is_selected = child.id == @archive_node.parents[index + 1]&.id || child.id == @archive_node.id %>
-        <% is_leaf = child.child_nodes.empty? %>
-        <li class="archive-node <%= "archive-node--selected" if is_selected %> <%= is_leaf ? "archive-node--leaf" : "archive-node--tree" %>">
-          <%= link_to archive_node_path(child), class: 'archive-node__link' do %>
-            <% if child.unitid.present? %><span class="archive-node__unitid"><%= child.unitid %></span><% end %>
-            <%= child.name %>
-            <% if (count = @file_counts[child.id]) && count > 0 %>
+  <% @levels.each_with_index do |nodes, level_index| %>
+    <ul class="archive-node-level" style="--level: <%= level_index %>">
+      <% nodes.each do |node| %>
+        <% 
+          # A node is "selected" if it is the current node OR if it is a parent of the current node
+          # (i.e. its ID appears in the current level's path toward the current node)
+          is_current = node.id == @archive_node.id
+          is_parent = @parents.any? { |p| p.id == node.id }
+          is_selected = is_current || is_parent
+          
+          # We don't have child_nodes count directly here without more queries, 
+          # but we can guess level behavior or just use a generic style.
+          # For now, let's treat everything as a "tree" unless we know otherwise.
+        %>
+        <li class="archive-node <%= "archive-node--selected" if is_selected %> archive-node--tree">
+          <%= link_to archive_node_path(node.id), class: 'archive-node__link' do %>
+            <% if node.unitid.present? %><span class="archive-node__unitid"><%= node.unitid %></span><% end %>
+            <%= node.name %>
+            <% if (count = @file_counts[node.id]) && count > 0 %>
               <span class="archive-node__count"><%= count %></span>
             <% end %>
           <% end %>
@@ -138,9 +138,9 @@
   </h1>
 <% end %>
 
-<% if @archive_node.archive_files.any? %>
+<% if @archive_files.any? %>
   <div class="archive-node-files">
-    <% @archive_node.archive_files.each do |archive_file| %>
+    <% @archive_files.each do |archive_file| %>
       <%= render ResultComponent.new(archive_file: archive_file) %>
     <% end %>
   </div>
