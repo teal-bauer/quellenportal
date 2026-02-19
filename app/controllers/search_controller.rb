@@ -78,8 +78,9 @@ class SearchController < ApplicationController
     end
 
     if @date_from.present? && @date_to.present?
-      parts << "source_date_start_unix >= #{@date_from.to_time.to_i}"
-      parts << "source_date_start_unix < #{@date_to.to_time.to_i}"
+      start_ts = @date_from.to_time.to_i
+      end_ts = @date_to.to_time.to_i
+      parts << "(source_date_start_unix >= #{start_ts} AND source_date_start_unix < #{end_ts} OR source_date_end_unix >= #{start_ts} AND source_date_end_unix < #{end_ts})"
     end
 
     parts.join(' AND ').presence

@@ -64,7 +64,7 @@ class ResultComponent < ViewComponent::Base
   end
 
   def ris_link
-    link_to @archive_file, format: :ris
+    link_to archive_file_path(@archive_file.id, format: :ris)
   end
 
   private

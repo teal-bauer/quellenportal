@@ -15,7 +15,7 @@
 <ul class="browse-fonds">
   <% @root_nodes.each do |node| %>
     <li class="browse-fonds__item">
-      <%= link_to archive_node_path(node), class: "browse-fonds__link" do %>
+      <%= link_to archive_node_path(node.id), class: "browse-fonds__link" do %>
         <% if node.unitid.present? %><span class="browse-fonds__unitid"><%= node.unitid %></span><% end %>
         <span class="browse-fonds__name"><%= node.name %></span>
       <% end %>

@@ -50,7 +50,7 @@ class MeilisearchRepository
     # ArchiveFile settings
     patch("/indexes/#{@file_index}/settings", {
       searchableAttributes: %w[title summary call_number parent_names origin_names],
-      filterableAttributes: %w[fonds_id fonds_name decade period period_span archive_node_id source_date_start_unix ancestor_ids depth],
+      filterableAttributes: %w[fonds_id fonds_name decade period period_span archive_node_id source_date_start_unix source_date_end_unix ancestor_ids depth],
       sortableAttributes: %w[call_number],
       stopWords: GERMAN_STOP_WORDS,
       typoTolerance: {

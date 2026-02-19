@@ -130,6 +130,7 @@ class ArchiveObject
           source_date_start_uncorrected: date.start_date_uncorrected&.to_s,
           source_date_end_uncorrected: date.end_date_uncorrected&.to_s,
           source_date_start_unix: date.start_date&.to_time&.to_i,
+          source_date_end_unix: date.end_date&.to_time&.to_i,
           decade: date.start_date ? (date.start_date.year / 10) * 10 : nil,
           period: date.start_date ? (date.start_date.year < 1800 ? (date.start_date.year / 100) * 100 : (date.start_date.year / 10) * 10) : nil,
           period_span: date.start_date ? (date.start_date.year < 1800 ? 100 : 10) : nil,
