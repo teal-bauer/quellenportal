@@ -39,6 +39,8 @@ en:
     sort_by: "Sort by"
     sort_name: "Title"
     sort_unitid: "Call Number"
+    page: "Page"
+    go: "Go"
   archive_node:
     unitid: "Call Number"
     unitdate: "Dates"

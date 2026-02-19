@@ -45,14 +45,26 @@
   <% end %>
       <% if @total_count > 0 %>
         <div class="search-results__header">
-          <h3><%= @total_count %> Objekte gefunden.</h3>
-          <span class="search-results__sort">
-            <% if params[:sort] == "call_number" %>
-              <%= link_to "Relevanz", facet_url(remove: [:sort]) %> | <strong>Signatur</strong>
-            <% else %>
-              <strong>Relevanz</strong> | <%= link_to "Signatur", facet_url(add: { sort: "call_number" }) %>
-            <% end %>
-          </span>
+          <div class="search-results__info">
+            <%= page_entries_info @results, entry_name: 'Aktenstück' %>
+          </div>
+          <div class="search-results__tools">
+            <span class="search-results__sort">
+              <% if params[:sort] == "call_number" %>
+                <%= link_to "Relevanz", facet_url(remove: [:sort]) %> | <strong>Signatur</strong>
+              <% else %>
+                <strong>Relevanz</strong> | <%= link_to "Signatur", facet_url(add: { sort: "call_number" }) %>
+              <% end %>
+            </span>
+            <form class="jump-to-page" action="<%= request.path %>" method="get">
+              <% request.query_parameters.except(:page).each do |k, v| %>
+                <input type="hidden" name="<%= k %>" value="<%= v %>" />
+              <% end %>
+              <label for="page-input"><%= t("browse.page") %>:</label>
+              <input type="number" name="page" id="page-input" value="<%= @results.current_page %>" min="1" max="<%= @results.total_pages %>" class="jump-to-page__input" />
+              <button type="submit" class="jump-to-page__button"><%= t("browse.go") %></button>
+            </form>
+          </div>
         </div>
         <div class="pagination">
           <%= paginate @results %>
