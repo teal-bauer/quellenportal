@@ -11,6 +11,9 @@ de:
     dates: "Zeitraum"
     all: "Alle"
     back_to_list: "Zurück zur Übersicht"
+    sort_by: "Sortieren nach"
+    sort_name: "Titel"
+    sort_unitid: "Signatur"
   archive_node:
     unitid: "Signatur"
     unitdate: "Laufzeit"

@@ -99,9 +99,14 @@ class SearchController < ApplicationController
     case @tab
     when 'fonds'
       @letter = params[:letter]
+      @fonds_sort = params[:fonds_sort] || 'name'
       
-      # Use the repository's dedicated method which handles the filter
-      response = @repository.root_nodes(page: (params[:page]||1).to_i, letter: @letter)
+      # Use the repository's dedicated method which handles the filter and sort
+      response = @repository.root_nodes(
+        page: (params[:page]||1).to_i, 
+        letter: @letter, 
+        sort_by: @fonds_sort
+      )
       
       @root_nodes = Kaminari.paginate_array(
         response['hits'].map { |h| OpenStruct.new(h) },
@@ -109,7 +114,8 @@ class SearchController < ApplicationController
       ).page(params[:page]).per(50)
       
       # Fetch available letters dynamically from facets
-      @fonds_letters = @repository.fonds_letters
+      # Pass the current sort mode to get relevant letters (Name or UnitID)
+      @fonds_letters = @repository.fonds_letters(sort_by: @fonds_sort)
       
     when 'origins'
       if params[:origin_id].present?
@@ -151,14 +157,15 @@ class SearchController < ApplicationController
           total_count: response['totalHits']
         ).page(params[:page]).per(50)
       else
-        # Period counts - tough one. 
-        # We can use facets on 'decade' to get counts per decade!
-        # This replaces the custom SQL aggregation.
-        response = @repository.search_files("", facets: ['decade'], hitsPerPage: 0)
+        # Period counts
+        # Use the new 'period' facet for better grouping (centuries vs decades)
+        response = @repository.search_files("", facets: ['period'], hitsPerPage: 0)
         
-        if response['facetDistribution'] && response['facetDistribution']['decade']
-          @period_counts = response['facetDistribution']['decade'].map do |decade, count|
-            { 'period' => decade.to_i, 'span' => 10, 'file_count' => count }
+        if response['facetDistribution'] && response['facetDistribution']['period']
+          @period_counts = response['facetDistribution']['period'].map do |period, count|
+            year = period.to_i
+            span = year < 1800 ? 100 : 10
+            { 'period' => year, 'span' => span, 'file_count' => count }
           end.sort_by { |p| p['period'] }
         else
           @period_counts = []

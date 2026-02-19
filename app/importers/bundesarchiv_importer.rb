@@ -49,7 +49,9 @@ class ArchiveObject
       ancestor_ids: @parent_nodes.map { |p| p[:id] },
       unitid: unitid.presence,
       unitdate: did.xpath('did/unitdate').text.presence,
-      first_letter: unittitle.present? ? unittitle[0].upcase : nil,
+      name_first_letter: unittitle.present? ? unittitle.gsub(/\A[\d\.\s]+/, '')[0]&.upcase : nil,
+      unitid_first_letter: unitid.present? ? unitid[0]&.upcase : nil,
+      first_letter: unittitle.present? ? unittitle.gsub(/\A[\d\.\s]+/, '')[0]&.upcase : nil,
       physdesc: {
         genreform: did.xpath('physdesc/genreform').text.presence,
         extent: did.xpath('physdesc/extent').map(&:text).presence || []
@@ -129,6 +131,8 @@ class ArchiveObject
           source_date_end_uncorrected: date.end_date_uncorrected&.to_s,
           source_date_start_unix: date.start_date&.to_time&.to_i,
           decade: date.start_date ? (date.start_date.year / 10) * 10 : nil,
+          period: date.start_date ? (date.start_date.year < 1800 ? (date.start_date.year / 100) * 100 : (date.start_date.year / 10) * 10) : nil,
+          period_span: date.start_date ? (date.start_date.year < 1800 ? 100 : 10) : nil,
           link: node.xpath('otherfindaid/p/extref')[0]&.attr('href'),
           location: node.xpath('did/physloc').text,
           language_code: node.xpath('did/langmaterial/language')[0]&.attr('langcode'),

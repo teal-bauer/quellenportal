@@ -1,7 +1,15 @@
+<div class="browse-controls">
+  <div class="sort-toggle">
+    <span class="sort-toggle__label"><%= t("browse.sort_by") %>:</span>
+    <%= link_to t("browse.sort_name"), browse_fonds_path(letter: @letter, fonds_sort: 'name'), class: "sort-toggle__item #{"sort-toggle__item--active" if @fonds_sort == 'name'}" %>
+    <%= link_to t("browse.sort_unitid"), browse_fonds_path(letter: @letter, fonds_sort: 'unitid'), class: "sort-toggle__item #{"sort-toggle__item--active" if @fonds_sort == 'unitid'}" %>
+  </div>
+</div>
+
 <nav class="letter-index">
-  <%= link_to t("browse.all"), browse_fonds_path, class: "letter-index__item #{"letter-index__item--active" unless @letter}" %>
+  <%= link_to t("browse.all"), browse_fonds_path(fonds_sort: @fonds_sort), class: "letter-index__item #{"letter-index__item--active" unless @letter}" %>
   <% @fonds_letters.each do |letter| %>
-    <%= link_to letter, browse_fonds_path(letter: letter), class: "letter-index__item #{"letter-index__item--active" if @letter == letter}" %>
+    <%= link_to letter, browse_fonds_path(letter: letter, fonds_sort: @fonds_sort), class: "letter-index__item #{"letter-index__item--active" if @letter == letter}" %>
   <% end %>
 </nav>
 <ul class="browse-fonds">
@@ -15,5 +23,5 @@
   <% end %>
 </ul>
 <div class="pagination">
-  <%= paginate @root_nodes, params: { letter: @letter } %>
+  <%= paginate @root_nodes, params: { letter: @letter, fonds_sort: @fonds_sort } %>
 </div>

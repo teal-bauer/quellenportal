@@ -50,7 +50,7 @@ class MeilisearchRepository
     # ArchiveFile settings
     patch("/indexes/#{@file_index}/settings", {
       searchableAttributes: %w[title summary call_number parent_names origin_names],
-      filterableAttributes: %w[fonds_id fonds_name decade archive_node_id source_date_start_unix ancestor_ids depth],
+      filterableAttributes: %w[fonds_id fonds_name decade period period_span archive_node_id source_date_start_unix ancestor_ids depth],
       sortableAttributes: %w[call_number],
       stopWords: GERMAN_STOP_WORDS,
       typoTolerance: {
@@ -64,7 +64,7 @@ class MeilisearchRepository
     # ArchiveNode settings
     patch("/indexes/#{@node_index}/settings", {
       searchableAttributes: %w[name unitid scopecontent],
-      filterableAttributes: %w[parent_node_id level first_letter],
+      filterableAttributes: %w[parent_node_id level first_letter name_first_letter unitid_first_letter],
       sortableAttributes: %w[name unitid],
       pagination: { maxTotalHits: 100_000 }
     })
@@ -123,13 +123,17 @@ class MeilisearchRepository
     nil
   end
 
-  def root_nodes(page: 1, per_page: 50, letter: nil)
+  def root_nodes(page: 1, per_page: 50, letter: nil, sort_by: 'name')
     filter = ["level = 'fonds'"]
-    filter << "first_letter = '#{letter}'" if letter.present?
+    
+    sort_field = sort_by == 'unitid' ? 'unitid' : 'name'
+    letter_field = sort_by == 'unitid' ? 'unitid_first_letter' : 'name_first_letter'
+    
+    filter << "#{letter_field} = '#{letter}'" if letter.present?
     
     options = {
       filter: filter.join(' AND '),
-      sort: ['name:asc'],
+      sort: ["#{sort_field}:asc"],
       hitsPerPage: per_page,
       page: page
     }
@@ -137,15 +141,16 @@ class MeilisearchRepository
     search_nodes("", options)
   end
 
-  def fonds_letters
-    # Get all available first letters via faceting
+  def fonds_letters(sort_by: 'name')
+    letter_field = sort_by == 'unitid' ? 'unitid_first_letter' : 'name_first_letter'
+    
     options = {
       filter: "level = 'fonds'",
-      facets: ['first_letter'],
+      facets: [letter_field],
       hitsPerPage: 0
     }
     resp = search_nodes("", options)
-    resp['facetDistribution']&.dig('first_letter')&.keys&.sort || []
+    resp['facetDistribution']&.dig(letter_field)&.keys&.sort || []
   rescue
     []
   end
