@@ -11,6 +11,7 @@ proxy:
   host: quellenportal.de,archivfinder.de
   app_port: 3000
   forward_headers: true
+  response_timeout: 60
 
 error_pages_path: public
 
