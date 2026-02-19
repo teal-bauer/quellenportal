@@ -15,6 +15,68 @@ class MeilisearchRepository
     @http.read_timeout = 5
   end
 
+  # -- Configuration --
+
+  GERMAN_STOP_WORDS = %w[
+    aber alle allem allen aller allerdings alles also am an ander andere anderem
+    anderen anderer anderes anderm andern anderr anders auch auf aus bei beim
+    bin bis bist da damit dann das dass dasselbe dazu dein deine deinem deinen
+    deiner dem den denn der des desselben dessen die dies diese dieselbe
+    dieselben diesem diesen dieser dieses doch dort du durch ein eine einem
+    einen einer einige einigem einigen einiger einiges einmal er es etwas euch
+    euer eure eurem euren eurer für gegen gewesen hab habe haben hat hatte
+    hätte hier hin hinter ich ihm ihn ihnen ihr ihre ihrem ihren ihrer im in
+    indem ins ist jede jedem jeden jeder jedes jedoch jenem jenen jener jenes
+    jetzt kann kein keine keinem keinen keiner könnte machen man manche manchem
+    manchen mancher manches mein meine meinem meinen meiner mit muss musste
+    nach nicht nichts noch nun nur ob oder ohne sehr sein seine seinem seinen
+    seiner seit sich sie sind so solche solchem solchen solcher soll sollte
+    sondern sonst über um und uns unser unsere unserem unseren unserer unter
+    viel vom von vor während war warum was weil welch welche welchem welchen
+    welcher wenn wer werde werden wie wieder will wir wird wirst wo wollen
+    wollt würde würden zu zum zur zwar zwischen
+  ].freeze
+
+  def configure_indices
+    # ArchiveFile settings
+    patch("/indexes/#{@file_index}/settings", {
+      searchableAttributes: %w[title summary call_number parent_names origin_names],
+      filterableAttributes: %w[fonds_id fonds_name decade archive_node_id source_date_start_unix ancestor_ids depth],
+      sortableAttributes: %w[call_number],
+      stopWords: GERMAN_STOP_WORDS,
+      typoTolerance: {
+        enabled: true,
+        minWordSizeForTypos: { oneTypo: 4, twoTypos: 8 }
+      },
+      faceting: { maxValuesPerFacet: 100 },
+      pagination: { maxTotalHits: 100_000 }
+    })
+
+    # ArchiveNode settings
+    patch("/indexes/#{@node_index}/settings", {
+      searchableAttributes: %w[name unitid scopecontent],
+      filterableAttributes: %w[parent_node_id level first_letter],
+      sortableAttributes: %w[name unitid],
+      pagination: { maxTotalHits: 100_000 }
+    })
+
+    # Origin settings
+    patch("/indexes/#{@origin_index}/settings", {
+      searchableAttributes: %w[name label],
+      filterableAttributes: %w[first_letter],
+      sortableAttributes: %w[name file_count],
+      pagination: { maxTotalHits: 100_000 }
+    })
+  end
+
+  def patch(path, body)
+    req = Net::HTTP::Patch.new(path)
+    req['Authorization'] = "Bearer #{@meili_key}"
+    req['Content-Type'] = 'application/json'
+    req.body = body.to_json
+    perform(req)
+  end
+
   # -- Generic Search --
   
   def search_files(query, options = {})

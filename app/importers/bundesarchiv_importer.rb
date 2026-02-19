@@ -326,6 +326,9 @@ class BundesarchivImporter
   end
 
   def run(show_progress: false)
+    puts "Configuring Meilisearch indices..." if show_progress
+    @repository.configure_indices
+
     puts "Importing data from XML files in #{@dir}..." if show_progress
     start = Time.now
     archive_file_count = 0

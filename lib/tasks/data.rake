@@ -38,4 +38,10 @@ namespace :data do
   task :import_sync, [:dir] => [:environment] do |_task, args|
     BundesarchivImporter.new(args[:dir]).run(show_progress: true)
   end
+
+  desc 'Configure Meilisearch indices (search/sort/filter settings)'
+  task configure_indices: :environment do
+    MeilisearchRepository.new.configure_indices
+    puts "Indices configured."
+  end
 end
