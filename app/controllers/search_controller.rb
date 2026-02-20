@@ -13,8 +13,14 @@ class SearchController < ApplicationController
     # Retrieve node metadata from Meilisearch if ID is present
     if @node_id.present?
       @archive_node = @repository.get_node(@node_id)
-      # Wrap in OpenStruct to mimic AR object if needed, or update view to use hash access
-      @archive_node = OpenStruct.new(@archive_node) if @archive_node
+      # Wrap in OpenStruct to mimic AR object
+      if @archive_node
+        @archive_node = OpenStruct.new(@archive_node)
+        # Add parents helper if missing (should be in metadata though)
+        unless @archive_node.respond_to?(:parents)
+          @archive_node.parents = []
+        end
+      end
     end
 
     if @query.present?
@@ -34,7 +40,7 @@ class SearchController < ApplicationController
         results = @repository.search_files(@query, search_opts)
         
         @results = Kaminari.paginate_array(
-          results['hits'].map { |h| OpenStruct.new(h) },
+          results['hits'].map { |h| wrap_archive_file(h) },
           total_count: results['totalHits'] || results['estimatedTotalHits']
         ).page(params[:page]).per(100)
 
@@ -128,7 +134,7 @@ class SearchController < ApplicationController
             page: (params[:page]||1).to_i
           )
           @archive_files = Kaminari.paginate_array(
-            response['hits'].map { |h| OpenStruct.new(h) },
+            response['hits'].map { |h| wrap_archive_file(h) },
             total_count: response['totalHits'] || response['estimatedTotalHits']
           ).page(params[:page]).per(50)
         end
@@ -152,7 +158,7 @@ class SearchController < ApplicationController
         response = @repository.search_files("", filter: filter, hitsPerPage: 50, page: (params[:page]||1).to_i)
         
         @archive_files = Kaminari.paginate_array(
-          response['hits'].map { |h| OpenStruct.new(h) },
+          response['hits'].map { |h| wrap_archive_file(h) },
           total_count: response['totalHits']
         ).page(params[:page]).per(50)
       else
