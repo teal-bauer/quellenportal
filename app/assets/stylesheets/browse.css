@@ -35,6 +35,45 @@
   opacity: 0.7;
 }
 
+/* Sort toggle */
+
+.browse-sort {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 1rem;
+}
+
+.browse-sort__label {
+  font-size: 0.85em;
+  color: #998a78;
+}
+
+.browse-sort__item {
+  padding: 0.25rem 0.5rem;
+  text-decoration: none;
+  color: #6b5d4f;
+  background-color: #ede6d8;
+  border-radius: 3px;
+  font-size: 0.85em;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.browse-sort__item:hover {
+  color: #7a4419;
+  background-color: #e2d8c8;
+}
+
+.browse-sort__item--active {
+  color: white;
+  background-color: #7a4419;
+}
+
+.browse-sort__item--active:hover {
+  color: white;
+  background-color: #5e3412;
+}
+
 /* Letter index */
 
 .letter-index {

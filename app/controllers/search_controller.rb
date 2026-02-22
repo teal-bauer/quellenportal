@@ -3,6 +3,8 @@ class SearchController < ApplicationController
 
   def index
     @repository = MeilisearchRepository.new
+    stats = @repository.stats
+    @total = ActiveSupport::NumberHelper.number_to_delimited(stats[:files])
     @query = params[:q].presence
     @node_id = params[:node_id]
     @total_count = 0
