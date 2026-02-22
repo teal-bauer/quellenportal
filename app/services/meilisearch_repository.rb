@@ -42,13 +42,11 @@ class MeilisearchRepository
   ].freeze
 
   def configure_indices
-    # Ensure indices exist with correct primary key
+    # Ensure indices exist with correct primary key (only create if missing)
     [@file_index, @node_index, @origin_index].each do |idx|
-      begin
-        post("/indexes", { uid: idx, primaryKey: 'id' })
-      rescue
-        # Ignore if index already exists
-      end
+      get("/indexes/#{idx}")
+    rescue
+      post("/indexes", { uid: idx, primaryKey: 'id' })
     end
 
     # ArchiveFile settings
