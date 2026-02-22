@@ -51,17 +51,20 @@ namespace :data do
     puts "Indices recreated and configured."
   end
 
-  desc 'Rebuild origins index from XML data (dedup + normalize)'
+  desc 'Rebuild origins index from XML data (dedup + normalize, blue-green swap)'
   task :rebuild_origins, [:dir] => [:environment] do |_task, args|
     dir = args[:dir] || 'data'
     repo = MeilisearchRepository.new
 
-    # Delete existing origins
-    puts "Deleting origin index..."
-    repo.delete_index("Origin_#{Rails.env}")
+    live_index = "Origin_#{Rails.env}"
+    shadow_index = "Origin_#{Rails.env}_new"
+
+    # Prepare shadow index (delete if leftover from previous failed run)
+    puts "Preparing shadow index #{shadow_index}..."
+    repo.delete_index(shadow_index)
     sleep 2
-    repo.post("/indexes", { uid: "Origin_#{Rails.env}", primaryKey: 'id' })
-    repo.configure_indices
+    repo.post("/indexes", { uid: shadow_index, primaryKey: 'id' })
+    repo.configure_origin_index(shadow_index)
 
     # Scan all XML files for origination elements
     origins = {}
@@ -91,10 +94,29 @@ namespace :data do
       end
     end
 
-    puts "\nFound #{origins.size} unique origins. Upserting..."
+    puts "\nFound #{origins.size} unique origins. Upserting to shadow index..."
     origins.values.each_slice(1000) do |batch|
-      repo.upsert_origins(batch)
+      repo.post("/indexes/#{shadow_index}/documents", batch)
     end
-    puts "Done."
+
+    # Wait for Meilisearch to finish indexing the shadow
+    puts "Waiting for shadow index to finish indexing..."
+    loop do
+      stats = repo.get("/indexes/#{shadow_index}/stats")
+      break unless stats['isIndexing']
+      sleep 2
+    end
+
+    # Atomic swap: live <-> shadow
+    puts "Swapping #{live_index} <-> #{shadow_index}..."
+    resp = repo.swap_indexes([{ indexes: [live_index, shadow_index] }])
+    task_uid = resp['taskUid']
+    repo.wait_for_task(task_uid)
+
+    # Clean up the old index (now at the shadow name)
+    puts "Cleaning up old index..."
+    repo.delete_index(shadow_index)
+
+    puts "Done. #{origins.size} unique origins live in #{live_index}."
   end
 end

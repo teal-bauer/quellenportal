@@ -72,7 +72,11 @@ class MeilisearchRepository
     })
 
     # Origin settings
-    patch("/indexes/#{@origin_index}/settings", {
+    configure_origin_index(@origin_index)
+  end
+
+  def configure_origin_index(index_name)
+    patch("/indexes/#{index_name}/settings", {
       searchableAttributes: %w[name label],
       filterableAttributes: %w[first_letter],
       sortableAttributes: %w[name file_count],
@@ -234,6 +238,24 @@ class MeilisearchRepository
     delete("/indexes/#{name}")
   rescue
     nil
+  end
+
+  def swap_indexes(pairs)
+    # pairs: array of { indexes: [a, b] }
+    post("/swap-indexes", pairs)
+  end
+
+  def wait_for_task(task_uid, timeout: 120)
+    deadline = Time.now + timeout
+    loop do
+      resp = get("/tasks/#{task_uid}")
+      case resp['status']
+      when 'succeeded' then return resp
+      when 'failed' then raise "Task #{task_uid} failed: #{resp.dig('error', 'message')}"
+      end
+      raise "Timeout waiting for task #{task_uid}" if Time.now > deadline
+      sleep 1
+    end
   end
 
   def recreate_indices
