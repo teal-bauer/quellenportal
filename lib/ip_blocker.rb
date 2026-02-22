@@ -26,7 +26,8 @@ class IpBlocker
   RUNTIME_BANNED = {}  # raw_str => IPAddr, from storage/manual_bans.txt (editable)
   RUNTIME_BANNED_MUTEX = Mutex.new
 
-  AUTO_BANNED = {}     # ip_str => banned_at (Time), expires after BAN_TTL
+  # ip_str => {banned_at: Time, reason: String, ua: String}, expires after BAN_TTL
+  AUTO_BANNED = {}
   AUTO_BANNED_MUTEX = Mutex.new
 
   # -- File paths --
@@ -51,10 +52,10 @@ class IpBlocker
 
     if File.exist?(auto_ban_file)
       File.readlines(auto_ban_file, chomp: true).each do |line|
-        ip, ts = line.split("\t", 2)
+        ip, ts, reason, ua = line.split("\t", 4)
         next if ip.blank?
         banned_at = ts ? Time.parse(ts) : (Time.now - BAN_TTL + 1)
-        AUTO_BANNED[ip] = banned_at if banned_at > cutoff
+        AUTO_BANNED[ip] = { banned_at: banned_at, reason: reason.to_s, ua: ua.to_s } if banned_at > cutoff
       end
     end
 
@@ -66,11 +67,14 @@ class IpBlocker
 
   # -- Mutation methods --
 
-  def self.auto_ban!(ip_str)
+  def self.auto_ban!(ip_str, reason:, ua:)
     now = Time.now
+    # Strip tabs so the TSV file stays intact
+    reason_safe = reason.to_s.gsub("\t", " ")
+    ua_safe     = ua.to_s.gsub("\t", " ")[0, 200]
     AUTO_BANNED_MUTEX.synchronize do
-      AUTO_BANNED[ip_str] = now
-      File.open(auto_ban_file, "a") { |f| f.puts "#{ip_str}\t#{now.iso8601}" }
+      AUTO_BANNED[ip_str] = { banned_at: now, reason: reason_safe, ua: ua_safe }
+      File.open(auto_ban_file, "a") { |f| f.puts "#{ip_str}\t#{now.iso8601}\t#{reason_safe}\t#{ua_safe}" }
     end
   end
 
@@ -117,8 +121,9 @@ class IpBlocker
       end
 
       if honeypot?(path)
-        self.class.auto_ban!(ip_str)
-        Rails.logger.warn "[ip-blocker] auto-banned #{ip_str} for #{path} UA:#{env['HTTP_USER_AGENT'].to_s[0, 100]}"
+        ua = env["HTTP_USER_AGENT"].to_s
+        self.class.auto_ban!(ip_str, reason: path, ua: ua)
+        Rails.logger.warn "[ip-blocker] auto-banned #{ip_str} for #{path} UA:#{ua[0, 100]}"
         return [403, { "Content-Type" => "text/plain" }, ["Forbidden\n"]]
       end
     end
@@ -138,7 +143,7 @@ class IpBlocker
   end
 
   private_class_method def self.rewrite_auto_ban_file
-    lines = AUTO_BANNED.map { |ip, t| "#{ip}\t#{t.iso8601}" }
+    lines = AUTO_BANNED.map { |ip, e| "#{ip}\t#{e[:banned_at].iso8601}\t#{e[:reason]}\t#{e[:ua]}" }
     File.write(auto_ban_file, lines.join("\n") + (lines.any? ? "\n" : ""))
   end
 
@@ -166,9 +171,9 @@ class IpBlocker
 
   def auto_banned?(ip_str)
     AUTO_BANNED_MUTEX.synchronize do
-      banned_at = AUTO_BANNED[ip_str]
-      return false unless banned_at
-      return true if Time.now - banned_at < BAN_TTL
+      entry = AUTO_BANNED[ip_str]
+      return false unless entry
+      return true if Time.now - entry[:banned_at] < BAN_TTL
       AUTO_BANNED.delete(ip_str)  # expired
       false
     end

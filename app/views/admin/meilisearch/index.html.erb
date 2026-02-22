@@ -31,11 +31,13 @@
 <p class="note">Honeypot hits — expire after 30 days. Persisted in <code>storage/banned_ips.txt</code>.</p>
 <% if @auto_banned.any? %>
   <table>
-    <tr><th>IP</th><th>Banned</th><th></th></tr>
-    <% @auto_banned.each do |ip, banned_at| %>
+    <tr><th>IP</th><th>Banned</th><th>Reason</th><th>User-Agent</th><th></th></tr>
+    <% @auto_banned.each do |ip, e| %>
       <tr>
         <td><%= ip %></td>
-        <td><%= banned_at.strftime("%Y-%m-%d %H:%M") %></td>
+        <td><%= e[:banned_at].strftime("%Y-%m-%d %H:%M") %></td>
+        <td><%= e[:reason] %></td>
+        <td style="max-width:30em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="<%= e[:ua] %>"><%= e[:ua].truncate(80) %></td>
         <td class="rm">
           <%= form_with url: admin_remove_auto_ban_path, method: :post, local: true do |f| %>
             <%= f.hidden_field :ip, value: ip %>

@@ -8,7 +8,7 @@ class Admin::MeilisearchController < ApplicationController
     repo = MeilisearchRepository.new
     @global_stats = repo.get("/stats")
     @tasks        = repo.get("/tasks?limit=20")["results"]
-    @auto_banned  = IpBlocker::AUTO_BANNED_MUTEX.synchronize { IpBlocker::AUTO_BANNED.sort_by { |_, t| t }.reverse }
+    @auto_banned  = IpBlocker::AUTO_BANNED_MUTEX.synchronize { IpBlocker::AUTO_BANNED.sort_by { |_, e| e[:banned_at] }.reverse }
     @config_bans  = IpBlocker::CONFIG_BANNED.keys.sort
     @runtime_bans = IpBlocker::RUNTIME_BANNED_MUTEX.synchronize { IpBlocker::RUNTIME_BANNED.keys.sort }
     @rack_attack_enabled = Rack::Attack.enabled
