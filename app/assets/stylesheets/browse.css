@@ -260,7 +260,7 @@
 .search-facets__list-item {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: flex-start;
   gap: 0.5rem;
   min-width: 0;
   font-size: 0.9em;
@@ -270,7 +270,7 @@
 .search-facets__list-item a {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: flex-start;
   text-decoration: none;
   gap: 0.5rem;
   min-width: 0;
@@ -285,8 +285,9 @@
   flex: 1;
   min-width: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
 }
 
 .search-facets__count {
