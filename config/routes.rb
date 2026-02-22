@@ -19,6 +19,9 @@ Rails.application.routes.draw do
   resources :archive_nodes, only: [:show]
 
   namespace :admin do
-    get "status" => "meilisearch#index"
+    get  "status"              => "meilisearch#index"
+    post "bans/manual"         => "meilisearch#add_manual_ban",    as: :add_manual_ban
+    post "bans/manual/remove"  => "meilisearch#remove_manual_ban", as: :remove_manual_ban
+    post "bans/auto/remove"    => "meilisearch#remove_auto_ban",   as: :remove_auto_ban
   end
 end

@@ -1,43 +1,95 @@
 <style>
   body { font-family: monospace; padding: 1rem 2rem; }
-  table { border-collapse: collapse; width: 100%; margin-bottom: 2rem; }
+  table { border-collapse: collapse; width: 100%; margin-bottom: 1rem; }
   th, td { border: 1px solid #ccc; padding: 0.3rem 0.6rem; text-align: left; }
   th { background: #eee; }
   .ok { color: green; } .warn { color: orange; } .err { color: red; }
-  h2 { margin-top: 2rem; }
-  .top-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem; }
-  .top-grid table { margin-bottom: 0; }
+  h2 { margin-top: 2rem; border-bottom: 1px solid #ddd; padding-bottom: 0.2rem; }
+  .note { font-size: 0.85em; color: #666; margin: 0.3rem 0 0.7rem; }
+  .rm { font-size: 0.8em; }
+  .rm button { font-family: monospace; cursor: pointer; color: #c00; background: none;
+               border: 1px solid #c00; padding: 0 4px; border-radius: 2px; }
+  .add-form { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+  .add-form input { font-family: monospace; padding: 0.2rem 0.4rem; border: 1px solid #ccc; }
+  .add-form button { font-family: monospace; padding: 0.2rem 0.6rem; cursor: pointer; }
+  .flash-notice { color: green; } .flash-alert { color: red; }
 </style>
 
-<h1>Meilisearch Admin</h1>
+<h1>Admin</h1>
+
+<% if notice.present? %><p class="flash-notice"><%= notice %></p><% end %>
+<% if alert.present? %><p class="flash-alert"><%= alert %></p><% end %>
 
 <% if @error %>
   <p class="err">Error: <%= @error %></p>
 <% else %>
 
-<div class="top-grid">
-  <div>
-    <h2 style="margin-top:0">Rack::Attack</h2>
-    <p>Enabled: <span class="<%= @rack_attack_enabled ? "ok" : "warn" %>"><%= @rack_attack_enabled %></span></p>
-  </div>
+<p>Rack::Attack: <strong class="<%= @rack_attack_enabled ? "ok" : "warn" %>"><%= @rack_attack_enabled ? "enabled" : "disabled" %></strong></p>
 
-  <div>
-    <h2 style="margin-top:0">Auto-banned IPs (<%= @ip_auto_banned.size %>, expire after 30d)</h2>
-    <p style="font-size:0.85em;color:#666">Manual bans: <%= @ip_manual_banned %> entries in storage/manual_bans.txt</p>
-    <% if @ip_auto_banned.any? %>
-      <table>
-        <% @ip_auto_banned.each do |ip, banned_at| %>
-          <tr><td><%= ip %></td><td style="color:#999"><%= banned_at.strftime("%Y-%m-%d") %></td></tr>
-        <% end %>
-      </table>
-    <% else %>
-      <p>None yet.</p>
+<%# ── AUTO-BANNED ────────────────────────────────────────── %>
+<h2>Auto-bans (<%= @auto_banned.size %>)</h2>
+<p class="note">Honeypot hits — expire after 30 days. Persisted in <code>storage/banned_ips.txt</code>.</p>
+<% if @auto_banned.any? %>
+  <table>
+    <tr><th>IP</th><th>Banned</th><th></th></tr>
+    <% @auto_banned.each do |ip, banned_at| %>
+      <tr>
+        <td><%= ip %></td>
+        <td><%= banned_at.strftime("%Y-%m-%d %H:%M") %></td>
+        <td class="rm">
+          <%= form_with url: admin_remove_auto_ban_path, method: :post, local: true do |f| %>
+            <%= f.hidden_field :ip, value: ip %>
+            <%= f.submit "remove" %>
+          <% end %>
+        </td>
+      </tr>
     <% end %>
-  </div>
-</div>
+  </table>
+<% else %>
+  <p class="note">None yet.</p>
+<% end %>
 
+<%# ── RUNTIME MANUAL BANS ────────────────────────────────── %>
+<h2>Manual bans — runtime (<%= @runtime_bans.size %>)</h2>
+<p class="note">Editable here. Written to <code>storage/manual_bans.txt</code>, survives deploys.</p>
+<% if @runtime_bans.any? %>
+  <table>
+    <tr><th>IP / CIDR</th><th></th></tr>
+    <% @runtime_bans.each do |raw| %>
+      <tr>
+        <td><%= raw %></td>
+        <td class="rm">
+          <%= form_with url: admin_remove_manual_ban_path, method: :post, local: true do |f| %>
+            <%= f.hidden_field :ip, value: raw %>
+            <%= f.submit "remove" %>
+          <% end %>
+        </td>
+      </tr>
+    <% end %>
+  </table>
+<% end %>
+<%= form_with url: admin_add_manual_ban_path, method: :post, local: true do |f| %>
+  <div class="add-form">
+    <%= f.text_field :ip, placeholder: "1.2.3.4 or 1.2.0.0/16", size: 30 %>
+    <%= f.submit "Ban" %>
+  </div>
+<% end %>
+
+<%# ── CONFIG MANUAL BANS ─────────────────────────────────── %>
+<h2>Manual bans — config (<%= @config_bans.size %>)</h2>
+<p class="note">Read-only. Defined in <code>config/manual_bans.txt</code> — deploy to change.</p>
+<% if @config_bans.any? %>
+  <table>
+    <tr><th>IP / CIDR</th></tr>
+    <% @config_bans.each do |raw| %>
+      <tr><td><%= raw %></td></tr>
+    <% end %>
+  </table>
+<% end %>
+
+<%# ── MEILISEARCH ─────────────────────────────────────────── %>
 <h2>Indices</h2>
-<p style="font-size:0.85em;color:#666">Per-index disk usage is not exposed by the Meilisearch API — only total DB size is available.</p>
+<p class="note">Per-index disk usage is not available via the Meilisearch API — only total DB size.</p>
 <table>
   <tr><th>Index</th><th>Docs</th><th>Indexing?</th></tr>
   <% @global_stats["indexes"]&.each do |name, idx| %>
