@@ -119,4 +119,35 @@ namespace :data do
 
     puts "Done. #{origins.size} unique origins live in #{live_index}."
   end
+
+  desc 'Delete ghost ROOT_ nodes left behind by redundant-node ID swaps'
+  task cleanup_ghost_nodes: :environment do
+    repo = MeilisearchRepository.new
+
+    # Browse all node documents and collect ROOT_ IDs
+    ghost_ids = []
+    offset = 0
+    limit = 1000
+    loop do
+      resp = repo.get("/indexes/ArchiveNode_#{Rails.env}/documents?limit=#{limit}&offset=#{offset}&fields=id")
+      batch = resp['results'] || []
+      batch.each do |node|
+        ghost_ids << node['id'] if node['id']&.start_with?('ROOT_')
+      end
+      break if batch.size < limit
+      offset += limit
+    end
+
+    if ghost_ids.empty?
+      puts "No ghost ROOT_ nodes found."
+      next
+    end
+
+    puts "Found #{ghost_ids.size} ghost ROOT_ nodes. Deleting..."
+    ghost_ids.each_slice(100) do |batch|
+      batch.each { |id| repo.delete_node(id) }
+    end
+
+    puts "Deleted #{ghost_ids.size} ghost ROOT_ nodes."
+  end
 end

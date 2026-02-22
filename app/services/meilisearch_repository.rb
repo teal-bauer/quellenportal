@@ -228,6 +228,10 @@ class MeilisearchRepository
     []
   end
 
+  def delete_node(id)
+    delete("/indexes/#{@node_index}/documents/#{id}")
+  end
+
   def delete_all
     [@file_index, @node_index, @origin_index].each do |idx|
       delete("/indexes/#{idx}")

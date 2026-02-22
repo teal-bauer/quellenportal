@@ -212,9 +212,8 @@ class ArchiveObject
             # Transfer metadata from @archive_node to existing_node if existing_node is missing it
             @archive_node[:id] = child_id
             @repository.upsert_nodes([@archive_node])
-            # In a real system we might want to delete the old ROOT_ node, but Meilisearch 
-            # doesn't easily support "rename" - we just upsert with new ID.
-            
+            @repository.delete_node(old_id)
+
             @caches[:nodes].delete(old_id)
             @caches[:nodes][child_id] = @archive_node
           end
