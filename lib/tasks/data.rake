@@ -42,11 +42,14 @@ namespace :data do
     # Prepare shadow indices (clean up any leftovers from failed runs)
     puts "Preparing shadow indices..."
     [shadow.file_index, shadow.node_index, shadow.origin_index].each do |idx|
-      live.delete_index(idx)
+      resp = live.delete_index(idx)
+      live.wait_for_task(resp['taskUid'], timeout: 30) if resp&.dig('taskUid')
+    rescue
+      nil
     end
-    sleep 2
     [shadow.file_index, shadow.node_index, shadow.origin_index].each do |idx|
-      live.post("/indexes", { uid: idx, primaryKey: 'id' })
+      resp = live.post("/indexes", { uid: idx, primaryKey: 'id' })
+      live.wait_for_task(resp['taskUid'], timeout: 30)
     end
     shadow.configure_indices
 
