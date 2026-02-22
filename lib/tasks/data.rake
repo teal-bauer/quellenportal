@@ -50,4 +50,51 @@ namespace :data do
     MeilisearchRepository.new.recreate_indices
     puts "Indices recreated and configured."
   end
+
+  desc 'Rebuild origins index from XML data (dedup + normalize)'
+  task :rebuild_origins, [:dir] => [:environment] do |_task, args|
+    dir = args[:dir] || 'data'
+    repo = MeilisearchRepository.new
+
+    # Delete existing origins
+    puts "Deleting origin index..."
+    repo.delete_index("Origin_#{Rails.env}")
+    sleep 2
+    repo.post("/indexes", { uid: "Origin_#{Rails.env}", primaryKey: 'id' })
+    repo.configure_indices
+
+    # Scan all XML files for origination elements
+    origins = {}
+    xml_files = Dir.glob('*.xml', base: dir).sort
+
+    xml_files.each_with_index do |filename, i|
+      print "\r[#{i + 1}/#{xml_files.size}] Scanning #{filename}...".ljust(80)
+      doc = File.open(File.join(dir, filename)) { |f| Nokogiri.XML(f) }
+      doc.remove_namespaces!
+
+      doc.xpath('//origination').each do |orig|
+        name = orig.text.strip
+        next if name.blank?
+
+        unless origins.key?(name)
+          first = name.gsub(/\A[^\p{L}\p{N}]+/, '')
+          letter = first[0]&.unicode_normalize(:nfd)&.gsub(/\p{M}/, '')&.upcase
+          letter = first[0]&.upcase if letter.blank?
+
+          origins[name] = {
+            id: Digest::SHA256.hexdigest(name)[0, 24],
+            name: name,
+            label: orig.attr('label'),
+            first_letter: letter
+          }
+        end
+      end
+    end
+
+    puts "\nFound #{origins.size} unique origins. Upserting..."
+    origins.values.each_slice(1000) do |batch|
+      repo.upsert_origins(batch)
+    end
+    puts "Done."
+  end
 end

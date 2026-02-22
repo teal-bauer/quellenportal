@@ -153,11 +153,17 @@ class ArchiveObject
   end
 
   def get_or_create_origin(name, label)
-    key = [name, label]
+    key = name
     return @caches[:origins][key] if @caches[:origins][key]
 
-    origin = { id: SecureRandom.uuid, name: name, label: label, first_letter: normalize_letter(name) }
-    
+    # Deterministic ID from name so duplicates across files merge naturally
+    origin = {
+      id: Digest::SHA256.hexdigest(name)[0, 24],
+      name: name,
+      label: label,
+      first_letter: normalize_letter(name)
+    }
+
     @caches[:origins_batch] << origin
     if @caches[:origins_batch].size >= 100
       @repository.upsert_origins(@caches[:origins_batch])
@@ -239,10 +245,13 @@ class ArchiveObject
 
   def normalize_letter(str)
     return nil if str.blank?
-    # Remove leading non-alphanumeric (including German characters)
-    # Then take the first character
-    clean = str.gsub(/\A[^a-zA-Z0-9äöüÄÖÜß]+/, '')
-    clean[0]&.upcase
+    # Strip leading non-letter/non-digit characters (Unicode-aware)
+    clean = str.gsub(/\A[^\p{L}\p{N}]+/, '')
+    return nil if clean.empty?
+    # Decompose to NFD, strip combining marks (accents), then take first char
+    first = clean[0].unicode_normalize(:nfd).gsub(/\p{M}/, '')
+    first = clean[0] if first.empty? # fallback for CJK etc.
+    first.upcase
   end
 
   def clean_id(id)
@@ -294,7 +303,7 @@ class BundesarchivImporter
     caches = {
       nodes: {},
       nodes_batch: [],
-      origins: origins_list.to_h { |o| [[o['name'], o['label']], o] },
+      origins: origins_list.to_h { |o| [o['name'], o] },
       origins_batch: [],
       progress_acc: 0.0
     }

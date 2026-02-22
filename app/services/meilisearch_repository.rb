@@ -60,7 +60,7 @@ class MeilisearchRepository
         minWordSizeForTypos: { oneTypo: 4, twoTypos: 8 }
       },
       faceting: { maxValuesPerFacet: 100 },
-      pagination: { maxTotalHits: 100_000 }
+      pagination: { maxTotalHits: 500_000 }
     })
 
     # ArchiveNode settings
@@ -68,7 +68,7 @@ class MeilisearchRepository
       searchableAttributes: %w[name unitid scopecontent],
       filterableAttributes: %w[parent_node_id level first_letter name_first_letter unitid_first_letter],
       sortableAttributes: %w[name unitid],
-      pagination: { maxTotalHits: 100_000 }
+      pagination: { maxTotalHits: 500_000 }
     })
 
     # Origin settings
@@ -76,7 +76,7 @@ class MeilisearchRepository
       searchableAttributes: %w[name label],
       filterableAttributes: %w[first_letter],
       sortableAttributes: %w[name file_count],
-      pagination: { maxTotalHits: 100_000 }
+      pagination: { maxTotalHits: 500_000 }
     })
   end
 
@@ -208,10 +208,18 @@ class MeilisearchRepository
   end
 
   def all_origins_for_cache
-    # Fetch all origins without pagination for the importer cache
-    # Meilisearch default limit is 20, so we need a large number
-    resp = get("/indexes/#{@origin_index}/documents?limit=10000")
-    resp['results'] || []
+    # Fetch all origins for the importer cache, paginating if needed
+    all = []
+    offset = 0
+    limit = 10_000
+    loop do
+      resp = get("/indexes/#{@origin_index}/documents?limit=#{limit}&offset=#{offset}")
+      batch = resp['results'] || []
+      all.concat(batch)
+      break if batch.size < limit
+      offset += limit
+    end
+    all
   rescue
     []
   end
