@@ -16,6 +16,7 @@ gem 'propshaft'
 gem 'bibtex-ruby', '~> 6.1' # Export bibtex citations
 gem 'bootsnap', require: false # Reduces boot times through caching; required in config/boot.rb
 gem 'kaminari' # Pagination
+gem 'rack-attack' # Rate limiting and IP blocking
 gem 'meilisearch' # Raw Meilisearch client (replacing meilisearch-rails which is AR-bound)
 gem 'progressbar', '~> 1.13' # Used in the import task
 gem 'view_component' # Reusable view components

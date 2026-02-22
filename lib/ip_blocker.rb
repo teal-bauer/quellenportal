@@ -18,6 +18,9 @@ class IpBlocker
 
     # Majestic / MJ12bot
     "91.108.4.0/22",
+
+    # Manual blocks
+    "74.7.227.140/32",
   ].map { |cidr| IPAddr.new(cidr) }.freeze
 
   def initialize(app)
@@ -28,6 +31,8 @@ class IpBlocker
     ip = remote_ip(env)
 
     if ip && blocked?(ip)
+      ua = env["HTTP_USER_AGENT"].to_s.truncate(100)
+      Rails.logger.warn "[ip-blocker] blocked #{ip} #{env['REQUEST_METHOD']} #{env['PATH_INFO']} UA:#{ua}"
       return [403, { "Content-Type" => "text/plain" }, ["Forbidden\n"]]
     end
 
