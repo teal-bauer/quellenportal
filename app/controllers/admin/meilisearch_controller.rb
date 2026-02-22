@@ -9,16 +9,15 @@ class Admin::MeilisearchController < ApplicationController
     @global_stats = repo.get("/stats")
     @tasks        = repo.get("/tasks?limit=20")["results"]
     @auto_banned  = IpBlocker::AUTO_BANNED_MUTEX.synchronize { IpBlocker::AUTO_BANNED.sort_by { |_, e| e[:banned_at] }.reverse }
-    @config_bans  = IpBlocker::CONFIG_BANNED.keys.sort
-    @runtime_bans = IpBlocker::RUNTIME_BANNED_MUTEX.synchronize { IpBlocker::RUNTIME_BANNED.keys.sort }
-    @rack_attack_enabled = Rack::Attack.enabled
+    @manual_bans  = build_merged_bans
   rescue => e
     @error = e.message
   end
 
   def add_manual_ban
-    ip = params[:ip].to_s.strip
-    IpBlocker.add_manual_ban!(ip)
+    ip      = params[:ip].to_s.strip
+    comment = params[:comment].to_s.strip
+    IpBlocker.add_manual_ban!(ip, comment: comment)
     redirect_to admin_status_path, notice: "Banned #{ip}"
   rescue => e
     redirect_to admin_status_path, alert: "Invalid: #{e.message}"
@@ -32,5 +31,16 @@ class Admin::MeilisearchController < ApplicationController
   def remove_auto_ban
     IpBlocker.remove_auto_ban!(params[:ip].to_s.strip)
     redirect_to admin_status_path
+  end
+
+  private
+
+  def build_merged_bans
+    bans = []
+    IpBlocker::CONFIG_BANNED.each { |raw, _| bans << { ip: raw, source: "config", comment: "" } }
+    IpBlocker::RUNTIME_BANNED_MUTEX.synchronize do
+      IpBlocker::RUNTIME_BANNED.each { |raw, e| bans << { ip: raw, source: "runtime", comment: e[:comment] } }
+    end
+    bans.sort_by { |b| b[:ip] }
   end
 end

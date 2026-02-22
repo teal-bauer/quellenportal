@@ -8,7 +8,6 @@ require 'ipaddr'
 #   RUNTIME_BANNED — storage/manual_bans.txt, persistent volume, editable via admin UI
 #   AUTO_BANNED    — storage/banned_ips.txt, honeypot hits, expire after 30 days
 class IpBlocker
-  # Requests to these paths immediately ban the IP — no legitimate user hits them.
   HONEYPOT_PATHS = %w[
     /wp-admin /wp-login /wp-config /wp-content /wp-includes /wordpress
     /xmlrpc.php /wlwmanifest.xml
@@ -20,33 +19,23 @@ class IpBlocker
     /cgi-bin/ /fckeditor /ckfinder
   ].freeze
 
-  BAN_TTL = 30 * 24 * 3600  # 30 days in seconds
+  BAN_TTL = 30 * 24 * 3600  # 30 days
 
-  CONFIG_BANNED  = {}  # raw_str => IPAddr, from config/manual_bans.txt (never written)
-  RUNTIME_BANNED = {}  # raw_str => IPAddr, from storage/manual_bans.txt (editable)
+  CONFIG_BANNED  = {}  # raw_str => IPAddr (read-only)
+  RUNTIME_BANNED = {}  # raw_str => { addr: IPAddr, comment: String }
   RUNTIME_BANNED_MUTEX = Mutex.new
 
-  # ip_str => {banned_at: Time, reason: String, ua: String}, expires after BAN_TTL
-  AUTO_BANNED = {}
+  AUTO_BANNED = {}     # ip_str => { banned_at: Time, reason: String, ua: String }
   AUTO_BANNED_MUTEX = Mutex.new
 
   # -- File paths --
 
-  def self.auto_ban_file
-    Rails.root.join("storage", "banned_ips.txt")
-  end
+  def self.auto_ban_file    = Rails.root.join("storage", "banned_ips.txt")
+  def self.config_ban_file  = Rails.root.join("config", "manual_bans.txt")
+  def self.runtime_ban_file = Rails.root.join("storage", "manual_bans.txt")
 
-  def self.config_ban_file
-    Rails.root.join("config", "manual_bans.txt")
-  end
+  # -- Boot loader (called from config/initializers/ip_blocker.rb) --
 
-  def self.runtime_ban_file
-    Rails.root.join("storage", "manual_bans.txt")
-  end
-
-  # -- Boot loader --
-
-  # Called once at boot from config/initializers/ip_blocker.rb
   def self.load_bans!
     cutoff = Time.now - BAN_TTL
 
@@ -59,8 +48,8 @@ class IpBlocker
       end
     end
 
-    load_ban_file(config_ban_file, CONFIG_BANNED)
-    load_ban_file(runtime_ban_file, RUNTIME_BANNED)
+    load_config_bans
+    load_runtime_bans
   rescue => e
     Rails.logger.error "[ip-blocker] failed to load ban files: #{e.message}"
   end
@@ -69,7 +58,6 @@ class IpBlocker
 
   def self.auto_ban!(ip_str, reason:, ua:)
     now = Time.now
-    # Strip tabs so the TSV file stays intact
     reason_safe = reason.to_s.gsub("\t", " ")
     ua_safe     = ua.to_s.gsub("\t", " ")[0, 200]
     AUTO_BANNED_MUTEX.synchronize do
@@ -85,12 +73,13 @@ class IpBlocker
     end
   end
 
-  def self.add_manual_ban!(raw)
+  def self.add_manual_ban!(raw, comment: "")
     raw = raw.strip
-    addr = IPAddr.new(raw)  # raises IPAddr::InvalidAddressError if bad
+    addr = IPAddr.new(raw)  # validates
+    comment_safe = comment.to_s.gsub("\t", " ").strip
     RUNTIME_BANNED_MUTEX.synchronize do
-      RUNTIME_BANNED[raw] = addr
-      File.open(runtime_ban_file, "a") { |f| f.puts raw }
+      RUNTIME_BANNED[raw] = { addr: addr, comment: comment_safe }
+      File.open(runtime_ban_file, "a") { |f| f.puts comment_safe.present? ? "#{raw}\t#{comment_safe}" : raw }
     end
   end
 
@@ -131,14 +120,28 @@ class IpBlocker
     @app.call(env)
   end
 
-  private_class_method def self.load_ban_file(path, store)
-    return unless File.exist?(path)
-    File.readlines(path, chomp: true).each do |line|
+  # -- Private class methods --
+
+  private_class_method def self.load_config_bans
+    return unless File.exist?(config_ban_file)
+    File.readlines(config_ban_file, chomp: true).each do |line|
       line = line.sub(/#.*/, "").strip
       next if line.blank?
-      store[line] = IPAddr.new(line)
+      CONFIG_BANNED[line] = IPAddr.new(line)
     rescue IPAddr::InvalidAddressError
-      Rails.logger.warn "[ip-blocker] invalid entry in #{path}: #{line}"
+      Rails.logger.warn "[ip-blocker] invalid entry in #{config_ban_file}: #{line}"
+    end
+  end
+
+  private_class_method def self.load_runtime_bans
+    return unless File.exist?(runtime_ban_file)
+    File.readlines(runtime_ban_file, chomp: true).each do |line|
+      raw, comment = line.split("\t", 2)
+      raw = raw.to_s.strip
+      next if raw.blank?
+      RUNTIME_BANNED[raw] = { addr: IPAddr.new(raw), comment: comment.to_s.strip }
+    rescue IPAddr::InvalidAddressError
+      Rails.logger.warn "[ip-blocker] invalid entry in #{runtime_ban_file}: #{raw}"
     end
   end
 
@@ -148,7 +151,8 @@ class IpBlocker
   end
 
   private_class_method def self.rewrite_runtime_ban_file
-    File.write(runtime_ban_file, RUNTIME_BANNED.keys.join("\n") + (RUNTIME_BANNED.any? ? "\n" : ""))
+    lines = RUNTIME_BANNED.map { |raw, e| e[:comment].present? ? "#{raw}\t#{e[:comment]}" : raw }
+    File.write(runtime_ban_file, lines.join("\n") + (lines.any? ? "\n" : ""))
   end
 
   private
@@ -166,7 +170,7 @@ class IpBlocker
 
   def manual_banned?(addr)
     CONFIG_BANNED.any? { |_, cidr| cidr.include?(addr) } ||
-      RUNTIME_BANNED_MUTEX.synchronize { RUNTIME_BANNED.any? { |_, cidr| cidr.include?(addr) } }
+      RUNTIME_BANNED_MUTEX.synchronize { RUNTIME_BANNED.any? { |_, e| e[:addr].include?(addr) } }
   end
 
   def auto_banned?(ip_str)
@@ -174,7 +178,7 @@ class IpBlocker
       entry = AUTO_BANNED[ip_str]
       return false unless entry
       return true if Time.now - entry[:banned_at] < BAN_TTL
-      AUTO_BANNED.delete(ip_str)  # expired
+      AUTO_BANNED.delete(ip_str)
       false
     end
   end

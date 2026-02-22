@@ -5,7 +5,7 @@ module SearchHelper
   end
 
   def facet_url(add: {}, remove: [])
-    base = { q: @query, node_id: @node_id, from: @date_from, to: @date_to, sort: params[:sort] }
+    base = { q: @query, node_id: @node_id, fonds_name: @fonds_name, from: @date_from, to: @date_to, sort: params[:sort] }
     remove.each { |k| base.delete(k) }
     base.merge!(add)
     root_path(base.compact)

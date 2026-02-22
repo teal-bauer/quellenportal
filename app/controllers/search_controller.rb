@@ -8,6 +8,7 @@ class SearchController < ApplicationController
     @total_count = 0
     @unitid = params[:unitid]
     @unitid_prefix = params[:unitid_prefix]
+    @fonds_name = params[:fonds_name]
     @date_from = params[:from].present? ? Date.parse(params[:from]) : nil
     @date_to = params[:to].present? ? Date.parse(params[:to]) : nil
     
@@ -48,10 +49,7 @@ class SearchController < ApplicationController
         @facets = results['facetDistribution']
         @total_count = results['totalHits'] || results['estimatedTotalHits'] || 0
 
-        # Map fonds identifiers - likely not needed if we just use the facet keys directly in view
-        # The original code queried ArchiveNode to get IDs. Now we just have names/unitids.
-        # We can implement a "lookup" search if strictly needed, but for now let's skip the DB query.
-        @fonds_id_map = {} 
+        @fonds_id_map = {}
       rescue => e
         Rails.logger.error "Meilisearch error: #{e.class}: #{e.message}"
         @search_error = true
@@ -80,6 +78,10 @@ class SearchController < ApplicationController
 
     if @unitid_prefix.present?
       parts << "fonds_unitid_prefix = #{MeilisearchRepository.quote(@unitid_prefix)}"
+    end
+
+    if @fonds_name.present?
+      parts << "fonds_name = #{MeilisearchRepository.quote(@fonds_name)}"
     end
 
     if @date_from.present? && @date_to.present?

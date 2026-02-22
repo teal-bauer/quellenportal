@@ -239,6 +239,7 @@
 
 .search-facets__section {
   margin-bottom: 1rem;
+  position: relative;
 }
 
 .search-facets__section summary {
@@ -249,6 +250,19 @@
   padding: 0.25rem 0;
   border-bottom: 1px solid #ede6d8;
   margin-bottom: 0.5rem;
+}
+
+.search-facets__list,
+.search-facets__decades {
+  max-height: 18em;
+  overflow-y: auto;
+  /* Scroll shadows: top/bottom fade appear only when scrollable in that direction */
+  background:
+    linear-gradient(#faf7f2 30%, transparent) top,
+    linear-gradient(transparent, #faf7f2 70%) bottom;
+  background-size: 100% 1.5em;
+  background-repeat: no-repeat;
+  background-attachment: local;
 }
 
 .search-facets__list {
