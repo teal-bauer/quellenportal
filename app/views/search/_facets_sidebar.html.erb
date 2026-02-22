@@ -36,7 +36,7 @@
         <% @facets["fonds_unitid_prefix"].sort_by { |_, count| -count }.each do |prefix, file_count| %>
           <li class="search-facets__list-item">
             <%= link_to facet_url(add: { unitid_prefix: prefix }) do %>
-              <span class="search-facets__name"><%= prefix %></span>
+              <span class="search-facets__name" title="<%= prefix %>"><%= prefix %></span>
               <span class="search-facets__count"><%= number_with_delimiter(file_count) %></span>
             <% end %>
           </li>
@@ -54,12 +54,12 @@
           <li class="search-facets__list-item">
             <% if fonds_id && @query.present? %>
               <%= link_to facet_url(add: { node_id: fonds_id }) do %>
-                <span class="search-facets__name"><%= unitid %></span>
+                <span class="search-facets__name" title="<%= unitid %>"><%= unitid %></span>
                 <span class="search-facets__count"><%= number_with_delimiter(file_count) %></span>
               <% end %>
             <% else %>
               <%= link_to facet_url(add: { unitid: unitid }) do %>
-                <span class="search-facets__name"><%= unitid %></span>
+                <span class="search-facets__name" title="<%= unitid %>"><%= unitid %></span>
                 <span class="search-facets__count"><%= number_with_delimiter(file_count) %></span>
               <% end %>
             <% end %>
@@ -78,12 +78,12 @@
           <li class="search-facets__list-item">
             <% if fonds_id && @query.present? %>
               <%= link_to facet_url(add: { node_id: fonds_id }) do %>
-                <span class="search-facets__name"><%= fonds_name %></span>
+                <span class="search-facets__name" title="<%= fonds_name %>"><%= fonds_name %></span>
                 <span class="search-facets__count"><%= number_with_delimiter(file_count) %></span>
               <% end %>
             <% elsif fonds_id %>
               <%= link_to archive_node_path(fonds_id) do %>
-                <span class="search-facets__name"><%= fonds_name %></span>
+                <span class="search-facets__name" title="<%= fonds_name %>"><%= fonds_name %></span>
                 <span class="search-facets__count"><%= number_with_delimiter(file_count) %></span>
               <% end %>
             <% else %>

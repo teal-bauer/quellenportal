@@ -28,7 +28,7 @@
 
 <%# ── AUTO-BANNED ────────────────────────────────────────── %>
 <h2>Auto-bans (<%= @auto_banned.size %>)</h2>
-<p class="note">Honeypot hits — expire after 30 days. Persisted in <code>storage/banned_ips.txt</code>.</p>
+<p class="note">Expire after 30 days. Persisted in <code>storage/banned_ips.txt</code>.</p>
 <% if @auto_banned.any? %>
   <table>
     <tr><th>IP</th><th>Banned</th><th>Reason</th><th>User-Agent</th><th></th></tr>

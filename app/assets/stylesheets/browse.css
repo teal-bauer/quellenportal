@@ -265,6 +265,7 @@
   text-decoration: none;
   gap: 0.5rem;
   font-size: 0.9em;
+  min-width: 0;
 }
 
 .search-facets__list-item a:hover .search-facets__name {
@@ -272,6 +273,8 @@
 }
 
 .search-facets__name {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
