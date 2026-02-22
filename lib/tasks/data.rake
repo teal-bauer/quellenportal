@@ -144,9 +144,7 @@ namespace :data do
     end
 
     puts "Found #{ghost_ids.size} ghost ROOT_ nodes. Deleting..."
-    ghost_ids.each_slice(100) do |batch|
-      batch.each { |id| repo.delete_node(id) }
-    end
+    repo.delete_nodes(ghost_ids)
 
     puts "Deleted #{ghost_ids.size} ghost ROOT_ nodes."
   end
