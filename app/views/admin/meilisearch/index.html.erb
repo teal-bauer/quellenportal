@@ -107,6 +107,22 @@
   <% end %>
 </table>
 
+<% if @pending_summary.any? %>
+  <h2>Pending tasks <small>(<%= @pending_summary.sum { |r| r[:count] } %>)</small></h2>
+  <table>
+    <tr><th>Index</th><th>Type</th><th>Status</th><th>Count</th></tr>
+    <% @pending_summary.each do |r| %>
+      <% sc = r[:status] == "processing" ? "warn" : "" %>
+      <tr>
+        <td><%= r[:index] %></td>
+        <td><%= r[:type] %></td>
+        <td class="<%= sc %>"><%= r[:status] %></td>
+        <td><%= r[:count] %></td>
+      </tr>
+    <% end %>
+  </table>
+<% end %>
+
 <h2>Tasks <small>(last 20)</small></h2>
 <table>
   <tr><th>UID</th><th>Index</th><th>Type</th><th>Status</th><th>Enqueued</th><th>Duration</th><th>Error</th></tr>

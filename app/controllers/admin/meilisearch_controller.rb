@@ -8,6 +8,11 @@ class Admin::MeilisearchController < ApplicationController
     repo = MeilisearchRepository.new
     @global_stats = repo.get("/stats")
     @tasks        = repo.get("/tasks?limit=20")["results"]
+    pending_tasks = repo.get("/tasks?statuses=enqueued,processing&limit=1000")["results"] || []
+    @pending_summary = pending_tasks
+      .group_by { |t| [t["indexUid"] || "(global)", t["type"], t["status"]] }
+      .map { |(idx, type, status), tasks| { index: idx, type: type, status: status, count: tasks.size } }
+      .sort_by { |r| [r[:index], r[:type]] }
     @auto_banned  = IpBlocker::AUTO_BANNED_MUTEX.synchronize { IpBlocker::AUTO_BANNED.sort_by { |_, e| e[:banned_at] }.reverse }
     @manual_bans  = build_merged_bans
   rescue => e
