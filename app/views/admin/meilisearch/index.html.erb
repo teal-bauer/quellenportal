@@ -1,21 +1,43 @@
 <style>
-  body { font-family: monospace; padding: 1rem 2rem; }
-  table { border-collapse: collapse; width: 100%; }
-  th, td { border: 1px solid #ccc; padding: 0.25rem 0.5rem; text-align: left; font-size: 0.9em; }
-  th { background: #eee; }
-  .ok { color: green; } .warn { color: orange; } .err { color: red; }
-  h2 { margin: 2rem 0 0.3rem; font-size: 1.1em; }
-  .note { font-size: 0.8em; color: #888; margin: 0 0 0.5rem; }
-  .ellip { max-width: 28em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .rm button { font-family: monospace; cursor: pointer; color: #c00; background: none;
-               border: 1px solid #c00; padding: 0 3px; border-radius: 2px; font-size: 0.85em; }
-  .add-form { display: flex; gap: 0.4rem; margin-top: 0.5rem; }
-  .add-form input { font-family: monospace; padding: 0.2rem 0.4rem; border: 1px solid #ccc; font-size: 0.9em; }
-  .add-form button { font-family: monospace; padding: 0.2rem 0.5rem; cursor: pointer; font-size: 0.9em; }
-  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; }
-  .flash { padding: 0.3rem 0.6rem; margin-bottom: 0.5rem; border-radius: 2px; }
+  :root { --c-bg: #fafafa; --c-border: #e0e0e0; --c-muted: #888; --c-ip: #1a1a2e; --c-rm: #b33; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, system-ui, "Segoe UI", sans-serif; padding: 1.5rem 2rem; background: var(--c-bg); color: #222; font-size: 14px; }
+  h1 { font-size: 1.4em; margin: 0 0 1rem; }
+  h2 { font-size: 1em; font-weight: 600; margin: 1.5rem 0 0.25rem; }
+  h2 small { font-weight: 400; color: var(--c-muted); }
+  .note { font-size: 0.8em; color: var(--c-muted); margin: 0 0 0.4rem; }
+  .ok { color: #1a7f37; } .warn { color: #bf8700; } .err { color: var(--c-rm); }
+  .flash { padding: 0.3rem 0.6rem; margin-bottom: 0.5rem; border-radius: 3px; font-size: 0.85em; }
   .flash-notice { background: #e6f4ea; color: #1a7f37; }
-  .flash-alert  { background: #fde8e8; color: #c00; }
+  .flash-alert  { background: #fde8e8; color: var(--c-rm); }
+
+  /* layout */
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
+
+  /* ban list (shared) */
+  .bans { list-style: none; padding: 0; margin: 0; }
+  .bans li { display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.35rem 0; border-bottom: 1px solid var(--c-border); }
+  .bans li:last-child { border-bottom: none; }
+  .ban-ip { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.85em; color: var(--c-ip); font-weight: 500; white-space: nowrap; }
+  .ban-meta { flex: 1; min-width: 0; font-size: 0.8em; color: var(--c-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ban-tag { display: inline-block; font-size: 0.7em; padding: 0 4px; border-radius: 2px; font-weight: 500; vertical-align: 1px; }
+  .ban-tag-config  { background: #e8e0f0; color: #5b4a8a; }
+  .ban-tag-runtime { background: #ddeeff; color: #1a6fb3; }
+  .ban-rm form { display: inline; }
+  .ban-rm button { font-family: inherit; cursor: pointer; color: var(--c-rm); background: none; border: none; font-size: 0.8em; padding: 0; opacity: 0.5; }
+  .ban-rm button:hover { opacity: 1; }
+
+  /* add form */
+  .add-form { display: flex; gap: 0.35rem; margin-top: 0.5rem; }
+  .add-form input { font-family: inherit; padding: 0.25rem 0.4rem; border: 1px solid var(--c-border); border-radius: 3px; font-size: 0.85em; }
+  .add-form button { font-family: inherit; padding: 0.25rem 0.6rem; cursor: pointer; font-size: 0.85em; border: 1px solid var(--c-border); border-radius: 3px; background: #fff; }
+  .add-form button:hover { background: #f0f0f0; }
+
+  /* meilisearch tables */
+  table { border-collapse: collapse; width: 100%; margin-bottom: 0.5rem; }
+  th, td { border: 1px solid var(--c-border); padding: 0.2rem 0.5rem; text-align: left; font-size: 0.85em; }
+  th { background: #f0f0f0; font-weight: 600; }
+  td.ellip { max-width: 24em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>
 
 <h1>Admin</h1>
@@ -27,61 +49,51 @@
   <p class="err">Error: <%= @error %></p>
 <% else %>
 
-<%# ── BANS — TWO COLUMNS ───────────────────────────────── %>
 <div class="cols">
   <div>
-    <h2>Auto-bans (<%= @auto_banned.size %>)</h2>
-    <p class="note">Expire after 30 days. Stored in <code>storage/banned_ips.txt</code>.</p>
+    <h2>Auto-bans <small>(<%= @auto_banned.size %>, 30d TTL)</small></h2>
     <% if @auto_banned.any? %>
-      <table>
-        <tr><th>IP</th><th>Banned</th><th>Reason</th><th>UA</th><th></th></tr>
+      <ul class="bans">
         <% @auto_banned.each do |ip, e| %>
-          <tr>
-            <td><%= ip %></td>
-            <td><%= e[:banned_at].strftime("%m-%d %H:%M") %></td>
-            <td><%= e[:reason] %></td>
-            <td class="ellip" title="<%= e[:ua] %>"><%= e[:ua].truncate(60) %></td>
-            <td class="rm"><%= form_with url: admin_remove_auto_ban_path, method: :post, local: true do |f| %><%= f.hidden_field :ip, value: ip %><%= f.submit "x" %><% end %></td>
-          </tr>
+          <li>
+            <span class="ban-ip"><%= ip %></span>
+            <span class="ban-meta" title="<%= e[:ua] %>"><%= e[:reason] %> &middot; <%= e[:banned_at].strftime("%b %-d %H:%M") %> &middot; <%= e[:ua].truncate(50) %></span>
+            <span class="ban-rm"><%= form_with url: admin_remove_auto_ban_path, method: :post, local: true do |f| %><%= f.hidden_field :ip, value: ip %><%= f.submit "\u00d7" %><% end %></span>
+          </li>
         <% end %>
-      </table>
+      </ul>
     <% else %>
       <p class="note">None yet.</p>
     <% end %>
   </div>
 
   <div>
-    <h2>Manual bans (<%= @manual_bans.size %>)</h2>
-    <p class="note">Config = <code>config/manual_bans.txt</code> (deploy to change). Runtime = <code>storage/manual_bans.txt</code> (edit here).</p>
+    <h2>Manual bans <small>(<%= @manual_bans.size %>)</small></h2>
     <% if @manual_bans.any? %>
-      <table>
-        <tr><th>IP / CIDR</th><th>Source</th><th>Comment</th><th></th></tr>
+      <ul class="bans">
         <% @manual_bans.each do |b| %>
-          <tr>
-            <td><%= b[:ip] %></td>
-            <td><%= b[:source] %></td>
-            <td><%= b[:comment] %></td>
-            <td class="rm">
-              <% if b[:source] == "runtime" %>
-                <%= form_with url: admin_remove_manual_ban_path, method: :post, local: true do |f| %><%= f.hidden_field :ip, value: b[:ip] %><%= f.submit "x" %><% end %>
-              <% end %>
-            </td>
-          </tr>
+          <li>
+            <span class="ban-ip"><%= b[:ip] %></span>
+            <span class="ban-tag ban-tag-<%= b[:source] %>"><%= b[:source] %></span>
+            <span class="ban-meta"><%= b[:comment] %></span>
+            <% if b[:source] == "runtime" %>
+              <span class="ban-rm"><%= form_with url: admin_remove_manual_ban_path, method: :post, local: true do |f| %><%= f.hidden_field :ip, value: b[:ip] %><%= f.submit "\u00d7" %><% end %></span>
+            <% end %>
+          </li>
         <% end %>
-      </table>
+      </ul>
     <% end %>
     <%= form_with url: admin_add_manual_ban_path, method: :post, local: true do |f| %>
       <div class="add-form">
-        <%= f.text_field :ip, placeholder: "1.2.3.4 or 10.0.0.0/8", size: 22 %>
-        <%= f.text_field :comment, placeholder: "reason (optional)", size: 22 %>
+        <%= f.text_field :ip, placeholder: "IP or CIDR", size: 18 %>
+        <%= f.text_field :comment, placeholder: "reason", size: 18 %>
         <%= f.submit "Ban" %>
       </div>
     <% end %>
   </div>
 </div>
 
-<%# ── MEILISEARCH ─────────────────────────────────────────── %>
-<h2>Indices (<%= (@global_stats["databaseSize"].to_f / 1024**3).round(2) %> GB total)</h2>
+<h2>Indices <small>(<%= (@global_stats["databaseSize"].to_f / 1024**3).round(2) %> GB)</small></h2>
 <table>
   <tr><th>Index</th><th>Docs</th><th>Indexing?</th></tr>
   <% @global_stats["indexes"]&.each do |name, idx| %>
@@ -93,16 +105,16 @@
   <% end %>
 </table>
 
-<h2>Recent Tasks (last 20)</h2>
+<h2>Tasks <small>(last 20)</small></h2>
 <table>
   <tr><th>UID</th><th>Index</th><th>Type</th><th>Status</th><th>Enqueued</th><th>Duration</th><th>Error</th></tr>
   <% @tasks.each do |t| %>
-    <% status_class = { "succeeded" => "ok", "failed" => "err", "processing" => "warn", "enqueued" => "" }[t["status"]] %>
+    <% sc = { "succeeded" => "ok", "failed" => "err", "processing" => "warn", "enqueued" => "" }[t["status"]] %>
     <tr>
       <td><%= t["uid"] %></td>
       <td><%= t["indexUid"] %></td>
       <td><%= t["type"] %></td>
-      <td class="<%= status_class %>"><%= t["status"] %></td>
+      <td class="<%= sc %>"><%= t["status"] %></td>
       <td><%= t["enqueuedAt"]&.sub("T", " ")&.first(19) %></td>
       <td><%= format_iso8601_duration(t["duration"]) %></td>
       <td class="ellip"><%= t.dig("error", "message")&.truncate(80) %></td>
