@@ -256,13 +256,14 @@
 .search-facets__decades {
   max-height: 18em;
   overflow-y: auto;
-  /* Scroll shadows: top/bottom fade appear only when scrollable in that direction */
+  /* Lea Verou scroll shadows: cover gradients scroll with content (local),
+     shadow gradients stay fixed to the frame (scroll). When scrolled away
+     from an edge, the cover slides off and reveals the shadow underneath. */
   background:
-    linear-gradient(#faf7f2 30%, transparent) top,
-    linear-gradient(transparent, #faf7f2 70%) bottom;
-  background-size: 100% 1.5em;
-  background-repeat: no-repeat;
-  background-attachment: local;
+    linear-gradient(#faf7f2, transparent) top / 100% 1.5em no-repeat local,
+    linear-gradient(transparent, #faf7f2) bottom / 100% 1.5em no-repeat local,
+    radial-gradient(farthest-side at 50% 0, rgba(0,0,0,.12), transparent) top / 100% 0.5em no-repeat scroll,
+    radial-gradient(farthest-side at 50% 100%, rgba(0,0,0,.12), transparent) bottom / 100% 0.5em no-repeat scroll;
 }
 
 .search-facets__list {
