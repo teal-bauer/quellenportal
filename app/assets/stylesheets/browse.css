@@ -257,15 +257,24 @@
   margin: 0;
 }
 
+.search-facets__list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  min-width: 0;
+  font-size: 0.9em;
+  padding: 0.25rem 0;
+}
+
 .search-facets__list-item a {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  padding: 0.25rem 0;
   text-decoration: none;
   gap: 0.5rem;
-  font-size: 0.9em;
   min-width: 0;
+  width: 100%;
 }
 
 .search-facets__list-item a:hover .search-facets__name {
