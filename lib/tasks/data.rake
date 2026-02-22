@@ -120,30 +120,38 @@ namespace :data do
     puts "Done. #{origins.size} unique origins live in #{live_index}."
   end
 
-  desc 'Delete ghost ROOT_ nodes left behind by redundant-node ID swaps'
+  desc 'Delete ghost ROOT_ nodes that have a same-name duplicate with a real ID'
   task cleanup_ghost_nodes: :environment do
     repo = MeilisearchRepository.new
 
-    # Browse all node documents and collect ROOT_ IDs
-    ghost_ids = []
+    # Collect all nodes: group ROOT_ nodes and non-ROOT_ nodes by name
+    root_nodes = {}   # name -> id
+    real_names = {}   # name -> true (nodes with non-ROOT_ IDs)
     offset = 0
     limit = 1000
     loop do
-      resp = repo.get("/indexes/ArchiveNode_#{Rails.env}/documents?limit=#{limit}&offset=#{offset}&fields=id")
+      resp = repo.get("/indexes/ArchiveNode_#{Rails.env}/documents?limit=#{limit}&offset=#{offset}&fields=id,name")
       batch = resp['results'] || []
       batch.each do |node|
-        ghost_ids << node['id'] if node['id']&.start_with?('ROOT_')
+        if node['id']&.start_with?('ROOT_')
+          root_nodes[node['name']] = node['id']
+        else
+          real_names[node['name']] = true
+        end
       end
       break if batch.size < limit
       offset += limit
     end
 
+    # Ghost = ROOT_ node whose name also exists with a real (non-ROOT_) ID
+    ghost_ids = root_nodes.select { |name, _| real_names[name] }.values
+
     if ghost_ids.empty?
-      puts "No ghost ROOT_ nodes found."
+      puts "No ghost ROOT_ nodes found (#{root_nodes.size} legitimate ROOT_ nodes exist)."
       next
     end
 
-    puts "Found #{ghost_ids.size} ghost ROOT_ nodes. Deleting..."
+    puts "Found #{ghost_ids.size} ghost ROOT_ nodes (#{root_nodes.size - ghost_ids.size} legitimate). Deleting ghosts..."
     repo.delete_nodes(ghost_ids)
 
     puts "Deleted #{ghost_ids.size} ghost ROOT_ nodes."
