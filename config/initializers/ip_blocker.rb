@@ -1,0 +1,1 @@
+IpBlocker.load_bans!

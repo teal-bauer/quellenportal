@@ -22,11 +22,12 @@
   </div>
 
   <div>
-    <h2 style="margin-top:0">Auto-banned IPs (<%= @ip_auto_banned.size %> this session)</h2>
+    <h2 style="margin-top:0">Auto-banned IPs (<%= @ip_auto_banned.size %>, expire after 30d)</h2>
+    <p style="font-size:0.85em;color:#666">Manual bans: <%= @ip_manual_banned %> entries in storage/manual_bans.txt</p>
     <% if @ip_auto_banned.any? %>
       <table>
-        <% @ip_auto_banned.each do |ip| %>
-          <tr><td><%= ip %></td></tr>
+        <% @ip_auto_banned.each do |ip, banned_at| %>
+          <tr><td><%= ip %></td><td style="color:#999"><%= banned_at.strftime("%Y-%m-%d") %></td></tr>
         <% end %>
       </table>
     <% else %>

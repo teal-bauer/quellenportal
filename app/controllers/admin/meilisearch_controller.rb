@@ -9,7 +9,8 @@ class Admin::MeilisearchController < ApplicationController
 
     @global_stats = repo.get("/stats")
     @tasks = repo.get("/tasks?limit=20")["results"]
-    @ip_auto_banned = IpBlocker::AUTO_BANNED.to_a.sort
+    @ip_auto_banned = IpBlocker::AUTO_BANNED_MUTEX.synchronize { IpBlocker::AUTO_BANNED.sort_by { |_, t| t }.reverse }
+    @ip_manual_banned = IpBlocker::MANUAL_BANNED.size
     @rack_attack_enabled = Rack::Attack.enabled
   rescue => e
     @error = e.message

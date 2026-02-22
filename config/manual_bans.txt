@@ -1,0 +1,19 @@
+# Manual IP/CIDR blocklist — read by IpBlocker at boot, never written by the app.
+# One IP or CIDR per line. Comments with #. Changes take effect on next restart/deploy.
+
+# ByteDance / Bytespider
+114.119.128.0/18
+2401:b180::/32
+
+# Omgili / Webz.io
+5.188.134.0/24
+
+# PetalBot (Huawei)
+119.28.0.0/16
+119.29.0.0/16
+
+# Majestic / MJ12bot
+91.108.4.0/22
+
+# Manual blocks
+74.7.227.140
