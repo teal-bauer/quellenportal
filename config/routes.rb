@@ -17,4 +17,8 @@ Rails.application.routes.draw do
 
   resources :archive_files, only: [:show]
   resources :archive_nodes, only: [:show]
+
+  namespace :admin do
+    get "status" => "meilisearch#index"
+  end
 end

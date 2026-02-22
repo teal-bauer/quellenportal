@@ -3,8 +3,9 @@ class SearchController < ApplicationController
 
   def index
     @repository = MeilisearchRepository.new
-    @query = params[:q]
+    @query = params[:q].presence
     @node_id = params[:node_id]
+    @total_count = 0
     @unitid = params[:unitid]
     @unitid_prefix = params[:unitid_prefix]
     @date_from = params[:from].present? ? Date.parse(params[:from]) : nil
