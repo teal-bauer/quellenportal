@@ -171,6 +171,7 @@ GEM
       racc (~> 1.4)
     nokogiri (1.18.5-x86_64-linux-gnu)
       racc (~> 1.4)
+    ostruct (0.6.3)
     pp (0.6.2)
       prettyprint
     prettier_print (1.2.1)
@@ -290,6 +291,7 @@ DEPENDENCIES
   kaminari
   meilisearch
   memory_profiler
+  ostruct (~> 0.6.3)
   progressbar (~> 1.13)
   propshaft
   puma (~> 6.6)

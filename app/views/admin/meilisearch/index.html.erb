@@ -5,6 +5,8 @@
   th { background: #eee; }
   .ok { color: green; } .warn { color: orange; } .err { color: red; }
   h2 { margin-top: 2rem; }
+  .top-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem; }
+  .top-grid table { margin-bottom: 0; }
 </style>
 
 <h1>Meilisearch Admin</h1>
@@ -13,18 +15,38 @@
   <p class="err">Error: <%= @error %></p>
 <% else %>
 
+<div class="top-grid">
+  <div>
+    <h2 style="margin-top:0">Rack::Attack</h2>
+    <p>Enabled: <span class="<%= @rack_attack_enabled ? "ok" : "warn" %>"><%= @rack_attack_enabled %></span></p>
+  </div>
+
+  <div>
+    <h2 style="margin-top:0">Auto-banned IPs (<%= @ip_auto_banned.size %> this session)</h2>
+    <% if @ip_auto_banned.any? %>
+      <table>
+        <% @ip_auto_banned.each do |ip| %>
+          <tr><td><%= ip %></td></tr>
+        <% end %>
+      </table>
+    <% else %>
+      <p>None yet.</p>
+    <% end %>
+  </div>
+</div>
+
 <h2>Indices</h2>
+<p style="font-size:0.85em;color:#666">Per-index disk usage is not exposed by the Meilisearch API — only total DB size is available.</p>
 <table>
-  <tr><th>Index</th><th>Docs</th><th>Indexing?</th><th>Size</th></tr>
+  <tr><th>Index</th><th>Docs</th><th>Indexing?</th></tr>
   <% @global_stats["indexes"]&.each do |name, idx| %>
     <tr>
       <td><%= name %></td>
       <td><%= idx["numberOfDocuments"] %></td>
       <td class="<%= idx["isIndexing"] ? "warn" : "ok" %>"><%= idx["isIndexing"] ? "yes" : "no" %></td>
-      <td>-</td>
     </tr>
   <% end %>
-  <tr><th colspan="3">Total DB size</th><td><%= (@global_stats["databaseSize"].to_f / 1024**3).round(2) %> GB</td></tr>
+  <tr><th colspan="2">Total DB size</th><td><%= (@global_stats["databaseSize"].to_f / 1024**3).round(2) %> GB</td></tr>
 </table>
 
 <h2>Recent Tasks (last 20)</h2>
@@ -38,24 +60,10 @@
       <td><%= t["type"] %></td>
       <td class="<%= status_class %>"><%= t["status"] %></td>
       <td><%= t["enqueuedAt"]&.sub("T", " ")&.first(19) %></td>
-      <td><%= t["duration"] %></td>
+      <td><%= format_iso8601_duration(t["duration"]) %></td>
       <td><%= t.dig("error", "message")&.truncate(80) %></td>
     </tr>
   <% end %>
 </table>
-
-<h2>Auto-banned IPs (<%= @ip_auto_banned.size %> this session)</h2>
-<% if @ip_auto_banned.any? %>
-  <table>
-    <% @ip_auto_banned.each do |ip| %>
-      <tr><td><%= ip %></td></tr>
-    <% end %>
-  </table>
-<% else %>
-  <p>None yet.</p>
-<% end %>
-
-<h2>Rack::Attack</h2>
-<p>Enabled: <span class="<%= @rack_attack_enabled ? "ok" : "warn" %>"><%= @rack_attack_enabled %></span></p>
 
 <% end %>
