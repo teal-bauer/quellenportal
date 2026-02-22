@@ -4,7 +4,7 @@ class SearchController < ApplicationController
   def index
     @repository = MeilisearchRepository.new
     stats = @repository.stats
-    @total = ActiveSupport::NumberHelper.number_to_delimited(stats[:files])
+    @total = stats[:files]
     @query = params[:q].presence
     @node_id = params[:node_id]
     @total_count = 0
@@ -96,12 +96,14 @@ class SearchController < ApplicationController
   end
 
   def browse_counts
-    # Get stats directly from Meilisearch
     stats = @repository.stats
+    # Count distinct periods via facet
+    period_resp = @repository.search_files("", facets: ['period'], hitsPerPage: 0)
+    period_count = period_resp.dig('facetDistribution', 'period')&.size || 0
     {
-      fonds: stats[:nodes],   # This might count ALL nodes, we may need a specific query for "roots"
+      fonds: stats[:nodes],
       origins: stats[:origins],
-      decades: stats[:files]  # Approximation
+      decades: period_count
     }
   end
 

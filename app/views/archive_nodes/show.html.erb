@@ -12,8 +12,8 @@
   </nav>
   <form class="search-bar__form" action="<%= root_path %>">
     <input type="hidden" name="node_id" value="<%= @archive_node.id %>" />
-    <input type="text" name="q" placeholder="In diesem Bestand suchen..." class="search__text-input" />
-    <input type="submit" value="Suchen" class="search__button" />
+    <input type="text" name="q" placeholder="<%= t("search_in_fonds", total: number_with_delimiter(@fonds_file_count)) %>" class="search__text-input" />
+    <input type="submit" value="<%= t("search_button") %>" class="search__button" />
   </form>
 </div>
 

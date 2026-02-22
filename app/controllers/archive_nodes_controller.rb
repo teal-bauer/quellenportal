@@ -51,6 +51,10 @@ class ArchiveNodesController < ApplicationController
         # Files for the current node
         current_files_resp = @repository.search_files("", filter: "archive_node_id = #{MeilisearchRepository.quote(@archive_node.id)}", sort: ['call_number:asc'], hitsPerPage: 100)
         @archive_files = current_files_resp['hits'].map { |h| wrap_archive_file(h) }
+
+        # Total descendant file count for search placeholder
+        descendant_resp = @repository.search_files("", filter: "ancestor_ids = #{MeilisearchRepository.quote(@archive_node.id)}", hitsPerPage: 0)
+        @fonds_file_count = descendant_resp['totalHits'] || descendant_resp['estimatedTotalHits'] || 0
       end
       format.json { render json: archive_node_payload }
       format.xml { render xml: archive_node_payload.to_xml(root: 'archive_node') }
@@ -61,10 +65,12 @@ class ArchiveNodesController < ApplicationController
 
   def browse_counts
     stats = @repository.stats
+    period_resp = @repository.search_files("", facets: ['period'], hitsPerPage: 0)
+    period_count = period_resp.dig('facetDistribution', 'period')&.size || 0
     {
       fonds: stats[:nodes],
       origins: stats[:origins],
-      decades: stats[:files]
+      decades: period_count
     }
   end
 

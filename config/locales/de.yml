@@ -1,6 +1,11 @@
 de:
+  number:
+    format:
+      separator: ","
+      delimiter: "."
   search_button: "Suchen"
   search_placeholder: "%{total} Objekte durchsuchen"
+  search_in_fonds: "%{total} Objekte in diesem Bestand durchsuchen"
   search:
     active_filters: "Filter:"
     remove_filter: "entfernen"

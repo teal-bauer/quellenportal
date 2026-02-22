@@ -20,7 +20,7 @@
       <input type="hidden" name="from" value="<%= @date_from %>" />
       <input type="hidden" name="to" value="<%= @date_to %>" />
     <% end %>
-    <input type="text" name="q" value="<%= @query %>" placeholder="<%= t("search_placeholder", total: @total) %>" class="search__text-input" />
+    <input type="text" name="q" value="<%= @query %>" placeholder="<%= t("search_placeholder", total: number_with_delimiter(@total)) %>" class="search__text-input" />
     <input type="submit" value="<%= t("search_button") %>" class="search__button" />
     <%= link_to "Suchhinweise", search_help_path, class: "search__help-link" %>
   </form>
