@@ -18,6 +18,7 @@
   .bans { list-style: none; padding: 0; margin: 0; }
   .bans li { display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.35rem 0; border-bottom: 1px solid var(--c-border); }
   .bans li:last-child { border-bottom: none; }
+  .ban-ts { font-size: 0.8em; color: var(--c-muted); white-space: nowrap; }
   .ban-ip { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.85em; color: var(--c-ip); font-weight: 500; white-space: nowrap; }
   .ban-meta { flex: 1; min-width: 0; font-size: 0.8em; color: var(--c-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .ban-tag { display: inline-block; font-size: 0.7em; padding: 0 4px; border-radius: 2px; font-weight: 500; vertical-align: 1px; }
@@ -56,8 +57,9 @@
       <ul class="bans">
         <% @auto_banned.each do |ip, e| %>
           <li>
+            <span class="ban-ts"><%= e[:banned_at].strftime("%b %-d %H:%M") %></span>
             <span class="ban-ip"><%= ip %></span>
-            <span class="ban-meta" title="<%= e[:ua] %>"><%= e[:reason] %> &middot; <%= e[:banned_at].strftime("%b %-d %H:%M") %> &middot; <%= e[:ua].truncate(50) %></span>
+            <span class="ban-meta" title="<%= e[:ua] %>"><%= e[:reason] %> &middot; <%= e[:ua].truncate(50) %></span>
             <span class="ban-rm"><%= form_with url: admin_remove_auto_ban_path, method: :post, local: true do |f| %><%= f.hidden_field :ip, value: ip %><%= f.submit "\u00d7" %><% end %></span>
           </li>
         <% end %>
