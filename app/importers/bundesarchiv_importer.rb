@@ -278,9 +278,9 @@ class ArchiveObject
 end
 
 class BundesarchivImporter
-  def initialize(dir)
+  def initialize(dir, repository: nil)
     @dir = dir || 'data'
-    @repository = MeilisearchRepository.new
+    @repository = repository || MeilisearchRepository.new
   end
 
   def enqueue_all

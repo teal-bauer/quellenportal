@@ -34,9 +34,54 @@ namespace :data do
     BundesarchivImporter.new(args[:dir]).enqueue_all
   end
 
-  desc 'Import data from XML files (synchronous)'
+  desc 'Import data from XML files (synchronous, blue-green swap)'
   task :import_sync, [:dir] => [:environment] do |_task, args|
-    BundesarchivImporter.new(args[:dir]).run(show_progress: true)
+    live = MeilisearchRepository.new
+    shadow = MeilisearchRepository.new(suffix: 'new')
+
+    # Prepare shadow indices (clean up any leftovers from failed runs)
+    puts "Preparing shadow indices..."
+    [shadow.file_index, shadow.node_index, shadow.origin_index].each do |idx|
+      live.delete_index(idx)
+    end
+    sleep 2
+    [shadow.file_index, shadow.node_index, shadow.origin_index].each do |idx|
+      live.post("/indexes", { uid: idx, primaryKey: 'id' })
+    end
+    shadow.configure_indices
+
+    # Import into shadow indices
+    importer = BundesarchivImporter.new(args[:dir], repository: shadow)
+    importer.run(show_progress: true)
+
+    # Wait for shadow indices to finish indexing
+    puts "Waiting for shadow indices to finish indexing..."
+    loop do
+      all_done = [shadow.file_index, shadow.node_index, shadow.origin_index].all? do |idx|
+        stats = live.get("/indexes/#{idx}/stats")
+        !stats['isIndexing']
+      end
+      break if all_done
+      sleep 5
+    end
+
+    # Atomic swap: all three pairs at once
+    puts "Swapping live <-> shadow indices..."
+    pairs = [
+      { indexes: [live.file_index, shadow.file_index] },
+      { indexes: [live.node_index, shadow.node_index] },
+      { indexes: [live.origin_index, shadow.origin_index] }
+    ]
+    resp = live.swap_indexes(pairs)
+    live.wait_for_task(resp['taskUid'], timeout: 300)
+
+    # Clean up old indices (now at the shadow names)
+    puts "Cleaning up old indices..."
+    [shadow.file_index, shadow.node_index, shadow.origin_index].each do |idx|
+      live.delete_index(idx)
+    end
+
+    puts "Blue-green swap complete. Live indices updated."
   end
 
   desc 'Configure Meilisearch indices (search/sort/filter settings)'
