@@ -70,7 +70,7 @@ class ArchiveObject
     }
 
     @caches[:nodes_batch] << metadata
-    if @caches[:nodes_batch].size >= 100
+    if @caches[:nodes_batch].size >= 5000
       @repository.upsert_nodes(@caches[:nodes_batch])
       @caches[:nodes_batch] = []
     end
@@ -91,7 +91,7 @@ class ArchiveObject
 
     archive_file_count = 0
 
-    file_nodes.each_slice(1000) do |slice|
+    file_nodes.each_slice(5000) do |slice|
       data = slice.map do |node|
         date = UnitDate.new(node.xpath('did/unitdate').first)
 
@@ -165,7 +165,7 @@ class ArchiveObject
     }
 
     @caches[:origins_batch] << origin
-    if @caches[:origins_batch].size >= 100
+    if @caches[:origins_batch].size >= 5000
       @repository.upsert_origins(@caches[:origins_batch])
       @caches[:origins_batch] = []
     end
@@ -208,11 +208,17 @@ class ArchiveObject
           child_id = clean_id(node.attr('id'))
           if @archive_node[:id].start_with?('ROOT_') && child_id.present?
             old_id = @archive_node[:id]
-            
-            # Transfer metadata from @archive_node to existing_node if existing_node is missing it
+
             @archive_node[:id] = child_id
-            @repository.upsert_nodes([@archive_node])
-            @repository.delete_node(old_id)
+
+            # Fix up the full metadata in the pending batch so it flushes with the UUID
+            # instead of re-creating the ROOT_ document
+            @caches[:nodes_batch].each do |n|
+              if n[:id] == old_id
+                n[:id] = child_id
+                break
+              end
+            end
 
             @caches[:nodes].delete(old_id)
             @caches[:nodes][child_id] = @archive_node
@@ -295,14 +301,13 @@ class BundesarchivImporter
     puts 'All jobs enqueued. Import will run in background.'
   end
 
-  def import_file(path, progress_bar: nil, file_start_progress: 0, file_lines: 0)
-    # Fetch origins from Meilisearch for cache
-    origins_list = @repository.all_origins_for_cache
-    
+  def import_file(path, progress_bar: nil, file_start_progress: 0, file_lines: 0, origins_cache: nil)
+    origins = origins_cache || @repository.all_origins_for_cache.to_h { |o| [o['name'], o] }
+
     caches = {
       nodes: {},
       nodes_batch: [],
-      origins: origins_list.to_h { |o| [o['name'], o] },
+      origins: origins,
       origins_batch: [],
       progress_acc: 0.0
     }
@@ -354,6 +359,9 @@ class BundesarchivImporter
     puts "Importing data from XML files in #{@dir}..." if show_progress
     start = Time.now
     archive_file_count = 0
+
+    # Build origins cache once — shared across all files so we don't re-fetch 101K origins per file
+    origins_cache = @repository.all_origins_for_cache.to_h { |o| [o['name'], o] }
 
     xml_files = Dir.glob('*.xml', base: @dir).sort
     
@@ -415,7 +423,7 @@ class BundesarchivImporter
       
       progress_bar.log "Now reading: #{filename} (#{index + 1} of #{xml_files.count})" if show_progress
       
-      archive_file_count += import_file(path, progress_bar: progress_bar, file_start_progress: current_start_progress, file_lines: lines)
+      archive_file_count += import_file(path, progress_bar: progress_bar, file_start_progress: current_start_progress, file_lines: lines, origins_cache: origins_cache)
       
       current_start_progress += lines
       # Ensure bar is perfectly aligned with file boundaries
