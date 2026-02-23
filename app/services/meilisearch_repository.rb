@@ -308,21 +308,43 @@ class MeilisearchRepository
     0
   end
 
-  def perform(req)
-    # Reconnect if needed
-    uri = URI.parse(@meili_url)
-    if @http.nil? || !@http.started?
-      @http = Net::HTTP.new(uri.host, uri.port)
-      @http.use_ssl = uri.scheme == 'https'
-    end
+  RETRYABLE_CODES = %w[408 429 502 503 504].freeze
+  MAX_RETRIES = 3
 
-    res = @http.request(req)
-    if res.is_a?(Net::HTTPSuccess)
-      JSON.parse(res.body)
-    else
-      # Simple error handling
-      Rails.logger.error("Meilisearch Error: #{res.code} #{res.body}")
-      raise "Meilisearch request failed: #{res.code}"
+  def perform(req)
+    attempts = 0
+    loop do
+      attempts += 1
+
+      # Reconnect if needed
+      uri = URI.parse(@meili_url)
+      if @http.nil? || !@http.started?
+        @http = Net::HTTP.new(uri.host, uri.port)
+        @http.use_ssl = uri.scheme == 'https'
+        @http.read_timeout = 60
+      end
+
+      begin
+        res = @http.request(req)
+      rescue Errno::ECONNREFUSED, Errno::ECONNRESET, Net::ReadTimeout, Net::OpenTimeout => e
+        @http = nil
+        raise if attempts > MAX_RETRIES
+        delay = 2**attempts
+        Rails.logger.warn("Meilisearch connection error (#{e.class}), retrying in #{delay}s (attempt #{attempts}/#{MAX_RETRIES})")
+        sleep delay
+        next
+      end
+
+      if res.is_a?(Net::HTTPSuccess)
+        return JSON.parse(res.body)
+      elsif RETRYABLE_CODES.include?(res.code) && attempts <= MAX_RETRIES
+        delay = 2**attempts
+        Rails.logger.warn("Meilisearch #{res.code}, retrying in #{delay}s (attempt #{attempts}/#{MAX_RETRIES})")
+        sleep delay
+      else
+        Rails.logger.error("Meilisearch Error: #{res.code} #{res.body}")
+        raise "Meilisearch request failed: #{res.code}"
+      end
     end
   end
 end

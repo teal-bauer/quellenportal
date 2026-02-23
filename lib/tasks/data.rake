@@ -43,13 +43,13 @@ namespace :data do
     puts "Preparing shadow indices..."
     [shadow.file_index, shadow.node_index, shadow.origin_index].each do |idx|
       resp = live.delete_index(idx)
-      live.wait_for_task(resp['taskUid'], timeout: 30) if resp&.dig('taskUid')
+      live.wait_for_task(resp['taskUid'], timeout: 600) if resp&.dig('taskUid')
     rescue
       nil
     end
     [shadow.file_index, shadow.node_index, shadow.origin_index].each do |idx|
       resp = live.post("/indexes", { uid: idx, primaryKey: 'id' })
-      live.wait_for_task(resp['taskUid'], timeout: 30)
+      live.wait_for_task(resp['taskUid'], timeout: 600)
     end
     shadow.configure_indices
 
