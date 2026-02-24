@@ -5,11 +5,17 @@ class Admin::MeilisearchController < ApplicationController
   )
 
   def index
-    repo = MeilisearchRepository.new
-    @global_stats      = repo.get("/stats")
-    enqueued_resp      = repo.get("/tasks?statuses=enqueued&limit=20")
-    processing_resp    = repo.get("/tasks?statuses=processing&limit=20")
-    finished_resp      = repo.get("/tasks?statuses=succeeded,failed&limit=20")
+    recent_cutoff = (Time.now.utc - 24.hours).strftime("%Y-%m-%dT%H:%M:%SZ")
+    threads = {
+      stats:      Thread.new { MeilisearchRepository.new.get("/stats") },
+      enqueued:   Thread.new { MeilisearchRepository.new.get("/tasks?statuses=enqueued&limit=20") },
+      processing: Thread.new { MeilisearchRepository.new.get("/tasks?statuses=processing&limit=20") },
+      finished:   Thread.new { MeilisearchRepository.new.get("/tasks?statuses=succeeded,failed&limit=20&afterFinishedAt=#{recent_cutoff}") }
+    }
+    @global_stats      = threads[:stats].value
+    enqueued_resp      = threads[:enqueued].value
+    processing_resp    = threads[:processing].value
+    finished_resp      = threads[:finished].value
     @tasks_enqueued    = enqueued_resp["results"]
     @tasks_processing  = processing_resp["results"]
     @tasks_finished    = finished_resp["results"]
