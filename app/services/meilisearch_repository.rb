@@ -8,9 +8,10 @@ class MeilisearchRepository
 
   attr_reader :file_index, :node_index, :origin_index
 
-  def initialize(suffix: nil)
+  def initialize(suffix: nil, read_timeout: 60)
     @meili_url = ENV.fetch('MEILISEARCH_HOST', 'http://localhost:7700')
     @meili_key = ENV.fetch('MEILISEARCH_API_KEY', '')
+    @read_timeout = read_timeout
     s = suffix ? "_#{suffix}" : ""
     @file_index = "ArchiveFile_#{Rails.env}#{s}"
     @node_index = "ArchiveNode_#{Rails.env}#{s}"
@@ -19,7 +20,7 @@ class MeilisearchRepository
     uri = URI.parse(@meili_url)
     @http = Net::HTTP.new(uri.host, uri.port)
     @http.use_ssl = uri.scheme == 'https'
-    @http.read_timeout = 60
+    @http.read_timeout = read_timeout
   end
 
   # -- Configuration --
@@ -329,7 +330,7 @@ class MeilisearchRepository
       if @http.nil? || !@http.started?
         @http = Net::HTTP.new(uri.host, uri.port)
         @http.use_ssl = uri.scheme == 'https'
-        @http.read_timeout = 60
+        @http.read_timeout = @read_timeout
       end
 
       begin

@@ -7,10 +7,10 @@ class Admin::MeilisearchController < ApplicationController
   def index
     recent_cutoff = (Time.now.utc - 24.hours).strftime("%Y-%m-%dT%H:%M:%SZ")
     threads = {
-      stats:      Thread.new { MeilisearchRepository.new.get("/stats") },
-      enqueued:   Thread.new { MeilisearchRepository.new.get("/tasks?statuses=enqueued&limit=20") },
-      processing: Thread.new { MeilisearchRepository.new.get("/tasks?statuses=processing&limit=20") },
-      finished:   Thread.new { MeilisearchRepository.new.get("/tasks?statuses=succeeded,failed&limit=20&afterFinishedAt=#{recent_cutoff}") }
+      stats:      Thread.new { MeilisearchRepository.new(read_timeout: 10).get("/stats") },
+      enqueued:   Thread.new { MeilisearchRepository.new(read_timeout: 10).get("/tasks?statuses=enqueued&limit=20") },
+      processing: Thread.new { MeilisearchRepository.new(read_timeout: 10).get("/tasks?statuses=processing&limit=20") },
+      finished:   Thread.new { MeilisearchRepository.new(read_timeout: 10).get("/tasks?statuses=succeeded,failed&limit=20&afterFinishedAt=#{recent_cutoff}") }
     }
     @global_stats      = threads[:stats].value
     enqueued_resp      = threads[:enqueued].value
