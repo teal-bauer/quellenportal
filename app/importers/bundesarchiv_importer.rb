@@ -70,7 +70,7 @@ class ArchiveObject
     }
 
     @caches[:nodes_batch] << metadata
-    if @caches[:nodes_batch].size >= 50_000
+    if @caches[:nodes_batch].size >= 10_000
       @repository.upsert_nodes(@caches[:nodes_batch])
       @caches[:nodes_batch] = []
     end
@@ -139,7 +139,7 @@ class ArchiveObject
         summary: node.xpath('scopecontent[@encodinganalog="summary"]/p').text
       }
 
-      if @caches[:files_batch].size >= 50_000
+      if @caches[:files_batch].size >= 10_000
         @repository.upsert_files(@caches[:files_batch])
         @caches[:files_batch] = []
       end
@@ -164,7 +164,7 @@ class ArchiveObject
     }
 
     @caches[:origins_batch] << origin
-    if @caches[:origins_batch].size >= 50_000
+    if @caches[:origins_batch].size >= 10_000
       @repository.upsert_origins(@caches[:origins_batch])
       @caches[:origins_batch] = []
     end
