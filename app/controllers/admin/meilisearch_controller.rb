@@ -7,9 +7,15 @@ class Admin::MeilisearchController < ApplicationController
   def index
     repo = MeilisearchRepository.new
     @global_stats      = repo.get("/stats")
-    @tasks_enqueued    = repo.get("/tasks?statuses=enqueued&limit=20")["results"]
-    @tasks_processing  = repo.get("/tasks?statuses=processing&limit=20")["results"]
-    @tasks_finished    = repo.get("/tasks?statuses=succeeded,failed&limit=20")["results"]
+    enqueued_resp      = repo.get("/tasks?statuses=enqueued&limit=20")
+    processing_resp    = repo.get("/tasks?statuses=processing&limit=20")
+    finished_resp      = repo.get("/tasks?statuses=succeeded,failed&limit=20")
+    @tasks_enqueued    = enqueued_resp["results"]
+    @tasks_processing  = processing_resp["results"]
+    @tasks_finished    = finished_resp["results"]
+    @total_enqueued    = enqueued_resp["total"]
+    @total_processing  = processing_resp["total"]
+    @total_finished    = finished_resp["total"]
     @auto_banned  = IpBlocker::AUTO_BANNED_MUTEX.synchronize { IpBlocker::AUTO_BANNED.sort_by { |_, e| e[:banned_at] }.reverse }
     @manual_bans  = build_merged_bans
   rescue => e

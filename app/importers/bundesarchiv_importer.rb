@@ -70,7 +70,7 @@ class ArchiveObject
     }
 
     @caches[:nodes_batch] << metadata
-    if @caches[:nodes_batch].size >= 5000
+    if @caches[:nodes_batch].size >= 50_000
       @repository.upsert_nodes(@caches[:nodes_batch])
       @caches[:nodes_batch] = []
     end
@@ -91,7 +91,7 @@ class ArchiveObject
 
     archive_file_count = 0
 
-    file_nodes.each_slice(5000) do |slice|
+    file_nodes.each_slice(50_000) do |slice|
       data = slice.map do |node|
         date = UnitDate.new(node.xpath('did/unitdate').first)
 
@@ -165,7 +165,7 @@ class ArchiveObject
     }
 
     @caches[:origins_batch] << origin
-    if @caches[:origins_batch].size >= 5000
+    if @caches[:origins_batch].size >= 50_000
       @repository.upsert_origins(@caches[:origins_batch])
       @caches[:origins_batch] = []
     end

@@ -41,13 +41,15 @@ builder:
 
 accessories:
   meilisearch:
-    image: getmeili/meilisearch:v1.12
+    image: getmeili/meilisearch:v1.35
     host: 100.91.49.44
     port: "127.0.0.1:7700:7700"
     env:
       clear:
         MEILI_ENV: production
         MEILI_NO_ANALYTICS: "true"
+        MEILI_MAX_INDEXING_THREADS: "0"
+        MEILI_EXPERIMENTAL_DUMPLESS_UPGRADE: "true"
       secret:
         - MEILI_MASTER_KEY
     directories:

@@ -192,17 +192,17 @@ class MeilisearchRepository
 
   def upsert_files(documents)
     return if documents.empty?
-    post("/indexes/#{@file_index}/documents", documents)
+    post_ndjson("/indexes/#{@file_index}/documents", documents)
   end
 
   def upsert_nodes(documents)
     return if documents.empty?
-    post("/indexes/#{@node_index}/documents", documents)
+    post_ndjson("/indexes/#{@node_index}/documents", documents)
   end
 
   def upsert_origins(documents)
     return if documents.empty?
-    post("/indexes/#{@origin_index}/documents", documents)
+    post_ndjson("/indexes/#{@origin_index}/documents", documents)
   end
 
   def stats
@@ -290,6 +290,14 @@ class MeilisearchRepository
     req['Authorization'] = "Bearer #{@meili_key}"
     req['Content-Type'] = 'application/json'
     req.body = body.to_json
+    perform(req)
+  end
+
+  def post_ndjson(path, documents)
+    req = Net::HTTP::Post.new(path)
+    req['Authorization'] = "Bearer #{@meili_key}"
+    req['Content-Type'] = 'application/x-ndjson'
+    req.body = documents.map { |doc| doc.to_json }.join("\n")
     perform(req)
   end
 

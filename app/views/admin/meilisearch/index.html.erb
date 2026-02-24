@@ -110,7 +110,7 @@
 
 <div class="task-cols">
   <div>
-    <h2>Enqueued <small>(<%= @tasks_enqueued.size %>)</small></h2>
+    <h2>Enqueued <small>(<%= @total_enqueued %>)</small></h2>
     <% if @tasks_enqueued.any? %>
       <table>
         <tr><th>UID</th><th>Task</th><th>Enqueued</th></tr>
@@ -128,7 +128,7 @@
   </div>
 
   <div>
-    <h2>Processing <small>(<%= @tasks_processing.size %>)</small></h2>
+    <h2>Processing <small>(<%= @total_processing %>)</small></h2>
     <% if @tasks_processing.any? %>
       <table>
         <tr><th>UID</th><th>Task</th><th>Started</th></tr>
@@ -146,7 +146,7 @@
   </div>
 
   <div>
-    <h2>Finished <small>(last 20)</small></h2>
+    <h2>Finished <small>(<%= @total_finished %>, showing 20)</small></h2>
     <table>
       <tr><th>UID</th><th>Task</th><th>Status</th><th>Duration</th><th>Error</th></tr>
       <% @tasks_finished.each do |t| %>
