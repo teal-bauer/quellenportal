@@ -13,6 +13,7 @@
 
   /* layout */
   .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
+  .task-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; align-items: start; }
 
   /* ban list (shared) */
   .bans { list-style: none; padding: 0; margin: 0; }
@@ -107,37 +108,62 @@
   <% end %>
 </table>
 
-<% if @pending_summary.any? %>
-  <h2>Pending tasks <small>(<%= @pending_summary.sum { |r| r[:count] } %>)</small></h2>
-  <table>
-    <tr><th>Index</th><th>Type</th><th>Status</th><th>Count</th></tr>
-    <% @pending_summary.each do |r| %>
-      <% sc = r[:status] == "processing" ? "warn" : "" %>
-      <tr>
-        <td><%= r[:index] %></td>
-        <td><%= r[:type] %></td>
-        <td class="<%= sc %>"><%= r[:status] %></td>
-        <td><%= r[:count] %></td>
-      </tr>
+<div class="task-cols">
+  <div>
+    <h2>Enqueued <small>(<%= @tasks_enqueued.size %>)</small></h2>
+    <% if @tasks_enqueued.any? %>
+      <table>
+        <tr><th>UID</th><th>Index</th><th>Type</th><th>Enqueued</th></tr>
+        <% @tasks_enqueued.each do |t| %>
+          <tr>
+            <td><%= t["uid"] %></td>
+            <td><%= t["indexUid"] %></td>
+            <td><%= t["type"] %></td>
+            <td><%= t["enqueuedAt"]&.sub("T", " ")&.first(19) %></td>
+          </tr>
+        <% end %>
+      </table>
+    <% else %>
+      <p class="note">None.</p>
     <% end %>
-  </table>
-<% end %>
+  </div>
 
-<h2>Tasks <small>(last 20)</small></h2>
-<table>
-  <tr><th>UID</th><th>Index</th><th>Type</th><th>Status</th><th>Enqueued</th><th>Duration</th><th>Error</th></tr>
-  <% @tasks.each do |t| %>
-    <% sc = { "succeeded" => "ok", "failed" => "err", "processing" => "warn", "enqueued" => "" }[t["status"]] %>
-    <tr>
-      <td><%= t["uid"] %></td>
-      <td><%= t["indexUid"] %></td>
-      <td><%= t["type"] %></td>
-      <td class="<%= sc %>"><%= t["status"] %></td>
-      <td><%= t["enqueuedAt"]&.sub("T", " ")&.first(19) %></td>
-      <td><%= format_iso8601_duration(t["duration"]) %></td>
-      <td class="ellip"><%= t.dig("error", "message")&.truncate(80) %></td>
-    </tr>
-  <% end %>
-</table>
+  <div>
+    <h2>Processing <small>(<%= @tasks_processing.size %>)</small></h2>
+    <% if @tasks_processing.any? %>
+      <table>
+        <tr><th>UID</th><th>Index</th><th>Type</th><th>Started</th></tr>
+        <% @tasks_processing.each do |t| %>
+          <tr>
+            <td><%= t["uid"] %></td>
+            <td><%= t["indexUid"] %></td>
+            <td class="warn"><%= t["type"] %></td>
+            <td><%= t["startedAt"]&.sub("T", " ")&.first(19) %></td>
+          </tr>
+        <% end %>
+      </table>
+    <% else %>
+      <p class="note">None.</p>
+    <% end %>
+  </div>
+
+  <div>
+    <h2>Finished <small>(last 20)</small></h2>
+    <table>
+      <tr><th>UID</th><th>Index</th><th>Type</th><th>Status</th><th>Duration</th><th>Error</th></tr>
+      <% @tasks_finished.each do |t| %>
+        <% sc = t["status"] == "succeeded" ? "ok" : "err" %>
+        <tr>
+          <td><%= t["uid"] %></td>
+          <td><%= t["indexUid"] %></td>
+          <td><%= t["type"] %></td>
+          <td class="<%= sc %>"><%= t["status"] %></td>
+          <td><%= format_iso8601_duration(t["duration"]) %></td>
+          <td class="ellip"><%= t.dig("error", "message")&.truncate(80) %></td>
+        </tr>
+      <% end %>
+    </table>
+  </div>
+</div>
 
 <% end %>
