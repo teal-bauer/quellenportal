@@ -91,62 +91,61 @@ class ArchiveObject
 
     archive_file_count = 0
 
-    file_nodes.each_slice(50_000) do |slice|
-      data = slice.map do |node|
-        date = UnitDate.new(node.xpath('did/unitdate').first)
+    file_nodes.each do |node|
+      date = UnitDate.new(node.xpath('did/unitdate').first)
 
-        node_origins = node.xpath('did/origination').map do |origin|
-          { name: origin.text, label: origin.attr('label') }
-        end
-        
-        # Upsert origins directly
-        node_origins.each do |o|
-          get_or_create_origin(o[:name], o[:label])
-        end
-
-        call_number = clean_unitid(node.xpath('did/unitid[@type="call number"]').text)
-
-        parents_cache = (@parent_nodes + [@archive_node]).map do |n|
-          { name: n[:name], id: n[:id], unitid: n[:unitid] }
-        end
-
-        fonds = parents_cache.first
-
-        {
-          id: clean_id(node.attr('id')),
-          archive_node_id: @archive_node[:id],
-          title: node.xpath('did/unittitle').text,
-          parents: parents_cache,
-          ancestor_ids: parents_cache.map { |p| p[:id] },
-          depth: parents_cache.size,
-          fonds_id: fonds[:id],
-          fonds_name: fonds[:name],
-          fonds_unitid: fonds[:unitid],
-          fonds_unitid_prefix: fonds[:unitid]&.split(' ')&.first,
-          origin_names: node_origins.map { |o| o[:name] },
-          call_number: call_number,
-          source_date_text: date.text,
-          source_date_start: date.start_date&.to_s,
-          source_date_end: date.end_date&.to_s,
-          source_date_start_uncorrected: date.start_date_uncorrected&.to_s,
-          source_date_end_uncorrected: date.end_date_uncorrected&.to_s,
-          source_date_start_unix: date.start_date&.to_time&.to_i,
-          source_date_end_unix: date.end_date&.to_time&.to_i,
-          decade: date.start_date ? (date.start_date.year / 10) * 10 : nil,
-          period: date.start_date ? (date.start_date.year < 1800 ? (date.start_date.year / 100) * 100 : (date.start_date.year / 10) * 10) : nil,
-          period_span: date.start_date ? (date.start_date.year < 1800 ? 100 : 10) : nil,
-          link: node.xpath('otherfindaid/p/extref')[0]&.attr('href'),
-          location: node.xpath('did/physloc').text,
-          language_code: node.xpath('did/langmaterial/language')[0]&.attr('langcode'),
-          summary: node.xpath('scopecontent[@encodinganalog="summary"]/p').text
-        }
+      node_origins = node.xpath('did/origination').map do |origin|
+        { name: origin.text, label: origin.attr('label') }
       end
 
-      @repository.upsert_files(data)
-      
-      data.each { increment_progress }
+      node_origins.each do |o|
+        get_or_create_origin(o[:name], o[:label])
+      end
 
-      archive_file_count += data.count
+      call_number = clean_unitid(node.xpath('did/unitid[@type="call number"]').text)
+
+      parents_cache = (@parent_nodes + [@archive_node]).map do |n|
+        { name: n[:name], id: n[:id], unitid: n[:unitid] }
+      end
+
+      fonds = parents_cache.first
+
+      @caches[:files_batch] << {
+        id: clean_id(node.attr('id')),
+        archive_node_id: @archive_node[:id],
+        title: node.xpath('did/unittitle').text,
+        parents: parents_cache,
+        ancestor_ids: parents_cache.map { |p| p[:id] },
+        depth: parents_cache.size,
+        fonds_id: fonds[:id],
+        fonds_name: fonds[:name],
+        fonds_unitid: fonds[:unitid],
+        fonds_unitid_prefix: fonds[:unitid]&.split(' ')&.first,
+        origin_names: node_origins.map { |o| o[:name] },
+        call_number: call_number,
+        source_date_text: date.text,
+        source_date_start: date.start_date&.to_s,
+        source_date_end: date.end_date&.to_s,
+        source_date_start_uncorrected: date.start_date_uncorrected&.to_s,
+        source_date_end_uncorrected: date.end_date_uncorrected&.to_s,
+        source_date_start_unix: date.start_date&.to_time&.to_i,
+        source_date_end_unix: date.end_date&.to_time&.to_i,
+        decade: date.start_date ? (date.start_date.year / 10) * 10 : nil,
+        period: date.start_date ? (date.start_date.year < 1800 ? (date.start_date.year / 100) * 100 : (date.start_date.year / 10) * 10) : nil,
+        period_span: date.start_date ? (date.start_date.year < 1800 ? 100 : 10) : nil,
+        link: node.xpath('otherfindaid/p/extref')[0]&.attr('href'),
+        location: node.xpath('did/physloc').text,
+        language_code: node.xpath('did/langmaterial/language')[0]&.attr('langcode'),
+        summary: node.xpath('scopecontent[@encodinganalog="summary"]/p').text
+      }
+
+      if @caches[:files_batch].size >= 50_000
+        @repository.upsert_files(@caches[:files_batch])
+        @caches[:files_batch] = []
+      end
+
+      increment_progress
+      archive_file_count += 1
     end
 
     archive_file_count
@@ -301,17 +300,7 @@ class BundesarchivImporter
     puts 'All jobs enqueued. Import will run in background.'
   end
 
-  def import_file(path, progress_bar: nil, file_start_progress: 0, file_lines: 0, origins_cache: nil)
-    origins = origins_cache || @repository.all_origins_for_cache.to_h { |o| [o['name'], o] }
-
-    caches = {
-      nodes: {},
-      nodes_batch: [],
-      origins: origins,
-      origins_batch: [],
-      progress_acc: 0.0
-    }
-
+  def import_file(path, caches:, progress_bar: nil, file_start_progress: 0, file_lines: 0)
     doc = File.open(path) { |file| Nokogiri.XML(file) }
     doc.remove_namespaces!
 
@@ -337,14 +326,9 @@ class BundesarchivImporter
     c_count = doc.xpath('//c').count
     progress_step = c_count > 0 ? (file_lines * 0.95) / c_count : 0
 
-    archive_file_count = 0
     root_object = ArchiveObject.new([], archdesc, caches, progress_bar: progress_bar, progress_step: progress_step, repository: @repository)
     archive_file_count = root_object.process_files
     archive_file_count += root_object.descend
-
-    # Flush remaining batches
-    @repository.upsert_nodes(caches[:nodes_batch]) if caches[:nodes_batch].any?
-    @repository.upsert_origins(caches[:origins_batch]) if caches[:origins_batch].any?
 
     # Ensure we consume the full line count budget for this file to avoid drift
     progress_bar.progress = file_start_progress + file_lines if progress_bar
@@ -360,8 +344,16 @@ class BundesarchivImporter
     start = Time.now
     archive_file_count = 0
 
-    # Build origins cache once — shared across all files so we don't re-fetch 101K origins per file
+    # Build shared caches — persists across all files for proper batching
     origins_cache = @repository.all_origins_for_cache.to_h { |o| [o['name'], o] }
+    caches = {
+      nodes: {},
+      nodes_batch: [],
+      files_batch: [],
+      origins: origins_cache,
+      origins_batch: [],
+      progress_acc: 0.0
+    }
 
     xml_files = Dir.glob('*.xml', base: @dir).sort
     
@@ -423,12 +415,17 @@ class BundesarchivImporter
       
       progress_bar.log "Now reading: #{filename} (#{index + 1} of #{xml_files.count})" if show_progress
       
-      archive_file_count += import_file(path, progress_bar: progress_bar, file_start_progress: current_start_progress, file_lines: lines, origins_cache: origins_cache)
+      archive_file_count += import_file(path, caches: caches, progress_bar: progress_bar, file_start_progress: current_start_progress, file_lines: lines)
       
       current_start_progress += lines
       # Ensure bar is perfectly aligned with file boundaries
       progress_bar.progress = [current_start_progress, total_lines].min if progress_bar
     end
+
+    # Flush remaining batches
+    @repository.upsert_files(caches[:files_batch]) if caches[:files_batch].any?
+    @repository.upsert_nodes(caches[:nodes_batch]) if caches[:nodes_batch].any?
+    @repository.upsert_origins(caches[:origins_batch]) if caches[:origins_batch].any?
 
     progress_bar.finish if show_progress
 
