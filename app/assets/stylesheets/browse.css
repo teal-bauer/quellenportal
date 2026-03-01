@@ -35,6 +35,45 @@
   opacity: 0.7;
 }
 
+/* Sort toggle */
+
+.browse-sort {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 1rem;
+}
+
+.browse-sort__label {
+  font-size: 0.85em;
+  color: #998a78;
+}
+
+.browse-sort__item {
+  padding: 0.25rem 0.5rem;
+  text-decoration: none;
+  color: #6b5d4f;
+  background-color: #ede6d8;
+  border-radius: 3px;
+  font-size: 0.85em;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.browse-sort__item:hover {
+  color: #7a4419;
+  background-color: #e2d8c8;
+}
+
+.browse-sort__item--active {
+  color: white;
+  background-color: #7a4419;
+}
+
+.browse-sort__item--active:hover {
+  color: white;
+  background-color: #5e3412;
+}
+
 /* Letter index */
 
 .letter-index {
@@ -239,6 +278,7 @@
 
 .search-facets__section {
   margin-bottom: 1rem;
+  position: relative;
 }
 
 .search-facets__section summary {
@@ -251,20 +291,44 @@
   margin-bottom: 0.5rem;
 }
 
+.search-facets__list,
+.search-facets__decades {
+  max-height: 18em;
+  overflow-y: auto;
+  /* Lea Verou scroll shadows: cover gradients scroll with content (local),
+     shadow gradients stay fixed to the frame (scroll). When scrolled away
+     from an edge, the cover slides off and reveals the shadow underneath. */
+  background:
+    linear-gradient(#f5f0e8, transparent) top / 100% 1.5em no-repeat local,
+    linear-gradient(transparent, #f5f0e8) bottom / 100% 1.5em no-repeat local,
+    radial-gradient(farthest-side at 50% 0, rgba(0,0,0,.12), transparent) top / 100% 0.5em no-repeat scroll,
+    radial-gradient(farthest-side at 50% 100%, rgba(0,0,0,.12), transparent) bottom / 100% 0.5em no-repeat scroll;
+}
+
 .search-facets__list {
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
+.search-facets__list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+  min-width: 0;
+  font-size: 0.9em;
+  padding: 0.25rem 0;
+}
+
 .search-facets__list-item a {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
-  padding: 0.25rem 0;
+  align-items: flex-start;
   text-decoration: none;
   gap: 0.5rem;
-  font-size: 0.9em;
+  min-width: 0;
+  width: 100%;
 }
 
 .search-facets__list-item a:hover .search-facets__name {
@@ -272,9 +336,12 @@
 }
 
 .search-facets__name {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
 }
 
 .search-facets__count {

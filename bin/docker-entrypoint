@@ -1,16 +1,6 @@
 #!/bin/bash -e
 
-# If running the rails server then create or migrate existing database
-if [ "${1}" == "./bin/rails" ] && [ "${2}" == "server" ]; then
-  ./bin/rails db:prepare
-  ./bin/rails runner '
-    config = ActiveRecord::Base.configurations.configs_for(env_name: Rails.env, name: "queue")
-    ActiveRecord::Base.establish_connection(config)
-    unless ActiveRecord::Base.connection.table_exists?(:solid_queue_jobs)
-      load Rails.root.join("db/queue_schema.rb")
-      puts "Queue schema loaded successfully"
-    end
-  '
-fi
+# Prepare databases (SolidQueue + import tracking)
+./bin/rails db:prepare
 
 exec "${@}"

@@ -1,6 +1,7 @@
 require_relative 'boot'
 
 require 'rails'
+require 'ostruct'
 # Pick the frameworks you want:
 require 'active_model/railtie'
 require 'active_job/railtie'
@@ -17,6 +18,8 @@ require 'rails/test_unit/railtie'
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
+
+require_relative '../lib/ip_blocker'
 
 module Bundessuche
   class Application < Rails::Application
@@ -37,11 +40,10 @@ module Bundessuche
     # config.eager_load_paths << Rails.root.join("extras")
     config.cache_key_salt = ENV['SECRET_KEY_BASE_DUMMY'] ? 'dummy' : Rails.application.credentials.cache_key_salt
 
+    config.middleware.insert_before 0, IpBlocker
+
     config.i18n.default_locale = :de
 
-    config.active_record.schema_format = :sql
-
     config.active_job.queue_adapter = :solid_queue
-    config.solid_queue.connects_to = { database: { writing: :queue } }
   end
 end

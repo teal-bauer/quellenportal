@@ -40,8 +40,5 @@
 /data/*
 /datasets/*
 
-# Ignore sqlite databases
-/db/sqlite/*
-
 # Ignore test fixtures (135 MB of XML)
 /test/

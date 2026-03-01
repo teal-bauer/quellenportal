@@ -1,0 +1,146 @@
+.pagination {
+  display: flex;
+  justify-content: center;
+  margin: 1.5rem 0;
+  gap: 0.25rem;
+}
+
+.pagination nav {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.pagination span {
+  display: inline-block;
+}
+
+.pagination a, .pagination .current, .pagination .gap, .pagination .next a, .pagination .prev a, .pagination .first a, .pagination .last a {
+  padding: 0.4rem 0.75rem;
+  text-decoration: none;
+  border-radius: 4px;
+  background-color: #ede6d8;
+  color: #6b5d4f;
+  transition: all 0.15s;
+  min-width: 2.5rem;
+  text-align: center;
+  border: 1px solid transparent;
+}
+
+.pagination a:hover {
+  background-color: #e2d8c8;
+  color: #7a4419;
+  border-color: #c4b8a6;
+}
+
+.pagination .current {
+  background-color: #7a4419;
+  color: white;
+  font-weight: bold;
+}
+
+.pagination .gap {
+  background-color: transparent;
+  padding: 0.4rem 0.2rem;
+  min-width: 0;
+  color: #998a78;
+}
+
+/* Kaminari specifically uses these classes sometimes depending on version/config */
+.pagination .page a, .pagination .prev a, .pagination .next a, .pagination .first a, .pagination .last a {
+  /* already covered above but ensuring display */
+  display: inline-block;
+}
+
+/* Header Tools */
+
+.pagination-header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #d4c9b8;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+/* Bottom variant */
+.pagination-header:last-child {
+  border-bottom: none;
+  border-top: 1px solid #d4c9b8;
+  padding-bottom: 0;
+  padding-top: 0.75rem;
+  margin-bottom: 0;
+  margin-top: 1.5rem;
+}
+
+.pagination-info {
+  font-family: "EB Garamond", serif;
+  font-size: 1.2rem;
+  color: #2c2418;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.pagination-total-pages {
+  font-size: 0.9rem;
+  color: #998a78;
+  font-family: "Atkinson Hyperlegible", sans-serif;
+}
+
+.pagination-tools {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.jump-to-page {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #6b5d4f;
+}
+
+.jump-to-page__input {
+  width: 4rem;
+  padding: 0.2rem 0.4rem;
+  border: 1px solid #c4b8a6;
+  border-radius: 3px;
+  background-color: #faf7f2;
+  font-family: inherit;
+  text-align: center;
+}
+
+.jump-to-page__button {
+  padding: 0.2rem 0.6rem;
+  background-color: #7a4419;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: background-color 0.15s;
+}
+
+.jump-to-page__button:hover {
+  background-color: #5e3412;
+}
+
+@media (max-width: 600px) {
+  .pagination-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .pagination-tools {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .pagination-info {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+}

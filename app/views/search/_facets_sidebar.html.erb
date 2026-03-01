@@ -1,11 +1,17 @@
 <aside class="search-facets">
-  <% if @archive_node || @unitid || @unitid_prefix || @date_from %>
+  <% if @archive_node || @fonds_name || @unitid || @unitid_prefix || @date_from %>
     <div class="search-facets__chips">
       <span class="search-facets__chips-label"><%= t("search.active_filters") %></span>
       <% if @archive_node %>
         <span class="search-facets__chip">
           <%= @archive_node.name %>
           <%= link_to "\u00d7", facet_url(remove: [:node_id]), class: "search-facets__chip-remove" %>
+        </span>
+      <% end %>
+      <% if @fonds_name %>
+        <span class="search-facets__chip">
+          <%= @fonds_name %>
+          <%= link_to "\u00d7", facet_url(remove: [:fonds_name]), class: "search-facets__chip-remove" %>
         </span>
       <% end %>
       <% if @unitid %>
@@ -36,7 +42,7 @@
         <% @facets["fonds_unitid_prefix"].sort_by { |_, count| -count }.each do |prefix, file_count| %>
           <li class="search-facets__list-item">
             <%= link_to facet_url(add: { unitid_prefix: prefix }) do %>
-              <span class="search-facets__name"><%= prefix %></span>
+              <span class="search-facets__name" title="<%= prefix %>"><%= prefix %></span>
               <span class="search-facets__count"><%= number_with_delimiter(file_count) %></span>
             <% end %>
           </li>
@@ -54,12 +60,12 @@
           <li class="search-facets__list-item">
             <% if fonds_id && @query.present? %>
               <%= link_to facet_url(add: { node_id: fonds_id }) do %>
-                <span class="search-facets__name"><%= unitid %></span>
+                <span class="search-facets__name" title="<%= unitid %>"><%= unitid %></span>
                 <span class="search-facets__count"><%= number_with_delimiter(file_count) %></span>
               <% end %>
             <% else %>
               <%= link_to facet_url(add: { unitid: unitid }) do %>
-                <span class="search-facets__name"><%= unitid %></span>
+                <span class="search-facets__name" title="<%= unitid %>"><%= unitid %></span>
                 <span class="search-facets__count"><%= number_with_delimiter(file_count) %></span>
               <% end %>
             <% end %>
@@ -69,25 +75,14 @@
     </details>
   <% end %>
 
-  <% if @facets && @facets["fonds_name"]&.any? && !@archive_node %>
+  <% if @facets && @facets["fonds_name"]&.any? && !@archive_node && !@fonds_name %>
     <details open class="search-facets__section">
       <summary><%= t("browse.fonds") %></summary>
       <ul class="search-facets__list">
         <% @facets["fonds_name"].sort_by { |_, count| -count }.each do |fonds_name, file_count| %>
-          <% fonds_id = @fonds_id_map&.dig(fonds_name) %>
           <li class="search-facets__list-item">
-            <% if fonds_id && @query.present? %>
-              <%= link_to facet_url(add: { node_id: fonds_id }) do %>
-                <span class="search-facets__name"><%= fonds_name %></span>
-                <span class="search-facets__count"><%= number_with_delimiter(file_count) %></span>
-              <% end %>
-            <% elsif fonds_id %>
-              <%= link_to archive_node_path(fonds_id) do %>
-                <span class="search-facets__name"><%= fonds_name %></span>
-                <span class="search-facets__count"><%= number_with_delimiter(file_count) %></span>
-              <% end %>
-            <% else %>
-              <span class="search-facets__name"><%= fonds_name %></span>
+            <%= link_to facet_url(add: { fonds_name: fonds_name }) do %>
+              <span class="search-facets__name" title="<%= fonds_name %>"><%= fonds_name %></span>
               <span class="search-facets__count"><%= number_with_delimiter(file_count) %></span>
             <% end %>
           </li>

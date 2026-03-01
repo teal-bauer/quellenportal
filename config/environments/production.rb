@@ -43,18 +43,12 @@ Rails.application.configure do
   # Don't log any deprecations.
   config.active_support.report_deprecations = false
 
-  # Use file-based cache so it survives container restarts (persisted via sqlite volume).
-  config.cache_store = :file_store, '/rails/db/sqlite/cache'
+  # Use memory-based cache for now.
+  config.cache_store = :memory_store
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation cannot be found).
   config.i18n.fallbacks = true
-
-  # Do not dump schema after migrations.
-  config.active_record.dump_schema_after_migration = false
-
-  # Only use :id for inspections in production.
-  config.active_record.attributes_for_inspect = [:id]
 
   # Enable DNS rebinding protection and other `Host` header attacks.
   config.hosts = [

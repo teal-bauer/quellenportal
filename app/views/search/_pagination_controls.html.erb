@@ -1,0 +1,28 @@
+<div class="pagination-header">
+  <div class="pagination-info">
+    <%= page_entries_info paginatable, entry_name: entry_name %>
+    <span class="pagination-total-pages">
+      (Seite <%= paginatable.current_page %> von <%= paginatable.total_pages %>)
+    </span>
+  </div>
+  <div class="pagination-tools">
+    <% if local_assigns[:show_sort] %>
+      <span class="search-results__sort">
+        <% if params[:sort] == "call_number" %>
+          <%= link_to "Relevanz", facet_url(remove: [:sort]) %> | <strong>Signatur</strong>
+        <% else %>
+          <strong>Relevanz</strong> | <%= link_to "Signatur", facet_url(add: { sort: "call_number" }) %>
+        <% end %>
+      </span>
+    <% end %>
+    
+    <form class="jump-to-page" action="<%= request.path %>" method="get">
+      <% request.query_parameters.except(:page).each do |k, v| %>
+        <input type="hidden" name="<%= k %>" value="<%= v %>" />
+      <% end %>
+      <label for="page-input-<%= local_assigns[:suffix] %>"><%= t("browse.page") %>:</label>
+      <input type="number" name="page" id="page-input-<%= local_assigns[:suffix] %>" value="<%= paginatable.current_page %>" min="1" max="<%= paginatable.total_pages %>" class="jump-to-page__input" />
+      <button type="submit" class="jump-to-page__button"><%= t("browse.go") %></button>
+    </form>
+  </div>
+</div>

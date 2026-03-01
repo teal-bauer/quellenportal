@@ -1,13 +1,21 @@
+<%= render "pagination_controls", paginatable: @root_nodes, entry_name: 'Bestand', suffix: 'top' %>
+
+<div class="browse-sort">
+  <span class="browse-sort__label"><%= t("browse.sort_by") %>:</span>
+  <%= link_to t("browse.sort_name"), browse_fonds_path(letter: @letter, fonds_sort: 'name'), class: "browse-sort__item #{"browse-sort__item--active" if @fonds_sort == 'name'}" %>
+  <%= link_to t("browse.sort_unitid"), browse_fonds_path(letter: @letter, fonds_sort: 'unitid'), class: "browse-sort__item #{"browse-sort__item--active" if @fonds_sort == 'unitid'}" %>
+</div>
+
 <nav class="letter-index">
-  <%= link_to t("browse.all"), browse_fonds_path, class: "letter-index__item #{"letter-index__item--active" unless @letter}" %>
+  <%= link_to t("browse.all"), browse_fonds_path(fonds_sort: @fonds_sort), class: "letter-index__item #{"letter-index__item--active" unless @letter}" %>
   <% @fonds_letters.each do |letter| %>
-    <%= link_to letter, browse_fonds_path(letter: letter), class: "letter-index__item #{"letter-index__item--active" if @letter == letter}" %>
+    <%= link_to letter, browse_fonds_path(letter: letter, fonds_sort: @fonds_sort), class: "letter-index__item #{"letter-index__item--active" if @letter == letter}" %>
   <% end %>
 </nav>
 <ul class="browse-fonds">
   <% @root_nodes.each do |node| %>
     <li class="browse-fonds__item">
-      <%= link_to archive_node_path(node), class: "browse-fonds__link" do %>
+      <%= link_to archive_node_path(node.id), class: "browse-fonds__link" do %>
         <% if node.unitid.present? %><span class="browse-fonds__unitid"><%= node.unitid %></span><% end %>
         <span class="browse-fonds__name"><%= node.name %></span>
       <% end %>
@@ -15,5 +23,7 @@
   <% end %>
 </ul>
 <div class="pagination">
-  <%= paginate @root_nodes, params: { letter: @letter } %>
+  <%= paginate @root_nodes, params: { letter: @letter, fonds_sort: @fonds_sort }, window: 4, outer_window: 1 %>
 </div>
+
+<%= render "pagination_controls", paginatable: @root_nodes, entry_name: 'Bestand', suffix: 'bottom' %>

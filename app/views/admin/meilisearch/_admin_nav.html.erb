@@ -1,0 +1,5 @@
+<nav class="admin-nav">
+  <%= link_to "Dashboard", admin_status_path, class: ("active" if current_page?(admin_status_path)) %>
+  <%= link_to "IP Bans", admin_bans_path, class: ("active" if current_page?(admin_bans_path)) %>
+  <%= link_to "Meilisearch", admin_meilisearch_path, class: ("active" if current_page?(admin_meilisearch_path)) %>
+</nav>

@@ -20,7 +20,7 @@
       <input type="hidden" name="from" value="<%= @date_from %>" />
       <input type="hidden" name="to" value="<%= @date_to %>" />
     <% end %>
-    <input type="text" name="q" value="<%= @query %>" placeholder="<%= t("search_placeholder", total: @total) %>" class="search__text-input" />
+    <input type="text" name="q" value="<%= @query %>" placeholder="<%= t("search_placeholder", total: number_with_delimiter(@total)) %>" class="search__text-input" />
     <input type="submit" value="<%= t("search_button") %>" class="search__button" />
     <%= link_to "Suchhinweise", search_help_path, class: "search__help-link" %>
   </form>
@@ -44,25 +44,21 @@
       <div class="search-layout__content">
   <% end %>
       <% if @total_count > 0 %>
-        <div class="search-results__header">
-          <h3><%= @total_count %> Objekte gefunden.</h3>
-          <span class="search-results__sort">
-            <% if params[:sort] == "call_number" %>
-              <%= link_to "Relevanz", facet_url(remove: [:sort]) %> | <strong>Signatur</strong>
-            <% else %>
-              <strong>Relevanz</strong> | <%= link_to "Signatur", facet_url(add: { sort: "call_number" }) %>
-            <% end %>
-          </span>
-        </div>
+        <%= render "pagination_controls", paginatable: @results, entry_name: 'Aktenstück', suffix: 'top', show_sort: true %>
+        
         <div class="pagination">
-          <%= paginate @results %>
+          <%= paginate @results, window: 4, outer_window: 1 %>
         </div>
+
         <% @results.each do |archive_file| %>
           <%= render ResultComponent.new(query: @query, archive_file: archive_file) %>
         <% end %>
+
         <div class="pagination">
-          <%= paginate @results %>
+          <%= paginate @results, window: 4, outer_window: 1 %>
         </div>
+
+        <%= render "pagination_controls", paginatable: @results, entry_name: 'Aktenstück', suffix: 'bottom' %>
       <% else %>
         <hr />
         <h3>Keine Akten gefunden.</h3>

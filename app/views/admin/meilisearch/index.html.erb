@@ -1,0 +1,119 @@
+<style>
+  :root { --c-bg: #fafafa; --c-border: #e0e0e0; --c-muted: #888; --c-ip: #1a1a2e; --c-rm: #b33; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, system-ui, "Segoe UI", sans-serif; padding: 1.5rem 2rem; color: #222; font-size: 14px; }
+  h1 { font-size: 1.4em; margin: 0 0 1rem; }
+  h2 { font-size: 1em; font-weight: 600; margin: 1.5rem 0 0.25rem; }
+  h2 small { font-weight: 400; color: var(--c-muted); }
+  .note { font-size: 0.8em; color: var(--c-muted); margin: 0 0 0.4rem; }
+  .ok { color: #1a7f37; } .warn { color: #bf8700; } .err { color: var(--c-rm); }
+  .flash { padding: 0.3rem 0.6rem; margin-bottom: 0.5rem; border-radius: 3px; font-size: 0.85em; }
+  .flash-notice { background: #e6f4ea; color: #1a7f37; }
+  .flash-alert  { background: #fde8e8; color: var(--c-rm); }
+
+  .admin-nav { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 2px solid var(--c-border); padding-bottom: 0; }
+  .admin-nav a { text-decoration: none; padding: 0.4rem 0.8rem; color: var(--c-muted); font-size: 0.9em; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+  .admin-nav a:hover { color: #222; }
+  .admin-nav a.active { color: #222; border-bottom-color: #222; font-weight: 600; }
+
+  table { border-collapse: collapse; width: 100%; margin-bottom: 0.5rem; }
+  th, td { border: 1px solid var(--c-border); padding: 0.2rem 0.5rem; text-align: left; font-size: 0.85em; }
+  th { background: #f0f0f0; font-weight: 600; }
+  td.ellip { max-width: 24em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .import-box { border: 1px solid var(--c-border); border-radius: 4px; padding: 0.75rem 1rem; margin-bottom: 1rem; }
+  .import-box.active { border-color: #bf8700; background: #fffbeb; }
+  .import-progress { background: var(--c-border); border-radius: 3px; height: 8px; margin: 0.5rem 0; overflow: hidden; }
+  .import-progress-bar { background: #1a7f37; height: 100%; transition: width 0.5s; }
+  .import-meta { font-size: 0.8em; color: var(--c-muted); }
+  .import-actions { margin-top: 0.5rem; }
+  .import-actions form { display: inline; }
+  .btn { font-family: inherit; padding: 0.3rem 0.8rem; cursor: pointer; font-size: 0.85em; border: 1px solid var(--c-border); border-radius: 3px; background: #fff; }
+  .btn:hover { background: #f0f0f0; }
+  .btn-danger { color: var(--c-rm); border-color: var(--c-rm); }
+  .btn-danger:hover { background: #fde8e8; }
+  .btn-primary { color: #fff; background: #1a7f37; border-color: #1a7f37; }
+  .btn-primary:hover { background: #15692d; }
+</style>
+
+<% if @current_import&.active? %>
+  <meta http-equiv="refresh" content="30">
+<% end %>
+
+<h1>Admin</h1>
+
+<% if notice.present? %><p class="flash flash-notice"><%= notice %></p><% end %>
+<% if alert.present? %><p class="flash flash-alert"><%= alert %></p><% end %>
+
+<%= render "admin/meilisearch/admin_nav" %>
+
+<% if @error %>
+  <p class="err">Error: <%= @error %></p>
+<% else %>
+
+<h2>Data Import</h2>
+
+<% if @current_import %>
+  <div class="import-box active">
+    <strong class="warn"><%= @current_import.status.capitalize %></strong>
+    <% if @current_import.current_file %>
+      &mdash; <%= @current_import.current_file %>
+    <% end %>
+    <div class="import-progress">
+      <div class="import-progress-bar" style="width: <%= @current_import.progress_percent %>%"></div>
+    </div>
+    <div class="import-meta">
+      <%= @current_import.completed_files %> / <%= @current_import.total_files %> files
+      &middot; <%= number_with_delimiter(@current_import.total_records_imported) %> records
+      <% if @current_import.elapsed %>
+        &middot; <%= distance_of_time_in_words(@current_import.elapsed) %> elapsed
+      <% end %>
+    </div>
+    <div class="import-actions">
+      <%= form_with url: admin_cancel_import_path, method: :post, local: true do |f| %>
+        <%= f.submit "Cancel Import", class: "btn btn-danger", data: { confirm: "Cancel the running import?" } %>
+      <% end %>
+    </div>
+  </div>
+<% else %>
+  <div class="import-box">
+    <div class="import-actions">
+      <%= form_with url: admin_start_import_path, method: :post, local: true do |f| %>
+        <%= f.submit "Start Full Import", class: "btn btn-primary" %>
+      <% end %>
+    </div>
+  </div>
+<% end %>
+
+<% if @recent_imports&.any? %>
+  <h2>Recent Imports</h2>
+  <table>
+    <tr><th>ID</th><th>Status</th><th>Files</th><th>Records</th><th>Started</th><th>Duration</th><th>Error</th></tr>
+    <% @recent_imports.each do |run| %>
+      <% sc = run.status == "completed" ? "ok" : (run.status == "failed" ? "err" : "") %>
+      <tr>
+        <td><%= run.id %></td>
+        <td class="<%= sc %>"><%= run.status %></td>
+        <td><%= run.completed_files %> / <%= run.total_files %></td>
+        <td><%= number_with_delimiter(run.total_records_imported) %></td>
+        <td><%= run.started_at&.strftime("%b %-d %H:%M") %></td>
+        <td><%= run.elapsed ? distance_of_time_in_words(run.elapsed) : "-" %></td>
+        <td class="ellip"><%= run.error_message&.truncate(80) %></td>
+      </tr>
+    <% end %>
+  </table>
+<% end %>
+
+<h2>Indices <small>(<%= (@global_stats["databaseSize"].to_f / 1024**3).round(2) %> GB)</small></h2>
+<table>
+  <tr><th>Index</th><th>Docs</th><th>Indexing?</th></tr>
+  <% @global_stats["indexes"]&.each do |name, idx| %>
+    <tr>
+      <td><%= name %></td>
+      <td><%= number_with_delimiter(idx["numberOfDocuments"]) %></td>
+      <td class="<%= idx["isIndexing"] ? "warn" : "ok" %>"><%= idx["isIndexing"] ? "yes" : "no" %></td>
+    </tr>
+  <% end %>
+</table>
+
+<% end %>

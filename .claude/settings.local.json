@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:sqlite.org)",
+      "WebFetch(domain:open-data.bundesarchiv.de)",
+      "Bash(ls:*)",
+      "Bash(grep:*)",
+      "Bash(rg:*)",
+      "Bash(gh issue view:*)",
+      "Bash(gh issue list:*)",
+      "Bash(ssh:*)",
+      "Bash(rsync:*)",
+      "Bash(bin/rails runner:*)",
+      "Bash(whois:*)"
+    ]
+  }
+}

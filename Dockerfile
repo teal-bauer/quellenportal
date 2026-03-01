@@ -23,7 +23,7 @@ RUN apt-get install --no-install-recommends -y lsb-release curl
 FROM base AS build
 
 # Install packages needed to build gems
-RUN apt-get install --no-install-recommends -y build-essential git pkg-config libyaml-dev
+RUN apt-get install --no-install-recommends -y build-essential git pkg-config libyaml-dev libsqlite3-dev
 
 # Install application gems
 COPY Gemfile Gemfile.lock .ruby-version ./
@@ -44,12 +44,13 @@ RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
 # Final stage for app image
 FROM base
 
-# Remove build-time apt cache to reduce image size
-RUN rm -rf /var/lib/apt/lists /var/cache/apt/archives
+# Install runtime dependencies for SQLite
+RUN apt-get install --no-install-recommends -y libsqlite3-0 && \
+    rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Run and own only the runtime files as a non-root user for security
 RUN useradd rails --create-home --shell /bin/bash && \
-    mkdir -p /rails/db/sqlite /rails/log /rails/storage /rails/tmp /rails/data && \
+    mkdir -p /rails/log /rails/storage /rails/tmp /rails/data && \
     chown -R rails:rails /rails
 
 # Copy built artifacts: gems, application

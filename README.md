@@ -26,16 +26,10 @@ Quellenportal extends upstream with:
 
 ## Architecture
 
-- **Rails 8** + SQLite (data storage, browse queries)
-- **Meilisearch** (full-text search, faceting, typo tolerance)
+- **Rails 8** + **Meilisearch** (sole data store for all archival records)
+- **SQLite** (only for Solid Queue job tables and import progress tracking)
 - **Solid Queue** (background job processing for imports)
 - **Kamal 2** (deployment, with Meilisearch as a managed accessory)
-
-## Database
-
-This application uses SQLite. Database creation and migration is done with the standard Rails tasks. Make sure to mount a volume into the docker image to persist your database. The default location is `/rails/db/sqlite`.
-
-The Rails cache is also stored on this volume (`/rails/db/sqlite/cache`), so browse data and counts survive container restarts and deploys.
 
 ## Included XML Data
 

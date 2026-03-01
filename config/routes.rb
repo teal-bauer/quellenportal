@@ -17,4 +17,15 @@ Rails.application.routes.draw do
 
   resources :archive_files, only: [:show]
   resources :archive_nodes, only: [:show]
+
+  namespace :admin do
+    get  "status"              => "meilisearch#index",             as: :status
+    get  "bans"                => "meilisearch#bans",              as: :bans
+    get  "meilisearch"         => "meilisearch#meilisearch",       as: :meilisearch
+    post "import/start"        => "meilisearch#start_import",      as: :start_import
+    post "import/cancel"       => "meilisearch#cancel_import",     as: :cancel_import
+    post "bans/manual"         => "meilisearch#add_manual_ban",    as: :add_manual_ban
+    post "bans/manual/remove"  => "meilisearch#remove_manual_ban", as: :remove_manual_ban
+    post "bans/auto/remove"    => "meilisearch#remove_auto_ban",   as: :remove_auto_ban
+  end
 end

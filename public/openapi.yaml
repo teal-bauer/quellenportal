@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Quellenportal API
   description: Search interface for German Federal Archive (Bundesarchiv) records.
-  version: 0.1.0
+  version: 0.2.0
   contact:
     email: info@quellenportal.de
 
@@ -17,8 +17,9 @@ paths:
       operationId: search
       summary: Search archive files
       description: >-
-        Full-text search across archive file records using SQLite FTS5 trigram
-        tokenization. Returns paginated HTML results.
+        Full-text search across archive file records using Meilisearch.
+        Returns paginated HTML results. Without a query, serves the
+        landing page or browse tabs.
       parameters:
         - name: q
           in: query
@@ -27,18 +28,145 @@ paths:
             type: string
         - name: page
           in: query
-          description: Page number for pagination (500 results per page)
+          description: Page number for pagination (100 results per page)
           schema:
             type: integer
             minimum: 1
         - name: node_id
           in: query
-          description: Restrict search to files belonging to this archive node
+          description: Restrict search to files within this archive node (by ancestor)
           schema:
-            type: integer
+            type: string
+        - name: unitid
+          in: query
+          description: Filter by exact fonds unit ID (e.g. "B 112")
+          schema:
+            type: string
+        - name: unitid_prefix
+          in: query
+          description: Filter by fonds unit ID prefix (e.g. "B")
+          schema:
+            type: string
+        - name: fonds_name
+          in: query
+          description: Filter by fonds name
+          schema:
+            type: string
+        - name: from
+          in: query
+          description: Start date for date-range filter (ISO 8601)
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          description: End date for date-range filter (ISO 8601)
+          schema:
+            type: string
+            format: date
+        - name: sort
+          in: query
+          description: Sort order for results
+          schema:
+            type: string
+            enum: [call_number]
       responses:
         "200":
           description: Search results page
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /browse/fonds:
+    get:
+      operationId: browseFonds
+      summary: Browse archive fonds
+      description: Paginated listing of top-level fonds, filterable by first letter.
+      parameters:
+        - name: letter
+          in: query
+          description: Filter by first letter of name or unit ID
+          schema:
+            type: string
+        - name: fonds_sort
+          in: query
+          description: Sort fonds by name or unit ID
+          schema:
+            type: string
+            enum: [name, unitid]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: Fonds listing page
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /browse/origins:
+    get:
+      operationId: browseOrigins
+      summary: Browse provenance entities
+      description: >-
+        Paginated listing of origins (provenance), filterable by first letter.
+        With origin_id, shows files for that origin.
+      parameters:
+        - name: letter
+          in: query
+          description: Filter by first letter of origin name
+          schema:
+            type: string
+        - name: origin_id
+          in: query
+          description: Drilldown into a specific origin to see its files
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: Origins listing or drilldown page
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /browse/dates:
+    get:
+      operationId: browseDates
+      summary: Browse by time period
+      description: >-
+        Shows period/decade counts, or with from/to parameters, lists
+        files in that date range.
+      parameters:
+        - name: from
+          in: query
+          description: Start date (ISO 8601)
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          description: End date (ISO 8601)
+          schema:
+            type: string
+            format: date
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: Period overview or date-range results
           content:
             text/html:
               schema:
@@ -89,9 +217,9 @@ paths:
         - name: id
           in: path
           required: true
-          description: Archive node ID
+          description: Archive node ID (UUID)
           schema:
-            type: integer
+            type: string
       responses:
         "200":
           description: Archive node with full tree context
@@ -107,6 +235,18 @@ paths:
                 $ref: "#/components/schemas/ArchiveNodeDetail"
         "404":
           $ref: "#/components/responses/NotFound"
+
+  /search-help:
+    get:
+      operationId: getSearchHelp
+      summary: Search help page
+      responses:
+        "200":
+          description: Search help page
+          content:
+            text/html:
+              schema:
+                type: string
 
   /legal-notice:
     get:
@@ -126,9 +266,9 @@ components:
       name: id
       in: path
       required: true
-      description: Archive file ID
+      description: Archive file ID (UUID)
       schema:
-        type: integer
+        type: string
 
   responses:
     NotFound:
@@ -139,7 +279,8 @@ components:
       type: object
       properties:
         id:
-          type: integer
+          type: string
+          description: UUID
         title:
           type: string
         summary:
@@ -177,49 +318,74 @@ components:
           type:
             - string
             - "null"
-        source_id:
-          type: string
+        origin_names:
+          type: array
+          items:
+            type: string
         parents:
           type: array
           items:
             type: object
             properties:
+              id:
+                type: string
               name:
                 type: string
+              unitid:
+                type:
+                  - string
+                  - "null"
         archive_node_id:
-          type: integer
+          type: string
+          description: UUID of the parent archive node
+        fonds_id:
+          type: string
+        fonds_name:
+          type:
+            - string
+            - "null"
+        fonds_unitid:
+          type:
+            - string
+            - "null"
+        decade:
+          type:
+            - integer
+            - "null"
 
     ArchiveNode:
       type: object
       properties:
         id:
-          type: integer
+          type: string
+          description: UUID
         name:
           type: string
         level:
           type:
             - string
             - "null"
-        source_id:
-          type: string
+        unitid:
+          type:
+            - string
+            - "null"
         parent_node_id:
           type:
-            - integer
+            - string
             - "null"
+          description: UUID of parent node
 
     ArchiveNodeDetail:
       type: object
       properties:
         id:
-          type: integer
+          type: string
         name:
           type: string
         level:
           type:
             - string
             - "null"
-        source_id:
-          type: string
         parents:
           type: array
           items:
@@ -237,7 +403,7 @@ components:
       type: object
       properties:
         id:
-          type: integer
+          type: string
         name:
           type: string
         level:
@@ -249,7 +415,7 @@ components:
       type: object
       properties:
         id:
-          type: integer
+          type: string
         title:
           type: string
         call_number:
@@ -269,12 +435,15 @@ components:
       type: object
       properties:
         id:
-          type: integer
+          type: string
+          description: Deterministic 24-char hex (SHA256 of name)
         name:
           type: string
         label:
-          type: string
-          enum:
-            - pre
-            - final
-            - organisational unit
+          type:
+            - string
+            - "null"
+        first_letter:
+          type:
+            - string
+            - "null"

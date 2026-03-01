@@ -1,6 +1,11 @@
 de:
+  number:
+    format:
+      separator: ","
+      delimiter: "."
   search_button: "Suchen"
   search_placeholder: "%{total} Objekte durchsuchen"
+  search_in_fonds: "%{total} Objekte in diesem Bestand durchsuchen"
   search:
     active_filters: "Filter:"
     remove_filter: "entfernen"
@@ -11,6 +16,11 @@ de:
     dates: "Zeitraum"
     all: "Alle"
     back_to_list: "Zurück zur Übersicht"
+    sort_by: "Sortieren nach"
+    sort_name: "Titel"
+    sort_unitid: "Signatur"
+    page: "Seite"
+    go: "Go"
   archive_node:
     unitid: "Signatur"
     unitdate: "Laufzeit"

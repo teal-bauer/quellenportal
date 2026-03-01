@@ -1,12 +1,60 @@
 class ArchiveNodesController < ApplicationController
   def show
-    @archive_node = ArchiveNode.find(params[:id])
+    @repository = MeilisearchRepository.new
+    doc = @repository.get_node(params[:id])
+    if doc.nil?
+      render plain: "Not found", status: 404
+      return
+    end
+    
+    @archive_node = OpenStruct.new(doc)
+    
     respond_to do |format|
       format.html do
         @browse_counts = browse_counts
-        parent_chain = @archive_node.parents
-        child_ids = ArchiveNode.where(parent_node_id: parent_chain.map(&:id)).pluck(:id)
-        @file_counts = ArchiveFile.where(archive_node_id: child_ids + [parent_chain.first.id]).group(:archive_node_id).count
+        
+        # Prepare Tree Menu Data
+        # @archive_node.parents contains the chain ABOVE the current node
+        @parents = (@archive_node.parents || []).map { |p| OpenStruct.new(p) }
+        
+        # The full path from root to current node
+        path_nodes = @parents + [@archive_node]
+        root_node = path_nodes.first
+        
+        @levels = []
+        
+        # Level 0: Just the single root of this tree
+        @levels << [root_node]
+        
+        # Subsequent levels: Children of each node in the path (up to the current node)
+        path_nodes.each do |node|
+          children_resp = @repository.search_nodes("", filter: "parent_node_id = #{MeilisearchRepository.quote(node.id)}", sort: ['name:asc'], hitsPerPage: 1000)
+          children = children_resp['hits'].map { |h| OpenStruct.new(h) }
+          @levels << children if children.any?
+        end
+
+        # Fetch file counts for all nodes in the visible menu levels
+        all_visible_node_ids = @levels.flatten.map(&:id)
+        if all_visible_node_ids.any?
+          # Use quoted IDs for the IN filter
+          quoted_ids = all_visible_node_ids.map { |id| MeilisearchRepository.quote(id) }
+          count_resp = @repository.search_files("", 
+            filter: "archive_node_id IN [#{quoted_ids.join(',')}]", 
+            hitsPerPage: 0, 
+            facets: ['archive_node_id']
+          )
+          @file_counts = count_resp['facetDistribution']&.dig('archive_node_id') || {}
+        else
+          @file_counts = {}
+        end
+
+        # Files for the current node
+        current_files_resp = @repository.search_files("", filter: "archive_node_id = #{MeilisearchRepository.quote(@archive_node.id)}", sort: ['call_number:asc'], hitsPerPage: 100)
+        @archive_files = current_files_resp['hits'].map { |h| wrap_archive_file(h) }
+
+        # Total descendant file count for search placeholder
+        descendant_resp = @repository.search_files("", filter: "ancestor_ids = #{MeilisearchRepository.quote(@archive_node.id)}", hitsPerPage: 0)
+        @fonds_file_count = descendant_resp['totalHits'] || descendant_resp['estimatedTotalHits'] || 0
       end
       format.json { render json: archive_node_payload }
       format.xml { render xml: archive_node_payload.to_xml(root: 'archive_node') }
@@ -16,39 +64,36 @@ class ArchiveNodesController < ApplicationController
   private
 
   def browse_counts
-    Rails.cache.fetch('browse/tab_counts', expires_in: 24.hours) do
-      {
-        fonds: ArchiveNode.where(parent_node_id: nil).count,
-        origins: Origin.count,
-        decades: ArchiveFile.where.not(source_date_start: nil).count
-      }
-    end
+    stats = @repository.stats
+    period_resp = @repository.search_files("", facets: ['period'], hitsPerPage: 0)
+    period_count = period_resp.dig('facetDistribution', 'period')&.size || 0
+    {
+      fonds: stats[:nodes],
+      origins: stats[:origins],
+      decades: period_count
+    }
   end
 
   def archive_node_payload
+    # Fetch children and files for the payload
+    child_resp = @repository.search_nodes("", filter: "parent_node_id = #{MeilisearchRepository.quote(@archive_node.id)}", sort: ['name:asc'])
+    file_resp = @repository.search_files("", filter: "archive_node_id = #{MeilisearchRepository.quote(@archive_node.id)}", sort: ['call_number:asc'])
+    
     {
       id: @archive_node.id,
       name: @archive_node.name,
       level: @archive_node.level,
-      source_id: @archive_node.source_id,
-      parents:
-        @archive_node.parents.map do |n|
-          { id: n.id, name: n.name, level: n.level }
-        end,
-      child_nodes:
-        @archive_node.child_nodes.map do |n|
-          { id: n.id, name: n.name, level: n.level }
-        end,
-      archive_files:
-        @archive_node.archive_files.map do |f|
-          {
-            id: f.id,
-            title: f.title,
-            call_number: f.call_number,
-            source_date_text: f.source_date_text,
-            summary: f.summary
-          }
-        end
+      parents: @archive_node.parents || [],
+      child_nodes: child_resp['hits'].map { |h| { id: h['id'], name: h['name'], level: h['level'] } },
+      archive_files: file_resp['hits'].map do |f|
+        {
+          id: f['id'],
+          title: f['title'],
+          call_number: f['call_number'],
+          source_date_text: f['source_date_text'],
+          summary: f['summary']
+        }
+      end
     }
   end
 end

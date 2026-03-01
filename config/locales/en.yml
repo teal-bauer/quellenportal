@@ -30,10 +30,18 @@
 en:
   search_button: "search"
   search_placeholder: "Search %{total} objects"
+  search_in_fonds: "Search %{total} objects in this fonds"
   browse:
     fonds: "Fonds"
     origins: "Provenance"
     dates: "Period"
+    all: "All"
+    back_to_list: "Back to list"
+    sort_by: "Sort by"
+    sort_name: "Title"
+    sort_unitid: "Call Number"
+    page: "Page"
+    go: "Go"
   archive_node:
     unitid: "Call Number"
     unitdate: "Dates"
