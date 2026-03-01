@@ -11,90 +11,98 @@
   .flash-notice { background: #e6f4ea; color: #1a7f37; }
   .flash-alert  { background: #fde8e8; color: var(--c-rm); }
 
-  /* layout */
-  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
-  .task-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; align-items: start; }
+  .admin-nav { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 2px solid var(--c-border); padding-bottom: 0; }
+  .admin-nav a { text-decoration: none; padding: 0.4rem 0.8rem; color: var(--c-muted); font-size: 0.9em; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+  .admin-nav a:hover { color: #222; }
+  .admin-nav a.active { color: #222; border-bottom-color: #222; font-weight: 600; }
 
-  /* ban list (shared) */
-  .bans { list-style: none; padding: 0; margin: 0; }
-  .bans li { display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.35rem 0; border-bottom: 1px solid var(--c-border); }
-  .bans li:last-child { border-bottom: none; }
-  .ban-ts { font-size: 0.8em; color: var(--c-muted); white-space: nowrap; }
-  .ban-ip { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.85em; color: var(--c-ip); font-weight: 500; white-space: nowrap; }
-  .ban-meta { flex: 1; min-width: 0; font-size: 0.8em; color: var(--c-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .ban-tag { display: inline-block; font-size: 0.7em; padding: 0 4px; border-radius: 2px; font-weight: 500; vertical-align: 1px; }
-  .ban-tag-config  { background: #e8e0f0; color: #5b4a8a; }
-  .ban-tag-runtime { background: #ddeeff; color: #1a6fb3; }
-  .ban-rm form { display: inline; }
-  .ban-rm button { font-family: inherit; cursor: pointer; color: var(--c-rm); background: none; border: none; font-size: 0.8em; padding: 0; opacity: 0.5; }
-  .ban-rm button:hover { opacity: 1; }
-
-  /* add form */
-  .add-form { display: flex; gap: 0.35rem; margin-top: 0.5rem; }
-  .add-form input { font-family: inherit; padding: 0.25rem 0.4rem; border: 1px solid var(--c-border); border-radius: 3px; font-size: 0.85em; }
-  .add-form button { font-family: inherit; padding: 0.25rem 0.6rem; cursor: pointer; font-size: 0.85em; border: 1px solid var(--c-border); border-radius: 3px; background: #fff; }
-  .add-form button:hover { background: #f0f0f0; }
-
-  /* meilisearch tables */
   table { border-collapse: collapse; width: 100%; margin-bottom: 0.5rem; }
   th, td { border: 1px solid var(--c-border); padding: 0.2rem 0.5rem; text-align: left; font-size: 0.85em; }
   th { background: #f0f0f0; font-weight: 600; }
   td.ellip { max-width: 24em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .import-box { border: 1px solid var(--c-border); border-radius: 4px; padding: 0.75rem 1rem; margin-bottom: 1rem; }
+  .import-box.active { border-color: #bf8700; background: #fffbeb; }
+  .import-progress { background: var(--c-border); border-radius: 3px; height: 8px; margin: 0.5rem 0; overflow: hidden; }
+  .import-progress-bar { background: #1a7f37; height: 100%; transition: width 0.5s; }
+  .import-meta { font-size: 0.8em; color: var(--c-muted); }
+  .import-actions { margin-top: 0.5rem; }
+  .import-actions form { display: inline; }
+  .btn { font-family: inherit; padding: 0.3rem 0.8rem; cursor: pointer; font-size: 0.85em; border: 1px solid var(--c-border); border-radius: 3px; background: #fff; }
+  .btn:hover { background: #f0f0f0; }
+  .btn-danger { color: var(--c-rm); border-color: var(--c-rm); }
+  .btn-danger:hover { background: #fde8e8; }
+  .btn-primary { color: #fff; background: #1a7f37; border-color: #1a7f37; }
+  .btn-primary:hover { background: #15692d; }
 </style>
+
+<% if @current_import&.active? %>
+  <meta http-equiv="refresh" content="30">
+<% end %>
 
 <h1>Admin</h1>
 
 <% if notice.present? %><p class="flash flash-notice"><%= notice %></p><% end %>
 <% if alert.present? %><p class="flash flash-alert"><%= alert %></p><% end %>
 
+<%= render "admin/meilisearch/admin_nav" %>
+
 <% if @error %>
   <p class="err">Error: <%= @error %></p>
 <% else %>
 
-<div class="cols">
-  <div>
-    <h2>Auto-bans <small>(<%= @auto_banned.size %>, 30d TTL)</small></h2>
-    <% if @auto_banned.any? %>
-      <ul class="bans">
-        <% @auto_banned.each do |ip, e| %>
-          <li>
-            <span class="ban-ts"><%= e[:banned_at].strftime("%b %-d %H:%M") %></span>
-            <span class="ban-ip"><%= ip %></span>
-            <span class="ban-meta" title="<%= e[:ua] %>"><%= e[:reason] %> &middot; <%= e[:ua].truncate(50) %></span>
-            <span class="ban-rm"><%= form_with url: admin_remove_auto_ban_path, method: :post, local: true do |f| %><%= f.hidden_field :ip, value: ip %><%= f.submit "\u00d7" %><% end %></span>
-          </li>
-        <% end %>
-      </ul>
-    <% else %>
-      <p class="note">None yet.</p>
-    <% end %>
-  </div>
+<h2>Data Import</h2>
 
-  <div>
-    <h2>Manual bans <small>(<%= @manual_bans.size %>)</small></h2>
-    <% if @manual_bans.any? %>
-      <ul class="bans">
-        <% @manual_bans.each do |b| %>
-          <li>
-            <span class="ban-ip"><%= b[:ip] %></span>
-            <span class="ban-tag ban-tag-<%= b[:source] %>"><%= b[:source] %></span>
-            <span class="ban-meta"><%= b[:comment] %></span>
-            <% if b[:source] == "runtime" %>
-              <span class="ban-rm"><%= form_with url: admin_remove_manual_ban_path, method: :post, local: true do |f| %><%= f.hidden_field :ip, value: b[:ip] %><%= f.submit "\u00d7" %><% end %></span>
-            <% end %>
-          </li>
-        <% end %>
-      </ul>
+<% if @current_import %>
+  <div class="import-box active">
+    <strong class="warn"><%= @current_import.status.capitalize %></strong>
+    <% if @current_import.current_file %>
+      &mdash; <%= @current_import.current_file %>
     <% end %>
-    <%= form_with url: admin_add_manual_ban_path, method: :post, local: true do |f| %>
-      <div class="add-form">
-        <%= f.text_field :ip, placeholder: "IP or CIDR", size: 18 %>
-        <%= f.text_field :comment, placeholder: "reason", size: 18 %>
-        <%= f.submit "Ban" %>
-      </div>
-    <% end %>
+    <div class="import-progress">
+      <div class="import-progress-bar" style="width: <%= @current_import.progress_percent %>%"></div>
+    </div>
+    <div class="import-meta">
+      <%= @current_import.completed_files %> / <%= @current_import.total_files %> files
+      &middot; <%= number_with_delimiter(@current_import.total_records_imported) %> records
+      <% if @current_import.elapsed %>
+        &middot; <%= distance_of_time_in_words(@current_import.elapsed) %> elapsed
+      <% end %>
+    </div>
+    <div class="import-actions">
+      <%= form_with url: admin_cancel_import_path, method: :post, local: true do |f| %>
+        <%= f.submit "Cancel Import", class: "btn btn-danger", data: { confirm: "Cancel the running import?" } %>
+      <% end %>
+    </div>
   </div>
-</div>
+<% else %>
+  <div class="import-box">
+    <div class="import-actions">
+      <%= form_with url: admin_start_import_path, method: :post, local: true do |f| %>
+        <%= f.submit "Start Full Import", class: "btn btn-primary" %>
+      <% end %>
+    </div>
+  </div>
+<% end %>
+
+<% if @recent_imports&.any? %>
+  <h2>Recent Imports</h2>
+  <table>
+    <tr><th>ID</th><th>Status</th><th>Files</th><th>Records</th><th>Started</th><th>Duration</th><th>Error</th></tr>
+    <% @recent_imports.each do |run| %>
+      <% sc = run.status == "completed" ? "ok" : (run.status == "failed" ? "err" : "") %>
+      <tr>
+        <td><%= run.id %></td>
+        <td class="<%= sc %>"><%= run.status %></td>
+        <td><%= run.completed_files %> / <%= run.total_files %></td>
+        <td><%= number_with_delimiter(run.total_records_imported) %></td>
+        <td><%= run.started_at&.strftime("%b %-d %H:%M") %></td>
+        <td><%= run.elapsed ? distance_of_time_in_words(run.elapsed) : "-" %></td>
+        <td class="ellip"><%= run.error_message&.truncate(80) %></td>
+      </tr>
+    <% end %>
+  </table>
+<% end %>
 
 <h2>Indices <small>(<%= (@global_stats["databaseSize"].to_f / 1024**3).round(2) %> GB)</small></h2>
 <table>
@@ -102,65 +110,10 @@
   <% @global_stats["indexes"]&.each do |name, idx| %>
     <tr>
       <td><%= name %></td>
-      <td><%= idx["numberOfDocuments"] %></td>
+      <td><%= number_with_delimiter(idx["numberOfDocuments"]) %></td>
       <td class="<%= idx["isIndexing"] ? "warn" : "ok" %>"><%= idx["isIndexing"] ? "yes" : "no" %></td>
     </tr>
   <% end %>
 </table>
-
-<div class="task-cols">
-  <div>
-    <h2>Enqueued <small>(<%= @total_enqueued %>)</small></h2>
-    <% if @tasks_enqueued.any? %>
-      <table>
-        <tr><th>UID</th><th>Task</th><th>Enqueued</th></tr>
-        <% @tasks_enqueued.each do |t| %>
-          <tr>
-            <td><%= t["uid"] %></td>
-            <td><%= t["type"] %> <small><%= t["indexUid"] %></small></td>
-            <td><%= t["enqueuedAt"]&.sub("T", " ")&.first(19) %></td>
-          </tr>
-        <% end %>
-      </table>
-    <% else %>
-      <p class="note">None.</p>
-    <% end %>
-  </div>
-
-  <div>
-    <h2>Processing <small>(<%= @total_processing %>)</small></h2>
-    <% if @tasks_processing.any? %>
-      <table>
-        <tr><th>UID</th><th>Task</th><th>Started</th></tr>
-        <% @tasks_processing.each do |t| %>
-          <tr>
-            <td><%= t["uid"] %></td>
-            <td class="warn"><%= t["type"] %> <small><%= t["indexUid"] %></small></td>
-            <td><%= t["startedAt"]&.sub("T", " ")&.first(19) %></td>
-          </tr>
-        <% end %>
-      </table>
-    <% else %>
-      <p class="note">None.</p>
-    <% end %>
-  </div>
-
-  <div>
-    <h2>Finished <small>(<%= @total_finished %> in last 24h, showing 20)</small></h2>
-    <table>
-      <tr><th>UID</th><th>Task</th><th>Status</th><th>Duration</th><th>Error</th></tr>
-      <% @tasks_finished.each do |t| %>
-        <% sc = t["status"] == "succeeded" ? "ok" : "err" %>
-        <tr>
-          <td><%= t["uid"] %></td>
-          <td><%= t["type"] %> <small><%= t["indexUid"] %></small></td>
-          <td class="<%= sc %>"><%= t["status"] %></td>
-          <td><%= format_iso8601_duration(t["duration"]) %></td>
-          <td class="ellip"><%= t.dig("error", "message")&.truncate(80) %></td>
-        </tr>
-      <% end %>
-    </table>
-  </div>
-</div>
 
 <% end %>

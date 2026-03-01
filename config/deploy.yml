@@ -28,7 +28,7 @@ env:
     - MEILISEARCH_API_KEY
   clear:
     WEB_CONCURRENCY: 2
-    SOLID_QUEUE_IN_PUMA: false
+    SOLID_QUEUE_IN_PUMA: true
 
 volumes:
   - "quellenportal_storage:/rails/storage"

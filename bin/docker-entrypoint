@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# entrypoint simplified for Meilisearch-only architecture
-# no database preparation needed for main app
+# Prepare databases (SolidQueue + import tracking)
+./bin/rails db:prepare
 
 exec "${@}"

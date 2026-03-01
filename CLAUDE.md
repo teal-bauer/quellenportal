@@ -45,7 +45,7 @@ bundle exec htmlbeautifier app/views/**/*.erb
 
 ### Data Storage
 
-All data is stored in **Meilisearch** (no SQL database). `MeilisearchRepository` (`app/services/meilisearch_repository.rb`) wraps all Meilisearch HTTP API calls. Three indices:
+All archival data is stored in **Meilisearch**. SQLite is only used for **SolidQueue** job tables and the `import_runs` progress tracking table. `MeilisearchRepository` (`app/services/meilisearch_repository.rb`) wraps all Meilisearch HTTP API calls. Three indices:
 
 - **`ArchiveFile_<env>`**: Individual archival records (~4.3M documents). Searchable by title, summary, call number, parent names, origin names. Filterable by fonds, decade, date range, origin.
 - **`ArchiveNode_<env>`**: Hierarchical tree structure (fonds, series, etc.). Filterable by level, parent, first letter.
@@ -71,7 +71,8 @@ Origins are deduped by name with deterministic SHA256-based IDs, so the same ori
 
 ### Key Design Decisions
 
-- **Meilisearch as sole data store**: No SQL database. All reads and writes go through `MeilisearchRepository`. Index settings configured via `data:configure_indices`.
+- **Meilisearch as primary data store**: All archival data reads and writes go through `MeilisearchRepository`. SQLite is only for SolidQueue + import tracking. Index settings configured via `data:configure_indices`.
+- **Background imports via SolidQueue**: `FullImportJob` runs a blue-green import with file-level checkpointing via `ImportRun`. Survives deploys by resuming from the last completed file. Admin UI at `/admin/status` shows progress and allows starting/cancelling imports.
 - **Blue-green index rebuilds**: `data:rebuild_origins` builds into a shadow index, then atomically swaps via Meilisearch's swap-indexes API for zero-downtime rebuilds.
 - **Denormalized parents**: ArchiveFile stores `parents` as JSON array to avoid repeated tree traversal during display.
 - **German locale**: Default locale is `de`.

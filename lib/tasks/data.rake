@@ -29,9 +29,16 @@ namespace :data do
     puts "\nDone."
   end
 
-  desc 'Import data from XML files (background via async queue)'
-  task :import, [:dir] => [:environment] do |_task, args|
-    BundesarchivImporter.new(args[:dir]).enqueue_all
+  desc 'Import data from XML files (background via SolidQueue)'
+  task :import => [:environment] do
+    if ImportRun.active.exists?
+      puts "An import is already running."
+      next
+    end
+
+    run = ImportRun.create!(status: "pending", started_at: Time.current)
+    FullImportJob.perform_later(run.id)
+    puts "Import enqueued (ImportRun ##{run.id}). Progress visible at /admin/status."
   end
 
   desc 'Import data from XML files (synchronous, blue-green swap)'

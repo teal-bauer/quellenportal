@@ -10,8 +10,9 @@ gem 'rails', '~> 8.0.0'
 gem 'importmap-rails'
 gem 'propshaft'
 
-# Database
-# SQLite removed as per user request to move entirely to Meilisearch
+# Database (SQLite for SolidQueue + import progress tracking only; app data lives in Meilisearch)
+gem 'sqlite3', '~> 2.6'
+gem 'solid_queue', '~> 1.1'
 
 gem 'bibtex-ruby', '~> 6.1' # Export bibtex citations
 gem 'bootsnap', require: false # Reduces boot times through caching; required in config/boot.rb

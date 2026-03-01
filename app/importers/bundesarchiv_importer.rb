@@ -288,18 +288,6 @@ class BundesarchivImporter
     @repository = repository || MeilisearchRepository.new
   end
 
-  def enqueue_all
-    xml_files = Dir.glob('*.xml', base: @dir).sort
-    puts "Enqueuing #{xml_files.count} import jobs..."
-
-    xml_files.each do |filename|
-      ImportFileJob.perform_later(File.join(@dir, filename))
-    end
-
-    # No ReindexJob needed anymore as we index on the fly
-    puts 'All jobs enqueued. Import will run in background.'
-  end
-
   def import_file(path, caches:, progress_bar: nil, file_start_progress: 0, file_lines: 0)
     doc = File.open(path) { |file| Nokogiri.XML(file) }
     doc.remove_namespaces!
