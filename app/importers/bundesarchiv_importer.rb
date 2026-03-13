@@ -48,7 +48,7 @@ class ArchiveObject
       parents: @parent_nodes,
       ancestor_ids: @parent_nodes.map { |p| p[:id] },
       unitid: unitid.presence,
-      unitdate: did.xpath('did/unitdate').text.presence,
+      unitdate: did.xpath('unitdate').text.presence,
       name_first_letter: normalize_letter(unittitle),
       unitid_first_letter: normalize_letter(unitid),
       # Keep first_letter for backward compatibility or default
@@ -230,17 +230,17 @@ class ArchiveObject
                                      archive_node: @archive_node,
                                      repository: @repository)
           files_count = phantom.process_files
-          decendend_count = phantom.descend
-          next files_count + decendend_count
+          descended_count = phantom.descend
+          next files_count + descended_count
         end
 
         descendent = ArchiveObject.new(@parent_nodes + [@archive_node], node, @caches, 
                                       progress_bar: @progress_bar, progress_step: @progress_step,
                                       repository: @repository)
         files_count = descendent.process_files
-        decendend_count = descendent.descend
+        descended_count = descendent.descend
 
-        decendend_count + files_count
+        descended_count + files_count
       end
       .sum
   end

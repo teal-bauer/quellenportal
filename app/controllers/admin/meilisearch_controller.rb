@@ -31,12 +31,12 @@ class Admin::MeilisearchController < ApplicationController
     enqueued_resp     = threads[:enqueued].value
     processing_resp   = threads[:processing].value
     finished_resp     = threads[:finished].value
-    @tasks_enqueued   = enqueued_resp["results"]
-    @tasks_processing = processing_resp["results"]
-    @tasks_finished   = finished_resp["results"]
-    @total_enqueued   = enqueued_resp["total"]
-    @total_processing = processing_resp["total"]
-    @total_finished   = finished_resp["total"]
+    @tasks_enqueued   = enqueued_resp["results"] || []
+    @tasks_processing = processing_resp["results"] || []
+    @tasks_finished   = finished_resp["results"] || []
+    @total_enqueued   = enqueued_resp["total"] || 0
+    @total_processing = processing_resp["total"] || 0
+    @total_finished   = finished_resp["total"] || 0
   rescue => e
     @error = e.message
   end

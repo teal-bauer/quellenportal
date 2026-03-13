@@ -48,4 +48,5 @@ group :test do
   gem 'selenium-webdriver'
 end
 
+gem 'minitest', '~> 5.25' # minitest 6.x breaks Rails 8.0 test runner
 gem "ostruct", "~> 0.6.3"

@@ -2,6 +2,8 @@ class FullImportJob < ApplicationJob
   queue_as :imports
   limits_concurrency to: 1, key: "full_import"
 
+  INDEXING_TIMEOUT = 30.minutes
+
   def perform(import_run_id)
     @run = ImportRun.find(import_run_id)
     return if @run.status == "cancelled"
@@ -12,9 +14,11 @@ class FullImportJob < ApplicationJob
     begin
       prepare_shadow_indices
       import_files
+      return if cancelled?
       wait_for_indexing
+      return if cancelled?
       swap_indices
-      cleanup
+      cleanup_shadow
       @run.complete!
     rescue => e
       @run.fail!("#{e.class}: #{e.message}")
@@ -24,18 +28,28 @@ class FullImportJob < ApplicationJob
 
   private
 
+  def cancelled?
+    @run.reload
+    if @run.status == "cancelled"
+      cleanup_shadow
+      true
+    else
+      false
+    end
+  end
+
   def prepare_shadow_indices
     @run.update!(status: "preparing", started_at: @run.started_at || Time.current)
 
     # Only create shadow indices if this is a fresh run (no files completed yet)
     if @run.completed_files.zero?
-      [@shadow.file_index, @shadow.node_index, @shadow.origin_index].each do |idx|
+      shadow_indices.each do |idx|
         resp = @live.delete_index(idx)
         @live.wait_for_task(resp["taskUid"], timeout: 600) if resp&.dig("taskUid")
       rescue
         nil
       end
-      [@shadow.file_index, @shadow.node_index, @shadow.origin_index].each do |idx|
+      shadow_indices.each do |idx|
         resp = @live.post("/indexes", { uid: idx, primaryKey: "id" })
         @live.wait_for_task(resp["taskUid"], timeout: 600)
       end
@@ -66,10 +80,7 @@ class FullImportJob < ApplicationJob
     importer = BundesarchivImporter.new(dir, repository: @shadow)
 
     xml_files.each do |filename|
-      # Check for cancellation before each file
-      @run.reload
-      return if @run.status == "cancelled"
-
+      return if cancelled?
       next if already_done.include?(filename)
 
       path = File.join(dir, filename)
@@ -93,13 +104,15 @@ class FullImportJob < ApplicationJob
 
   def wait_for_indexing
     @run.update!(status: "swapping", current_file: nil)
+    deadline = Time.current + INDEXING_TIMEOUT
 
     loop do
-      all_done = [@shadow.file_index, @shadow.node_index, @shadow.origin_index].all? do |idx|
+      all_done = shadow_indices.all? do |idx|
         stats = @live.get("/indexes/#{idx}/stats")
         !stats["isIndexing"]
       end
       break if all_done
+      raise "Timed out waiting for Meilisearch indexing" if Time.current > deadline
       sleep 5
     end
   end
@@ -114,13 +127,15 @@ class FullImportJob < ApplicationJob
     @live.wait_for_task(resp["taskUid"], timeout: 300)
   end
 
-  def cleanup
-    [@shadow.file_index, @shadow.node_index, @shadow.origin_index].each do |idx|
-      @live.delete_index(idx)
-    end
+  def cleanup_shadow
+    shadow_indices.each { |idx| @live.delete_index(idx) }
 
     Rails.cache.delete("origins/with_file_counts")
     Rails.cache.delete("archive_files/decade_counts")
     Rails.cache.delete("browse/tab_counts")
+  end
+
+  def shadow_indices
+    [@shadow.file_index, @shadow.node_index, @shadow.origin_index]
   end
 end

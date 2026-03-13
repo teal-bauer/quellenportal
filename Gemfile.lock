@@ -161,9 +161,7 @@ GEM
       httparty (~> 0.24)
     memory_profiler (1.1.0)
     mini_mime (1.1.5)
-    minitest (6.0.2)
-      drb (~> 2.0)
-      prism (~> 1.5)
+    minitest (5.27.0)
     msgpack (1.8.0)
     multi_xml (0.8.1)
       bigdecimal (>= 3.1, < 5)
@@ -317,6 +315,7 @@ DEPENDENCIES
   kaminari
   meilisearch
   memory_profiler
+  minitest (~> 5.25)
   ostruct (~> 0.6.3)
   progressbar (~> 1.13)
   propshaft

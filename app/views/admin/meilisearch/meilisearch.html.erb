@@ -1,32 +1,4 @@
-<style>
-  :root { --c-bg: #fafafa; --c-border: #e0e0e0; --c-muted: #888; --c-ip: #1a1a2e; --c-rm: #b33; }
-  * { box-sizing: border-box; }
-  body { font-family: -apple-system, system-ui, "Segoe UI", sans-serif; padding: 1.5rem 2rem; color: #222; font-size: 14px; }
-  h1 { font-size: 1.4em; margin: 0 0 1rem; }
-  h2 { font-size: 1em; font-weight: 600; margin: 1.5rem 0 0.25rem; }
-  h2 small { font-weight: 400; color: var(--c-muted); }
-  .note { font-size: 0.8em; color: var(--c-muted); margin: 0 0 0.4rem; }
-  .ok { color: #1a7f37; } .warn { color: #bf8700; } .err { color: var(--c-rm); }
-  .flash { padding: 0.3rem 0.6rem; margin-bottom: 0.5rem; border-radius: 3px; font-size: 0.85em; }
-  .flash-notice { background: #e6f4ea; color: #1a7f37; }
-  .flash-alert  { background: #fde8e8; color: var(--c-rm); }
-
-  .admin-nav { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 2px solid var(--c-border); padding-bottom: 0; }
-  .admin-nav a { text-decoration: none; padding: 0.4rem 0.8rem; color: var(--c-muted); font-size: 0.9em; border-bottom: 2px solid transparent; margin-bottom: -2px; }
-  .admin-nav a:hover { color: #222; }
-  .admin-nav a.active { color: #222; border-bottom-color: #222; font-weight: 600; }
-
-  .task-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; align-items: start; }
-
-  table { border-collapse: collapse; width: 100%; margin-bottom: 0.5rem; }
-  th, td { border: 1px solid var(--c-border); padding: 0.2rem 0.5rem; text-align: left; font-size: 0.85em; }
-  th { background: #f0f0f0; font-weight: 600; }
-  td.ellip { max-width: 24em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-</style>
-
-<h1>Admin</h1>
-
-<%= render "admin/meilisearch/admin_nav" %>
+<%= render "admin/meilisearch/admin_header" %>
 
 <% if @error %>
   <p class="err">Error: <%= @error %></p>
@@ -83,19 +55,23 @@
 
   <div>
     <h2>Finished <small>(<%= @total_finished %> in last 24h, showing 20)</small></h2>
-    <table>
-      <tr><th>UID</th><th>Task</th><th>Status</th><th>Duration</th><th>Error</th></tr>
-      <% @tasks_finished.each do |t| %>
-        <% sc = t["status"] == "succeeded" ? "ok" : "err" %>
-        <tr>
-          <td><%= t["uid"] %></td>
-          <td><%= t["type"] %> <small><%= t["indexUid"] %></small></td>
-          <td class="<%= sc %>"><%= t["status"] %></td>
-          <td><%= format_iso8601_duration(t["duration"]) %></td>
-          <td class="ellip"><%= t.dig("error", "message")&.truncate(80) %></td>
-        </tr>
-      <% end %>
-    </table>
+    <% if @tasks_finished.any? %>
+      <table>
+        <tr><th>UID</th><th>Task</th><th>Status</th><th>Duration</th><th>Error</th></tr>
+        <% @tasks_finished.each do |t| %>
+          <% sc = t["status"] == "succeeded" ? "ok" : "err" %>
+          <tr>
+            <td><%= t["uid"] %></td>
+            <td><%= t["type"] %> <small><%= t["indexUid"] %></small></td>
+            <td class="<%= sc %>"><%= t["status"] %></td>
+            <td><%= format_iso8601_duration(t["duration"]) %></td>
+            <td class="ellip"><%= t.dig("error", "message")&.truncate(80) %></td>
+          </tr>
+        <% end %>
+      </table>
+    <% else %>
+      <p class="note">None.</p>
+    <% end %>
   </div>
 </div>
 

@@ -1,3 +1,11 @@
+<%= stylesheet_link_tag "admin" %>
+<%= yield :admin_head if content_for?(:admin_head) %>
+
+<h1>Admin</h1>
+
+<% if notice.present? %><p class="flash flash-notice"><%= notice %></p><% end %>
+<% if alert.present? %><p class="flash flash-alert"><%= alert %></p><% end %>
+
 <nav class="admin-nav">
   <%= link_to "Dashboard", admin_status_path, class: ("active" if current_page?(admin_status_path)) %>
   <%= link_to "IP Bans", admin_bans_path, class: ("active" if current_page?(admin_bans_path)) %>
