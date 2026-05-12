@@ -1,21 +1,21 @@
 body {
   font-family: "Atkinson Hyperlegible", sans-serif;
-  background-color: #f5f0e8;
-  color: #2c2418;
+  background-color: var(--bg);
+  color: var(--text);
   line-height: 1.6;
 }
 
 a {
-  color: #7a4419;
+  color: var(--accent);
   transition: color 0.15s;
 }
 a:hover {
-  color: #5e3412;
+  color: var(--accent-hover);
 }
 
 hr {
   border: none;
-  border-top: 1px solid #d4c9b8;
+  border-top: 1px solid var(--border);
   margin: 1.5rem 0;
 }
 
@@ -37,15 +37,15 @@ hr {
 .title-spacer {
   margin-top: 80pt;
   margin-bottom: 20pt;
-  color: #998a78;
-  border: 1pt dotted #d4c9b8;
+  color: var(--text-faint);
+  border: 1pt dotted var(--border);
 }
 
 footer {
   margin-top: 2rem;
   text-align: center;
-  color: #998a78;
-  border-top: 1px solid #d4c9b8;
+  color: var(--text-faint);
+  border-top: 1px solid var(--border);
   padding: 1rem 0;
 }
 
