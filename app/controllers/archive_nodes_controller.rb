@@ -75,9 +75,11 @@ class ArchiveNodesController < ApplicationController
   end
 
   def archive_node_payload
-    # Fetch children and files for the payload
-    child_resp = @repository.search_nodes("", filter: "parent_node_id = #{MeilisearchRepository.quote(@archive_node.id)}", sort: ['name:asc'])
-    file_resp = @repository.search_files("", filter: "archive_node_id = #{MeilisearchRepository.quote(@archive_node.id)}", sort: ['call_number:asc'])
+    # Fetch children and files for the payload.
+    # hitsPerPage 10_000 covers every real-world node; without it Meilisearch
+    # caps at its default 20 and silently truncates the API response.
+    child_resp = @repository.search_nodes("", filter: "parent_node_id = #{MeilisearchRepository.quote(@archive_node.id)}", sort: ['name:asc'], hitsPerPage: 10_000)
+    file_resp = @repository.search_files("", filter: "archive_node_id = #{MeilisearchRepository.quote(@archive_node.id)}", sort: ['call_number:asc'], hitsPerPage: 10_000)
     
     {
       id: @archive_node.id,
