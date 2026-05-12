@@ -72,9 +72,7 @@ class ResultComponent < ViewComponent::Base
   def highlight_query(text)
     return text if @query.blank? || text.blank?
 
-    text.gsub(
-      /(#{CGI.escapeHTML(@query)})/i,
-      '<span class="result__highlight">\1</span>'
-    ).html_safe
+    pattern = Regexp.new(Regexp.escape(CGI.escapeHTML(@query)), Regexp::IGNORECASE)
+    text.gsub(pattern) { |m| %(<span class="result__highlight">#{m}</span>) }.html_safe
   end
 end
