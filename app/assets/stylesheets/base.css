@@ -53,3 +53,44 @@ footer small {
   display: block;
   margin-top: 0.25rem;
 }
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background-color: var(--bg);
+  border-bottom: 1px solid var(--border);
+  transition: box-shadow 0.15s;
+}
+
+.site-header.is-scrolled {
+  box-shadow: var(--header-shadow);
+}
+
+.site-header__inner {
+  max-width: 1100pt;
+  margin: 0 auto;
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.site-header__wordmark {
+  font-family: "EB Garamond", serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  text-decoration: none;
+  flex-shrink: 0;
+}
+.site-header__wordmark:hover {
+  color: var(--accent);
+}
+
+@media (max-width: 600px) {
+  .site-header__inner {
+    padding: 0.4rem 0.75rem;
+  }
+}

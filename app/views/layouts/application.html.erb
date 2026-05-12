@@ -14,11 +14,14 @@
     <%= preload_link_tag asset_path('EB_Garamond/WOFF2/EBGaramond12-Regular.woff2'), as: "font", type: "font/woff2", crossorigin: "anonymous" %>
   </head>
   <body>
+    <header class="site-header" data-site-header>
+      <div class="site-header__inner">
+        <a href="<%= root_path %>" class="site-header__wordmark">Quellenportal</a>
+        <%= yield :site_header_extras %>
+      </div>
+    </header>
     <div class="container__outer">
       <main class="container__inner <%= yield :container_class %>">
-        <h1 class="search__title">
-          <%= link_to "Quellenportal", :root %>
-        </h1>
         <%= yield %>
       </main>
     </div>
