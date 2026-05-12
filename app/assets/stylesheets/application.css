@@ -1,6 +1,7 @@
 @import url('/atkinson_hyperlegible.css');
 @import url('/eb_garamond.css');
 
+@import url('/tokens.css');
 @import url('/base.css');
 
 @import url('/archive_nodes.css');

@@ -1,0 +1,74 @@
+/* tokens.css — Quellenportal design tokens
+ * Source of truth for colours. All component CSS uses var(--…). */
+
+:root {
+  /* Surfaces */
+  --bg:                #f7f2ea;
+  --bg-elevated:       #faf7f2;
+  --surface-chip:      #ede6d8;
+  --surface-chip-strong: #e6dcc6;
+
+  /* Text */
+  --text:              #1f1813;
+  --text-muted:        #5a4f3f;
+  --text-faint:        #7d6f5c;
+
+  /* Accent */
+  --accent:            #7a4419;
+  --accent-hover:      #5e3412;
+  --accent-on:         #ffffff;
+
+  /* Lines */
+  --border:            #d4c9b8;
+  --border-input:      #c4b8a6;
+  --border-faint:      #ede6d8;
+
+  /* Highlights / state */
+  --highlight:         rgba(218, 186, 117, 0.5);
+  --success:           #5a7a3a;
+
+  /* Date-correction badge */
+  --badge-warn-bg:     #f5ecd0;
+  --badge-warn-fg:     #8b6914;
+
+  /* Header shadow when scrolled */
+  --header-shadow:     0 4px 12px rgba(31, 24, 19, 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:                #1f1814;
+    --bg-elevated:       #2a2520;
+    --surface-chip:      #2a2520;
+    --surface-chip-strong: #332821;
+
+    --text:              #ede4d0;
+    --text-muted:        #bcae93;
+    --text-faint:        #b5a787;
+
+    --accent:            #c8954a;
+    --accent-hover:      #d4a35a;
+    --accent-on:         #1f1814;
+
+    --border:            #3a322a;
+    --border-input:      #5a4f3a;
+    --border-faint:      #2a2520;
+
+    --highlight:         rgba(200, 149, 74, 0.4);
+    --success:           #8caa6d;
+
+    --badge-warn-bg:     #3a2f1a;
+    --badge-warn-fg:     #d4b87a;
+
+    --header-shadow:     0 4px 12px rgba(0, 0, 0, 0.4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
