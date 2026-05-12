@@ -63,7 +63,7 @@ class MeilisearchRepository
         enabled: true,
         minWordSizeForTypos: { oneTypo: 4, twoTypos: 8 }
       },
-      faceting: { maxValuesPerFacet: 100 },
+      faceting: { maxValuesPerFacet: 1000 },
       pagination: { maxTotalHits: 500_000 }
     })
 
