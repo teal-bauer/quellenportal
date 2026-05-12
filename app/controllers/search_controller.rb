@@ -11,8 +11,8 @@ class SearchController < ApplicationController
     @unitid = params[:unitid]
     @unitid_prefix = params[:unitid_prefix]
     @fonds_name = params[:fonds_name]
-    @date_from = params[:from].present? ? Date.parse(params[:from]) : nil
-    @date_to = params[:to].present? ? Date.parse(params[:to]) : nil
+    @date_from = safe_parse_date(params[:from])
+    @date_to = safe_parse_date(params[:to])
     
     # Retrieve node metadata from Meilisearch if ID is present
     if @node_id.present?
@@ -86,13 +86,30 @@ class SearchController < ApplicationController
       parts << "fonds_name = #{MeilisearchRepository.quote(@fonds_name)}"
     end
 
-    if @date_from.present? && @date_to.present?
-      start_ts = @date_from.to_time.to_i
-      end_ts = @date_to.to_time.to_i
-      parts << "(source_date_start_unix >= #{start_ts} AND source_date_start_unix < #{end_ts} OR source_date_end_unix >= #{start_ts} AND source_date_end_unix < #{end_ts})"
+    if @date_from || @date_to
+      lower_bound = @date_from&.to_time&.to_i
+      upper_bound = @date_to ? (@date_to + 1).to_time.to_i : nil
+      parts << date_range_filter(lower_bound, upper_bound)
     end
 
     parts.join(' AND ').presence
+  end
+
+  def date_range_filter(lower, upper)
+    start_clauses = []
+    end_clauses = []
+    start_clauses << "source_date_start_unix >= #{lower}" if lower
+    start_clauses << "source_date_start_unix < #{upper}" if upper
+    end_clauses << "source_date_end_unix >= #{lower}" if lower
+    end_clauses << "source_date_end_unix < #{upper}" if upper
+    "((#{start_clauses.join(' AND ')}) OR (#{end_clauses.join(' AND ')}))"
+  end
+
+  def safe_parse_date(value)
+    return nil if value.blank?
+    Date.iso8601(value.to_s)
+  rescue Date::Error
+    nil
   end
 
   def browse_counts
@@ -157,11 +174,11 @@ class SearchController < ApplicationController
         @origin_letters = @repository.origin_letters
       end
     when 'dates'
-      if params[:from].present? && params[:to].present?
-        @date_from = Date.parse(params[:from])
-        @date_to = Date.parse(params[:to])
-        # Use Meilisearch filter for date range
-        filter = "source_date_start_unix >= #{@date_from.to_time.to_i} AND source_date_start_unix < #{@date_to.to_time.to_i}"
+      @date_from = safe_parse_date(params[:from])
+      @date_to = safe_parse_date(params[:to])
+      if @date_from && @date_to
+        # Inclusive of @date_to: use start of next day as exclusive upper bound
+        filter = "source_date_start_unix >= #{@date_from.to_time.to_i} AND source_date_start_unix < #{(@date_to + 1).to_time.to_i}"
         response = @repository.search_files("", filter: filter, hitsPerPage: 50, page: (params[:page]||1).to_i)
         
         @archive_files = Kaminari.paginate_array(
