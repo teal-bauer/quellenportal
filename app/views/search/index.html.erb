@@ -78,26 +78,71 @@
   <% when "dates" %>
     <%= render "browse_dates" %>
   <% else %>
-    <hr class="title-spacer">
-    <h2>Was ist Quellenportal?</h2>
-    <p>
-      Quellenportal bietet eine einfache und schnelle Möglichkeit, die Bestände des Bundesarchivs zu durchsuchen.
-      Dieses Angebot richtet sich vor allem an Personen, die für ihre Recherchen exakte textuelle Übereinstimmungen suchen und große Mengen an Ergebnissen schnell sichten möchten.
-      Die hierfür benötigten Erschließungsinformationen stammen aus dem <a href="https://www.bundesarchiv.de/DE/Content/Artikel/Ueber-uns/Aus-unserer-Arbeit/open-data.html">Open-Data-Angebot</a> des Bundesarchivs.
-    </p>
-    <p>
-      Gegenüber Bundessuche bietet Quellenportal folgende Erweiterungen:
-    </p>
-    <ul>
-      <li><strong>Stöbern</strong> — Bestände, Provenienz und Zeiträume durchblättern, ohne einen Suchbegriff zu kennen</li>
-      <li><strong>Bestandsnavigation</strong> — die Tektonik des Archivs als navigierbare Baumstruktur</li>
-      <li><strong>Bestandsbezogene Suche</strong> — Suche auf einzelne Bestände eingrenzen</li>
-      <li><strong>Suchoperatoren</strong> — AND, OR, NOT und Phrasensuche (<%= link_to "Suchhinweise", search_help_path %>)</li>
-    </ul>
-    <p>
-      Weitere Optionen für die Suche in den Beständen des Bundesarchivs sind <a href="https://www.archivesportaleurope.net">Archives Portal Europe</a>,
-      <a href="https://www.archivportal-d.de">Archivportal-D</a> und <a href="https://invenio.bundesarchiv.de">Invenio</a>.
-      Invenio ist ein Angebot des Bundesarchivs und ist bei Treffern im Quellenportal verlinkt. Dort kann das Archivgut eingesehen und bestellt werden.
-    </p>
+    <section class="landing">
+      <h1 class="landing__wordmark">Quellenportal</h1>
+      <p class="landing__tagline">Bundesarchiv-Bestände durchsuchen, <%= number_with_delimiter(@total) %> Aktenstücke</p>
+
+      <form class="landing__search">
+        <input type="text" name="q" placeholder="<%= t("search_placeholder", total: number_with_delimiter(@total)) %>" class="landing__search-input" data-search-input>
+        <button type="submit" class="landing__search-button"><%= icon(:search, label: t("search_button")) %> <%= t("search_button") %></button>
+      </form>
+
+      <p class="landing__examples">
+        <span class="landing__examples-label">Beispiele:</span>
+        <%= link_to "Wiederaufbau Berlin", root_path(q: "Wiederaufbau Berlin"), class: "landing__example" %>
+        <%= link_to "Reichsbahn", root_path(q: "Reichsbahn"), class: "landing__example" %>
+        <%= link_to %("Hans Globke"), root_path(q: '"Hans Globke"'), class: "landing__example" %>
+      </p>
+
+      <p class="landing__section-label">Stöbern</p>
+      <nav class="landing__browse">
+        <%= link_to browse_fonds_path, class: "landing__browse-row" do %>
+          <span class="landing__browse-text">
+            <strong><%= t("browse.fonds") %></strong>
+            <span class="landing__browse-desc">die Tektonik des Archivs</span>
+          </span>
+          <span class="landing__browse-count"><%= number_with_delimiter(@browse_counts[:fonds]) %></span>
+          <%= icon("arrow-right") %>
+        <% end %>
+        <%= link_to browse_origins_path, class: "landing__browse-row" do %>
+          <span class="landing__browse-text">
+            <strong><%= t("browse.origins") %></strong>
+            <span class="landing__browse-desc">wer hat sie erstellt</span>
+          </span>
+          <span class="landing__browse-count"><%= number_with_delimiter(@browse_counts[:origins]) %></span>
+          <%= icon("arrow-right") %>
+        <% end %>
+        <%= link_to browse_dates_path, class: "landing__browse-row" do %>
+          <span class="landing__browse-text">
+            <strong><%= t("browse.dates") %></strong>
+            <span class="landing__browse-desc">800 bis heute</span>
+          </span>
+          <span class="landing__browse-count"><%= number_with_delimiter(@browse_counts[:decades]) %></span>
+          <%= icon("arrow-right") %>
+        <% end %>
+      </nav>
+
+      <hr class="title-spacer">
+      <h2>Was ist Quellenportal?</h2>
+      <p>
+        Quellenportal bietet eine einfache und schnelle Möglichkeit, die Bestände des Bundesarchivs zu durchsuchen.
+        Dieses Angebot richtet sich vor allem an Personen, die für ihre Recherchen exakte textuelle Übereinstimmungen suchen und große Mengen an Ergebnissen schnell sichten möchten.
+        Die hierfür benötigten Erschließungsinformationen stammen aus dem <a href="https://www.bundesarchiv.de/DE/Content/Artikel/Ueber-uns/Aus-unserer-Arbeit/open-data.html">Open-Data-Angebot</a> des Bundesarchivs.
+      </p>
+      <p>
+        Gegenüber Bundessuche bietet Quellenportal folgende Erweiterungen:
+      </p>
+      <ul>
+        <li><strong>Stöbern</strong> — Bestände, Provenienz und Zeiträume durchblättern, ohne einen Suchbegriff zu kennen</li>
+        <li><strong>Bestandsnavigation</strong> — die Tektonik des Archivs als navigierbare Baumstruktur</li>
+        <li><strong>Bestandsbezogene Suche</strong> — Suche auf einzelne Bestände eingrenzen</li>
+        <li><strong>Suchoperatoren</strong> — AND, OR, NOT und Phrasensuche (<%= link_to "Suchhinweise", search_help_path %>)</li>
+      </ul>
+      <p>
+        Weitere Optionen für die Suche in den Beständen des Bundesarchivs sind <a href="https://www.archivesportaleurope.net">Archives Portal Europe</a>,
+        <a href="https://www.archivportal-d.de">Archivportal-D</a> und <a href="https://invenio.bundesarchiv.de">Invenio</a>.
+        Invenio ist ein Angebot des Bundesarchivs und ist bei Treffern im Quellenportal verlinkt. Dort kann das Archivgut eingesehen und bestellt werden.
+      </p>
+    </section>
   <% end %>
 <% end %>
