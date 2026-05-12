@@ -23,22 +23,22 @@
 }
 
 .archive-node--tree {
-    background-color: #ede6d8;
-    color: #6b5d4f;
+    background-color: var(--surface-chip);
+    color: var(--text-muted);
 }
 
 .archive-node--leaf {
     background-color: transparent;
-    border: 2px solid #c4b8a6;
-    color: #6b5d4f;
+    border: 2px solid var(--border-input);
+    color: var(--text-muted);
 }
 
 .archive-node--selected {
-    border: 2px solid #7a4419;
+    border: 2px solid var(--accent);
 }
 
 .archive-node--selected.archive-node--leaf {
-    border: 2px solid #7a4419;
+    border: 2px solid var(--accent);
 }
 
 .archive-node__link {
@@ -46,7 +46,7 @@
     color: inherit;
 }
 .archive-node__link:hover {
-    color: #7a4419;
+    color: var(--accent);
 }
 
 .archive-node__unitid {
@@ -55,7 +55,7 @@
 }
 
 .archive-node__count {
-    color: #998a78;
+    color: var(--text-faint);
     font-size: 0.85em;
     margin-left: 0.25rem;
 }
@@ -67,15 +67,15 @@
 }
 
 .archive-node-details {
-    background-color: #f8f5f0;
+    background-color: var(--bg-elevated);
     padding: 1.5rem;
-    border: 1px solid #c4b8a6;
+    border: 1px solid var(--border-input);
     border-radius: 4px;
 }
 
 .archive-node-details__title {
     margin-top: 0;
-    color: #7a4419;
+    color: var(--accent);
     font-size: 1.75rem;
     font-family: "EB Garamond", serif;
 }
@@ -89,25 +89,25 @@
 }
 
 .archive-node-details__item strong {
-    color: #6b5d4f;
+    color: var(--text-muted);
 }
 
 .archive-node-details__section {
     margin-top: 1.5rem;
-    border-top: 1px solid #e0d8cc;
+    border-top: 1px solid var(--border);
     padding-top: 1rem;
 }
 
 .archive-node-details__section h2 {
     font-size: 1.25rem;
-    color: #7a4419;
+    color: var(--accent);
     margin-bottom: 0.75rem;
     font-family: "EB Garamond", serif;
 }
 
 .archive-node-details__text {
     line-height: 1.6;
-    color: #333;
+    color: var(--text);
 }
 
 .archive-node-files {
@@ -124,23 +124,23 @@
 }
 
 .archive-node-children-list__item {
-    background-color: #ede6d8;
+    background-color: var(--surface-chip);
     border-radius: 4px;
     transition: background-color 0.2s;
 }
 
 .archive-node-children-list__item:hover {
-    background-color: #e5dbc9;
+    background-color: var(--surface-chip-strong);
 }
 
 .archive-node-children-list__link {
     display: block;
     padding: 0.75rem 1rem;
     text-decoration: none;
-    color: #6b5d4f;
+    color: var(--text-muted);
     font-size: 0.95rem;
 }
 
 .archive-node-children-list__link:hover {
-    color: #7a4419;
+    color: var(--accent);
 }

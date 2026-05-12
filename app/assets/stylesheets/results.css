@@ -10,7 +10,7 @@
 }
 
 .result__highlight {
-    background-color: rgba(218, 186, 117, 0.45);
+    background-color: var(--highlight);
 }
 
 .parents {
@@ -26,17 +26,17 @@
 
     border-radius: 2px;
     padding: 2px 5px;
-    background-color: #ede6d8;
-    color: #6b5d4f;
+    background-color: var(--surface-chip);
+    color: var(--text-muted);
     overflow-wrap: anywhere;
 }
 
 .parents__item__link {
     text-decoration: none;
-    color: #6b5d4f;
+    color: var(--text-muted);
 }
 .parents__item__link:hover {
-    color: #7a4419;
+    color: var(--accent);
 }
 
 .parents__separator {
@@ -46,12 +46,12 @@
 
     padding-top: 2px;
     padding-bottom: 2px;
-    color: #998a78;
+    color: var(--text-faint);
 }
 
 .result {
     padding: 1rem 0;
-    border-bottom: 1px solid #d4c9b8;
+    border-bottom: 1px solid var(--border);
     margin-bottom: 0;
 }
 
@@ -60,13 +60,13 @@
 }
 
 .result__date {
-    color: #6b5d4f;
+    color: var(--text-muted);
 }
 
 .result__date-corrected {
     font-size: 0.75rem;
-    color: #8b6914;
-    background-color: #f5ecd0;
+    color: var(--badge-warn-fg);
+    background-color: var(--badge-warn-bg);
     padding: 1px 5px;
     border-radius: 3px;
     cursor: help;
@@ -84,31 +84,31 @@
     align-items: center;
     border-radius: 4px;
     overflow: hidden;
-    border: 1px solid #c4b8a6;
+    border: 1px solid var(--border-input);
 }
 
 .cite__format {
     padding: 3px 8px;
     font-size: 12px;
-    color: #6b5d4f;
-    background-color: #ede6d8;
+    color: var(--text-muted);
+    background-color: var(--surface-chip);
     font-weight: bold;
 }
 
 .cite__action {
     padding: 4px 8px;
     font-size: 12px;
-    color: #6b5d4f;
+    color: var(--text-muted);
     text-decoration: none;
     cursor: pointer;
-    border-left: 1px solid #c4b8a6;
+    border-left: 1px solid var(--border-input);
     transition: background-color 0.15s, color 0.15s;
     white-space: nowrap;
 }
 
 .cite__action:hover {
-    background-color: #ede6d8;
-    color: #7a4419;
+    background-color: var(--surface-chip);
+    color: var(--accent);
 }
 
 .result__summary {

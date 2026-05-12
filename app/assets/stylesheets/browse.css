@@ -9,25 +9,25 @@
 .browse-tabs__tab {
   padding: 0.4rem 0.75rem;
   text-decoration: none;
-  color: #6b5d4f;
-  background-color: #ede6d8;
+  color: var(--text-muted);
+  background-color: var(--surface-chip);
   border-radius: 4px;
   transition: color 0.15s, background-color 0.15s;
 }
 
 .browse-tabs__tab:hover {
-  color: #7a4419;
-  background-color: #e2d8c8;
+  color: var(--accent);
+  background-color: var(--surface-chip-strong);
 }
 
 .browse-tabs__tab--active {
-  color: white;
-  background-color: #7a4419;
+  color: var(--accent-on);
+  background-color: var(--accent);
 }
 
 .browse-tabs__tab--active:hover {
-  color: white;
-  background-color: #5e3412;
+  color: var(--accent-on);
+  background-color: var(--accent-hover);
 }
 
 .browse-tabs__count {
@@ -46,32 +46,32 @@
 
 .browse-sort__label {
   font-size: 0.85em;
-  color: #998a78;
+  color: var(--text-faint);
 }
 
 .browse-sort__item {
   padding: 0.25rem 0.5rem;
   text-decoration: none;
-  color: #6b5d4f;
-  background-color: #ede6d8;
+  color: var(--text-muted);
+  background-color: var(--surface-chip);
   border-radius: 3px;
   font-size: 0.85em;
   transition: color 0.15s, background-color 0.15s;
 }
 
 .browse-sort__item:hover {
-  color: #7a4419;
-  background-color: #e2d8c8;
+  color: var(--accent);
+  background-color: var(--surface-chip-strong);
 }
 
 .browse-sort__item--active {
-  color: white;
-  background-color: #7a4419;
+  color: var(--accent-on);
+  background-color: var(--accent);
 }
 
 .browse-sort__item--active:hover {
-  color: white;
-  background-color: #5e3412;
+  color: var(--accent-on);
+  background-color: var(--accent-hover);
 }
 
 /* Letter index */
@@ -86,26 +86,26 @@
 .letter-index__item {
   padding: 0.25rem 0.5rem;
   text-decoration: none;
-  color: #6b5d4f;
-  background-color: #ede6d8;
+  color: var(--text-muted);
+  background-color: var(--surface-chip);
   border-radius: 3px;
   font-size: 0.9em;
   transition: color 0.15s, background-color 0.15s;
 }
 
 .letter-index__item:hover {
-  color: #7a4419;
-  background-color: #e2d8c8;
+  color: var(--accent);
+  background-color: var(--surface-chip-strong);
 }
 
 .letter-index__item--active {
-  color: white;
-  background-color: #7a4419;
+  color: var(--accent-on);
+  background-color: var(--accent);
 }
 
 .letter-index__item--active:hover {
-  color: white;
-  background-color: #5e3412;
+  color: var(--accent-on);
+  background-color: var(--accent-hover);
 }
 
 /* Fonds list */
@@ -118,7 +118,7 @@
 
 .browse-fonds__item {
   padding: 0.5rem 0;
-  border-bottom: 1px solid #ede6d8;
+  border-bottom: 1px solid var(--border-faint);
 }
 
 .browse-fonds__link {
@@ -135,12 +135,12 @@
 
 .browse-fonds__unitid {
   font-weight: bold;
-  color: #7a4419;
+  color: var(--accent);
   flex-shrink: 0;
 }
 
 .browse-fonds__name {
-  color: #2c2418;
+  color: var(--text);
 }
 
 /* Origins list */
@@ -152,7 +152,7 @@
 }
 
 .browse-origins__item {
-  border-bottom: 1px solid #ede6d8;
+  border-bottom: 1px solid var(--border-faint);
 }
 
 .browse-origins__item a {
@@ -169,7 +169,7 @@
 }
 
 .browse-origins__count {
-  color: #998a78;
+  color: var(--text-faint);
   white-space: nowrap;
   font-size: 0.9em;
 }
@@ -189,15 +189,15 @@
   gap: 0.75rem;
   text-decoration: none;
   padding: 0.25rem 0;
-  color: #2c2418;
+  color: var(--text);
 }
 
 .browse-decades__row:hover {
-  color: #7a4419;
+  color: var(--accent);
 }
 
 .browse-decades__row:hover .browse-decades__bar {
-  background-color: #7a4419;
+  background-color: var(--accent);
 }
 
 .browse-decades__label {
@@ -208,14 +208,14 @@
 
 .browse-decades__bar {
   height: 1.25rem;
-  background-color: #998a78;
+  background-color: var(--text-faint);
   border-radius: 2px;
   transition: background-color 0.15s;
   min-width: 2px;
 }
 
 .browse-decades__count {
-  color: #998a78;
+  color: var(--text-faint);
   font-size: 0.9em;
   white-space: nowrap;
 }
@@ -251,7 +251,7 @@
 
 .search-facets__chips-label {
   font-size: 0.85em;
-  color: #998a78;
+  color: var(--text-faint);
 }
 
 .search-facets__chip {
@@ -259,21 +259,21 @@
   align-items: center;
   gap: 0.25rem;
   padding: 0.2rem 0.5rem;
-  background-color: #e2d8c8;
+  background-color: var(--surface-chip-strong);
   border-radius: 3px;
   font-size: 0.85em;
-  color: #2c2418;
+  color: var(--text);
 }
 
 .search-facets__chip-remove {
-  color: #998a78;
+  color: var(--text-faint);
   text-decoration: none;
   font-weight: bold;
   line-height: 1;
 }
 
 .search-facets__chip-remove:hover {
-  color: #7a4419;
+  color: var(--accent);
 }
 
 .search-facets__section {
@@ -285,9 +285,9 @@
   cursor: pointer;
   font-weight: bold;
   font-size: 0.9em;
-  color: #6b5d4f;
+  color: var(--text-muted);
   padding: 0.25rem 0;
-  border-bottom: 1px solid #ede6d8;
+  border-bottom: 1px solid var(--border-faint);
   margin-bottom: 0.5rem;
 }
 
@@ -299,8 +299,8 @@
      shadow gradients stay fixed to the frame (scroll). When scrolled away
      from an edge, the cover slides off and reveals the shadow underneath. */
   background:
-    linear-gradient(#f5f0e8, transparent) top / 100% 1.5em no-repeat local,
-    linear-gradient(transparent, #f5f0e8) bottom / 100% 1.5em no-repeat local,
+    linear-gradient(var(--bg), transparent) top / 100% 1.5em no-repeat local,
+    linear-gradient(transparent, var(--bg)) bottom / 100% 1.5em no-repeat local,
     radial-gradient(farthest-side at 50% 0, rgba(0,0,0,.12), transparent) top / 100% 0.5em no-repeat scroll,
     radial-gradient(farthest-side at 50% 100%, rgba(0,0,0,.12), transparent) bottom / 100% 0.5em no-repeat scroll;
 }
@@ -345,7 +345,7 @@
 }
 
 .search-facets__count {
-  color: #998a78;
+  color: var(--text-faint);
   white-space: nowrap;
   font-size: 0.9em;
 }
@@ -364,16 +364,16 @@
   gap: 0.5rem;
   text-decoration: none;
   padding: 0.15rem 0;
-  color: #2c2418;
+  color: var(--text);
   font-size: 0.85em;
 }
 
 .search-facets__decade-row:hover {
-  color: #7a4419;
+  color: var(--accent);
 }
 
 .search-facets__decade-row:hover .search-facets__decade-bar-track .search-facets__decade-bar {
-  background-color: #7a4419;
+  background-color: var(--accent);
 }
 
 .search-facets__decade-label {
@@ -390,14 +390,14 @@
 .search-facets__decade-bar {
   display: block;
   height: 0.9rem;
-  background-color: #998a78;
+  background-color: var(--text-faint);
   border-radius: 2px;
   transition: background-color 0.15s;
   min-width: 2px;
 }
 
 .search-facets__decade-count {
-  color: #998a78;
+  color: var(--text-faint);
   font-size: 0.9em;
   white-space: nowrap;
 }
