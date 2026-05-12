@@ -149,19 +149,21 @@ class SearchController < ApplicationController
       if params[:origin_id].present?
         # Drilldown into an origin
         origin = @repository.get_origin(params[:origin_id])
-        @origin = OpenStruct.new(origin)
-        
-        if @origin
-          response = @repository.search_files("", 
-            filter: "origin_names = #{MeilisearchRepository.quote(@origin.name)}", 
-            hitsPerPage: 50, 
-            page: (params[:page]||1).to_i
-          )
-          @archive_files = Kaminari.paginate_array(
-            response['hits'].map { |h| wrap_archive_file(h) },
-            total_count: response['totalHits'] || response['estimatedTotalHits']
-          ).page(params[:page]).per(50)
+        if origin.nil?
+          render plain: "Not found", status: 404
+          return
         end
+
+        @origin = OpenStruct.new(origin)
+        response = @repository.search_files("",
+          filter: "origin_names = #{MeilisearchRepository.quote(@origin.name)}",
+          hitsPerPage: 50,
+          page: (params[:page]||1).to_i
+        )
+        @archive_files = Kaminari.paginate_array(
+          response['hits'].map { |h| wrap_archive_file(h) },
+          total_count: response['totalHits'] || response['estimatedTotalHits']
+        ).page(params[:page]).per(50)
       else
         @letter = params[:letter]
         response = @repository.all_origins(page: (params[:page]||1).to_i, letter: @letter)
