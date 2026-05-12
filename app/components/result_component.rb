@@ -1,4 +1,6 @@
 class ResultComponent < ViewComponent::Base
+  include IconHelper
+
   def initialize(archive_file:, query: '')
     @query = query
     @archive_file = archive_file

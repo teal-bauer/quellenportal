@@ -4,9 +4,10 @@
   </div>
   <div class="result__header">
     <h4 class="result__title">
-      <%= link_to_if(@archive_file.link.present?, @archive_file.call_number, @archive_file.link, target: "_blank") %>: <%= title %>
+      <span class="result__call-number"><%= link_to_if(@archive_file.link.present?, @archive_file.call_number, @archive_file.link, target: "_blank") %></span>
+      <%= title %>
     </h4>
-    <p>
+    <p class="result__date">
       <%= date %>
       <% if date_corrected? %>
         <span class="result__date-corrected" title="<%= date_correction_detail %>">korrigiert</span>
@@ -19,13 +20,13 @@
   <div class="cite">
     <div class="cite__group">
       <span class="cite__format">RIS</span>
-      <a class="cite__action cite__copy" data-path="<%= archive_file_path(@archive_file.id, format: :ris) %>" title="RIS kopieren">&#x2398; Kopieren</a>
-      <%= link_to archive_file_path(@archive_file.id, format: :ris), class: "cite__action", title: "RIS herunterladen" do %>&#x2913; Download<% end %>
+      <a class="cite__action cite__copy" data-path="<%= archive_file_path(@archive_file.id, format: :ris) %>" title="RIS kopieren"><%= icon(:copy, label: "RIS kopieren") %> Kopieren</a>
+      <%= link_to archive_file_path(@archive_file.id, format: :ris), class: "cite__action", title: "RIS herunterladen" do %><%= icon(:download, label: "RIS herunterladen") %> Download<% end %>
     </div>
     <div class="cite__group">
       <span class="cite__format">BibTeX</span>
-      <a class="cite__action cite__copy" data-path="<%= archive_file_path(@archive_file.id, format: :bib) %>" title="BibTeX kopieren">&#x2398; Kopieren</a>
-      <%= link_to archive_file_path(@archive_file.id, format: :bib), class: "cite__action", title: "BibTeX herunterladen" do %>&#x2913; Download<% end %>
+      <a class="cite__action cite__copy" data-path="<%= archive_file_path(@archive_file.id, format: :bib) %>" title="BibTeX kopieren"><%= icon(:copy, label: "BibTeX kopieren") %> Kopieren</a>
+      <%= link_to archive_file_path(@archive_file.id, format: :bib), class: "cite__action", title: "BibTeX herunterladen" do %><%= icon(:download, label: "BibTeX herunterladen") %> Download<% end %>
     </div>
   </div>
 </div>

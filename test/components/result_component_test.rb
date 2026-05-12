@@ -74,4 +74,28 @@ class ResultComponentTest < ViewComponent::TestCase
                  component.title
     @archive_file.verify
   end
+
+  def test_renders_with_icons_instead_of_dingbats
+    @archive_file.expect(:title, 'A')
+    @archive_file.expect(:summary, 'B')
+    @archive_file.expect(:source_date_text, '1989')
+    @archive_file.expect(:source_date_text, '1989')
+    @archive_file.expect(:source_date_start_uncorrected, nil)
+    @archive_file.expect(:source_date_end_uncorrected, nil)
+    @archive_file.expect(:parents, [])
+    @archive_file.expect(:link, nil)
+    @archive_file.expect(:link, nil)
+    @archive_file.expect(:call_number, 'B 106/1')
+    @archive_file.expect(:id, 'some-id')
+    @archive_file.expect(:id, 'some-id')
+    @archive_file.expect(:id, 'some-id')
+    @archive_file.expect(:id, 'some-id')
+
+    component = ResultComponent.new(query: 'a', archive_file: @archive_file)
+    rendered = render_inline(component).to_html
+
+    refute_match %r{⎘}, rendered
+    refute_match %r{⤓}, rendered
+    assert_match %r{<svg }, rendered
+  end
 end
