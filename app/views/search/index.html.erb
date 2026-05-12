@@ -1,30 +1,19 @@
-<div class="search-bar">
-  <% unless @query %>
-    <nav class="browse-tabs">
-      <%= link_to browse_fonds_path, class: "browse-tabs__tab #{"browse-tabs__tab--active" if @tab == "fonds"}" do %>
-        <%= t("browse.fonds") %> <span class="browse-tabs__count"><%= @browse_counts[:fonds] %></span>
+<% if @query.present? || @tab.present? %>
+  <% content_for :site_header_extras do %>
+    <form class="site-search">
+      <% if @archive_node %>
+        <input type="hidden" name="node_id" value="<%= @archive_node.id %>" />
       <% end %>
-      <%= link_to browse_origins_path, class: "browse-tabs__tab #{"browse-tabs__tab--active" if @tab == "origins"}" do %>
-        <%= t("browse.origins") %> <span class="browse-tabs__count"><%= @browse_counts[:origins] %></span>
+      <% if @date_from %>
+        <input type="hidden" name="from" value="<%= @date_from %>" />
+        <input type="hidden" name="to" value="<%= @date_to %>" />
       <% end %>
-      <%= link_to browse_dates_path, class: "browse-tabs__tab #{"browse-tabs__tab--active" if @tab == "dates"}" do %>
-        <%= t("browse.dates") %> <span class="browse-tabs__count"><%= @browse_counts[:decades] %></span>
-      <% end %>
-    </nav>
+      <input type="text" name="q" value="<%= @query %>" placeholder="<%= t("search_placeholder", total: number_with_delimiter(@total)) %>" class="site-search__input" data-search-input />
+      <button type="submit" class="site-search__button"><%= icon(:search, label: t("search_button")) %></button>
+      <span class="site-search__shortcut" data-shortcut-affordance></span>
+    </form>
   <% end %>
-  <form class="search-bar__form">
-    <% if @archive_node %>
-      <input type="hidden" name="node_id" value="<%= @archive_node.id %>" />
-    <% end %>
-    <% if @date_from %>
-      <input type="hidden" name="from" value="<%= @date_from %>" />
-      <input type="hidden" name="to" value="<%= @date_to %>" />
-    <% end %>
-    <input type="text" name="q" value="<%= @query %>" placeholder="<%= t("search_placeholder", total: number_with_delimiter(@total)) %>" class="search__text-input" />
-    <input type="submit" value="<%= t("search_button") %>" class="search__button" />
-    <%= link_to "Suchhinweise", search_help_path, class: "search__help-link" %>
-  </form>
-</div>
+<% end %>
 <% if @archive_node %>
   <p class="search__node-filter">
     Suche in: <%= link_to @archive_node.name, archive_node_path(@archive_node) %>
@@ -45,7 +34,7 @@
   <% end %>
       <% if @total_count > 0 %>
         <%= render "pagination_controls", paginatable: @results, entry_name: 'Aktenstück', suffix: 'top', show_sort: true %>
-        
+
         <div class="pagination">
           <%= paginate @results, window: 4, outer_window: 1 %>
         </div>
@@ -68,6 +57,19 @@
     </div>
   <% end %>
 <% else %>
+  <% if @tab.present? %>
+    <nav class="browse-tabs">
+      <%= link_to browse_fonds_path, class: "browse-tabs__tab #{"browse-tabs__tab--active" if @tab == "fonds"}" do %>
+        <%= t("browse.fonds") %> <span class="browse-tabs__count"><%= @browse_counts[:fonds] %></span>
+      <% end %>
+      <%= link_to browse_origins_path, class: "browse-tabs__tab #{"browse-tabs__tab--active" if @tab == "origins"}" do %>
+        <%= t("browse.origins") %> <span class="browse-tabs__count"><%= @browse_counts[:origins] %></span>
+      <% end %>
+      <%= link_to browse_dates_path, class: "browse-tabs__tab #{"browse-tabs__tab--active" if @tab == "dates"}" do %>
+        <%= t("browse.dates") %> <span class="browse-tabs__count"><%= @browse_counts[:decades] %></span>
+      <% end %>
+    </nav>
+  <% end %>
   <% case @tab %>
   <% when "fonds" %>
     <%= render "browse_fonds" %>

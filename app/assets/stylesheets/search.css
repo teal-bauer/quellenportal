@@ -102,3 +102,56 @@
     margin: 8px 0 0 0;
   }
 }
+
+.site-search {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.site-search__input {
+  flex: 1;
+  background-color: var(--bg-elevated);
+  border-radius: 4px;
+  border: 1px solid var(--border-input);
+  font-family: "Atkinson Hyperlegible", sans-serif;
+  font-size: 0.9rem;
+  padding: 0.4rem 0.7rem;
+  color: var(--text);
+  min-width: 0;
+}
+.site-search__input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(122, 68, 25, 0.2);
+}
+.site-search__input::placeholder { color: var(--text-faint); }
+
+.site-search__button {
+  background-color: var(--accent);
+  color: var(--accent-on);
+  border: 0;
+  border-radius: 4px;
+  padding: 0.35rem 0.6rem;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+.site-search__button:hover { background-color: var(--accent-hover); }
+
+.site-search__shortcut {
+  font-size: 0.72rem;
+  color: var(--text-faint);
+  background-color: var(--surface-chip);
+  border-radius: 3px;
+  padding: 0.15rem 0.4rem;
+  white-space: nowrap;
+}
+.site-search__shortcut:empty { display: none; }
+
+@media (max-width: 600px) {
+  .site-search__shortcut { display: none; }
+  .site-search__input { font-size: 16px; }
+}
