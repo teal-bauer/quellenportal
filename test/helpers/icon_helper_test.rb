@@ -33,4 +33,8 @@ class IconHelperTest < ActionView::TestCase
   test "raises on unknown icon" do
     assert_raises(KeyError) { icon(:nonexistent) }
   end
+
+  test "accepts string names interchangeably with symbols" do
+    assert_equal icon(:"arrow-right"), icon("arrow-right")
+  end
 end

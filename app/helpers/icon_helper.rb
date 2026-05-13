@@ -11,7 +11,7 @@ module IconHelper
   }.freeze
 
   def icon(name, size: 16, label: nil)
-    paths = PATHS.fetch(name)
+    paths = PATHS.fetch(name.to_sym)
     aria = label ? %(role="img" aria-label="#{ERB::Util.html_escape(label)}") : 'aria-hidden="true"'
     %(<svg xmlns="http://www.w3.org/2000/svg" width="#{size}" height="#{size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" #{aria}>#{paths}</svg>).html_safe
   end
