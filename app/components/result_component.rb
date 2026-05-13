@@ -72,7 +72,7 @@ class ResultComponent < ViewComponent::Base
   private
 
   # Title / summary come from Meilisearch's `_formatted` payload with our
-  # [[HL]]…[[/HL]] tokens wrapping every matched span (typo-tolerant). Escape
+  # [[HL]]...[[/HL]] tokens wrapping every matched span (typo-tolerant). Escape
   # the surrounding text, then swap tokens for spans.
   def render_meilisearch_marks(text)
     return text if text.blank?

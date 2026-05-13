@@ -1,5 +1,5 @@
-/* tokens.css — Quellenportal design tokens
- * Source of truth for colours. All component CSS uses var(--…). */
+/* tokens.css - Quellenportal design tokens.
+ * Source of truth for colours. All component CSS uses var(--...). */
 
 :root {
   /* Surfaces */
