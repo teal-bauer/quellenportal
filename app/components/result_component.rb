@@ -19,7 +19,7 @@ class ResultComponent < ViewComponent::Base
   end
 
   def title
-    highlight_query(@archive_file.title)
+    render_meilisearch_marks(@archive_file.title)
   end
 
   def date
@@ -62,7 +62,7 @@ class ResultComponent < ViewComponent::Base
   end
 
   def summary
-    highlight_query(@archive_file.summary)
+    render_meilisearch_marks(@archive_file.summary)
   end
 
   def ris_link
@@ -71,6 +71,21 @@ class ResultComponent < ViewComponent::Base
 
   private
 
+  # Title / summary come from Meilisearch's `_formatted` payload with our
+  # [[HL]]…[[/HL]] tokens wrapping every matched span (typo-tolerant). Escape
+  # the surrounding text, then swap tokens for spans.
+  def render_meilisearch_marks(text)
+    return text if text.blank?
+
+    CGI.escapeHTML(text)
+       .gsub(ApplicationController::HL_OPEN, '<span class="result__highlight">')
+       .gsub(ApplicationController::HL_CLOSE, '</span>')
+       .html_safe
+  end
+
+  # Parents come from a structured array, not a Meilisearch-formatted field.
+  # Fall back to a literal case-insensitive match of the user's query so the
+  # breadcrumbs still light up when there's an exact match.
   def highlight_query(text)
     return text if @query.blank? || text.blank?
 

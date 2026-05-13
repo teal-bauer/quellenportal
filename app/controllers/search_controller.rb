@@ -38,7 +38,7 @@ class SearchController < ApplicationController
           sort: sort,
           hitsPerPage: 100,
           page: (params[:page] || 1).to_i
-        }.compact
+        }.compact.merge(self.class.highlight_search_options)
 
         # Use Repository for search
         results = @repository.search_files(@query, search_opts)
