@@ -33,7 +33,7 @@
       <div class="search-layout__content">
   <% end %>
       <% if @total_count > 0 %>
-        <%= render "pagination_controls", paginatable: @results, entry_name: 'Aktenstück', suffix: 'top', show_sort: true %>
+        <%= render "pagination_controls", paginatable: @results, entry_name: { one: 'Aktenstück', other: 'Aktenstücke' }, suffix: 'top', show_sort: true %>
 
         <div class="pagination">
           <%= paginate @results, window: 4, outer_window: 1 %>
@@ -47,7 +47,7 @@
           <%= paginate @results, window: 4, outer_window: 1 %>
         </div>
 
-        <%= render "pagination_controls", paginatable: @results, entry_name: 'Aktenstück', suffix: 'bottom' %>
+        <%= render "pagination_controls", paginatable: @results, entry_name: { one: 'Aktenstück', other: 'Aktenstücke' }, suffix: 'bottom' %>
       <% else %>
         <hr />
         <h3>Keine Akten gefunden.</h3>

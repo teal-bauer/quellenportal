@@ -1,4 +1,4 @@
-<%= render "pagination_controls", paginatable: @root_nodes, entry_name: 'Bestand', suffix: 'top' %>
+<%= render "pagination_controls", paginatable: @root_nodes, entry_name: { one: 'Bestand', other: 'Bestände' }, suffix: 'top' %>
 
 <div class="browse-sort">
   <span class="browse-sort__label"><%= t("browse.sort_by") %>:</span>
@@ -26,4 +26,4 @@
   <%= paginate @root_nodes, params: { letter: @letter, fonds_sort: @fonds_sort }, window: 4, outer_window: 1 %>
 </div>
 
-<%= render "pagination_controls", paginatable: @root_nodes, entry_name: 'Bestand', suffix: 'bottom' %>
+<%= render "pagination_controls", paginatable: @root_nodes, entry_name: { one: 'Bestand', other: 'Bestände' }, suffix: 'bottom' %>

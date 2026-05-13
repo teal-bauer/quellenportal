@@ -1,5 +1,5 @@
 <% if @date_from %>
-  <%= render "pagination_controls", paginatable: @archive_files, entry_name: 'Aktenstück', suffix: 'top' %>
+  <%= render "pagination_controls", paginatable: @archive_files, entry_name: { one: 'Aktenstück', other: 'Aktenstücke' }, suffix: 'top' %>
 
   <% @archive_files.each do |archive_file| %>
     <%= render ResultComponent.new(archive_file: archive_file) %>
@@ -7,7 +7,7 @@
   <div class="pagination">
     <%= paginate @archive_files, window: 4, outer_window: 1 %>
   </div>
-  <%= render "pagination_controls", paginatable: @archive_files, entry_name: 'Aktenstück', suffix: 'bottom' %>
+  <%= render "pagination_controls", paginatable: @archive_files, entry_name: { one: 'Aktenstück', other: 'Aktenstücke' }, suffix: 'bottom' %>
 <% else %>
   <% max_count = @period_counts.map { |d| d["file_count"] }.max %>
   <div class="browse-decades">

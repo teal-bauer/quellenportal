@@ -1,6 +1,6 @@
 <div class="pagination-header">
   <div class="pagination-info">
-    <%= page_entries_info paginatable, entry_name: entry_name %>
+    <%= entries_info paginatable, singular: entry_name[:one], plural: entry_name[:other] %>
     <span class="pagination-total-pages">
       (Seite <%= paginatable.current_page %> von <%= paginatable.total_pages %>)
     </span>

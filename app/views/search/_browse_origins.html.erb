@@ -1,5 +1,5 @@
 <% if @origin %>
-  <%= render "pagination_controls", paginatable: @archive_files, entry_name: 'Aktenstück', suffix: 'top' %>
+  <%= render "pagination_controls", paginatable: @archive_files, entry_name: { one: 'Aktenstück', other: 'Aktenstücke' }, suffix: 'top' %>
   
   <% @archive_files.each do |archive_file| %>
     <%= render ResultComponent.new(archive_file: archive_file) %>
@@ -7,7 +7,7 @@
   <div class="pagination">
     <%= paginate @archive_files, window: 4, outer_window: 1 %>
   </div>
-  <%= render "pagination_controls", paginatable: @archive_files, entry_name: 'Aktenstück', suffix: 'bottom' %>
+  <%= render "pagination_controls", paginatable: @archive_files, entry_name: { one: 'Aktenstück', other: 'Aktenstücke' }, suffix: 'bottom' %>
 <% else %>
   <nav class="letter-index">
     <%= link_to t("browse.all"), browse_origins_path, class: "letter-index__item #{"letter-index__item--active" unless @letter}" %>
@@ -16,7 +16,7 @@
     <% end %>
   </nav>
   
-  <%= render "pagination_controls", paginatable: @origins, entry_name: 'Provenienz', suffix: 'top' %>
+  <%= render "pagination_controls", paginatable: @origins, entry_name: { one: 'Provenienz', other: 'Provenienzen' }, suffix: 'top' %>
 
   <ul class="browse-origins">
     <% @origins.each do |origin| %>
@@ -31,5 +31,5 @@
   <div class="pagination">
     <%= paginate @origins, params: { letter: @letter }, window: 4, outer_window: 1 %>
   </div>
-  <%= render "pagination_controls", paginatable: @origins, entry_name: 'Provenienz', suffix: 'bottom' %>
+  <%= render "pagination_controls", paginatable: @origins, entry_name: { one: 'Provenienz', other: 'Provenienzen' }, suffix: 'bottom' %>
 <% end %>
