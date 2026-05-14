@@ -1,10 +1,32 @@
+<% page_title = content_for?(:title) ? "#{content_for(:title)} · Quellenportal" : "Quellenportal · Suche im Bundesarchiv" %>
+<% page_description = content_for?(:meta_description) ? content_for(:meta_description) : "Durchsuche Millionen archivalischer Quellen aus dem Bundesarchiv. Volltextsuche, Facetten und schnelles Stöbern in Findbüchern, Akten und Beständen." %>
 <!DOCTYPE html>
 <html lang="<%= I18n.locale %>">
   <head>
-    <title>Quellenportal</title>
+    <title><%= page_title %></title>
+    <meta name="description" content="<%= page_description %>">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="apple-touch-icon" href="/favicon.png">
     <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="theme-color" content="#f7f2ea" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#1f1814" media="(prefers-color-scheme: dark)">
+
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Quellenportal">
+    <meta property="og:locale" content="de_DE">
+    <meta property="og:title" content="<%= page_title %>">
+    <meta property="og:description" content="<%= page_description %>">
+    <meta property="og:url" content="<%= request.original_url %>">
+    <meta property="og:image" content="<%= request.base_url %>/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Quellenportal — Suche im Bundesarchiv">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="<%= page_title %>">
+    <meta name="twitter:description" content="<%= page_description %>">
+    <meta name="twitter:image" content="<%= request.base_url %>/og-image.png">
+
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>

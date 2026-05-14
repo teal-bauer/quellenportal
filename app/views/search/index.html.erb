@@ -1,3 +1,7 @@
+<% if @query.present? %>
+  <% content_for :title, "#{@query} – Suche" %>
+  <% content_for :meta_description, "Suchergebnisse für „#{@query}“ im Bundesarchiv auf Quellenportal." %>
+<% end %>
 <% if @query.present? || @tab.present? %>
   <% content_for :site_header_extras do %>
     <form class="site-search">
