@@ -14,7 +14,13 @@ Disallow: /
 User-agent: ClaudeBot
 Disallow: /
 
+User-agent: Claude-SearchBot
+Disallow: /
+
 User-agent: Claude-Web
+Disallow: /
+
+User-agent: Barkrowler
 Disallow: /
 
 User-agent: cohere-ai

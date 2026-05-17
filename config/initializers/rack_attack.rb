@@ -6,6 +6,27 @@ if Rails.env.development?
   return
 end
 
+# Hard-block AI/SEO crawler UAs — they either ignore robots.txt or use UA strings
+# we haven't disallowed there. Defense in depth.
+BAD_UA_RE = /
+  Claude-SearchBot | ClaudeBot | anthropic-ai | Claude-Web |
+  GPTBot | ChatGPT-User | OAI-SearchBot |
+  PerplexityBot | cohere-ai | YouBot |
+  Bytespider |
+  meta-externalagent | FacebookBot |
+  CCBot | Applebot-Extended |
+  AhrefsBot | SemrushBot | MJ12bot | DotBot | BLEXBot | Barkrowler |
+  DataForSeoBot | PetalBot | Seekport | SEOkicks | Seobility |
+  Amazonbot | Diffbot | ImagesiftBot | omgili | omgilibot |
+  TurnitinBot | VelenPublicWebCrawler | Scrapy | Timpibot |
+  Kangaroo\sBot
+/ix.freeze
+
+Rack::Attack.blocklist("bad-ua") do |req|
+  ua = req.user_agent.to_s
+  !ua.empty? && BAD_UA_RE.match?(ua)
+end
+
 # Throttle: 60 req/min per IP across the whole app
 Rack::Attack.throttle("req/ip", limit: 60, period: 60) do |req|
   req.ip unless req.path.start_with?("/assets/")
