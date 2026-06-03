@@ -22,6 +22,10 @@ class ResultComponent < ViewComponent::Base
     render_meilisearch_marks(@archive_file.title)
   end
 
+  def call_number
+    render_meilisearch_marks(@archive_file.call_number)
+  end
+
   def date
     return @archive_file.source_date_text if @archive_file.source_date_text.present?
 

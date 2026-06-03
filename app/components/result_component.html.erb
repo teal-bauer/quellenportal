@@ -4,7 +4,7 @@
   </div>
   <div class="result__header">
     <h4 class="result__title">
-      <span class="result__call-number"><%= link_to_if(@archive_file.link.present?, @archive_file.call_number, @archive_file.link, target: "_blank") %></span>
+      <span class="result__call-number"><%= link_to_if(@archive_file.link.present?, call_number, @archive_file.link, target: "_blank") %></span>
       <%= title %>
     </h4>
     <p class="result__date">

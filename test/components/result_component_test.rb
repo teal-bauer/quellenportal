@@ -45,6 +45,16 @@ class ResultComponentTest < ViewComponent::TestCase
     @archive_file.verify
   end
 
+  def test_call_number_renders_meilisearch_highlight_tokens
+    @archive_file.expect(:call_number, "[[HL]]DR[[/HL]] 2/[[HL]]27018[[/HL]]")
+
+    component = ResultComponent.new(query: "DR 27018", archive_file: @archive_file)
+
+    assert_equal %(<span class="result__highlight">DR</span> 2/<span class="result__highlight">27018</span>),
+                 component.call_number
+    @archive_file.verify
+  end
+
   def test_date_returns_source_date_text
     @archive_file.expect(:source_date_text, "1989")
     @archive_file.expect(:source_date_text, "1989")
