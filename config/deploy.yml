@@ -4,14 +4,14 @@ image: teal-bauer/quellenportal
 
 servers:
   web:
-    - 100.91.49.44
+    - 100.111.134.64
 
 proxy:
   ssl: false
   host: quellenportal.de,archivfinder.de
   app_port: 3000
   forward_headers: true
-  response_timeout: 60
+  response_timeout: 120
 
 error_pages_path: public
 
@@ -42,7 +42,7 @@ builder:
 accessories:
   meilisearch:
     image: getmeili/meilisearch:v1.35
-    host: 100.91.49.44
+    host: 100.111.134.64
     port: "127.0.0.1:7700:7700"
     env:
       clear:
