@@ -1,8 +1,10 @@
 # syntax = docker/dockerfile:1
 
 # Make sure RUBY_VERSION matches the Ruby version in .ruby-version and Gemfile
-ARG RUBY_VERSION=3.4.2
-FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
+ARG RUBY_VERSION=4.0.10
+FROM docker.io/library/ruby:${RUBY_VERSION}-slim-bookworm@sha256:2ae2957252f1d59985f012f876f4f70d8fc643537766499ba5efa2c991319823 AS base
+ARG RUBY_VERSION
+RUN ruby --disable-gems -e 'abort unless RUBY_VERSION == ARGV.fetch(0)' "$RUBY_VERSION"
 
 # Rails app lives here
 WORKDIR /rails
@@ -17,7 +19,8 @@ ENV RAILS_ENV="production" \
 RUN apt-get update -qq
 RUN apt-get upgrade -y
 
-RUN apt-get install --no-install-recommends -y lsb-release curl
+RUN apt-get install --no-install-recommends -y ca-certificates lsb-release curl && \
+    dpkg --compare-versions "$(dpkg-query -W -f='${Version}' ca-certificates)" ge '20250419~deb12u2'
 
 # Throw-away build stage to reduce size of final image
 FROM base AS build
@@ -27,7 +30,8 @@ RUN apt-get install --no-install-recommends -y build-essential git pkg-config li
 
 # Install application gems
 COPY Gemfile Gemfile.lock .ruby-version ./
-RUN bundle install && \
+RUN gem install bundler -v "$(tail -1 Gemfile.lock | tr -d ' ')" --no-document && \
+    bundle install && \
     rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
     bundle exec bootsnap precompile --gemfile
 
